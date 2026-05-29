@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docsmith | Docsmith</title>
+    <meta name="description" content="Craft static documentation sites from Markdown with minimal setup.">
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/app.js" defer></script>
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar">
+            <h1 class="brand">Docsmith</h1>
+            <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+            <div class="search">
+                <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+            </div>
+            <nav class="nav" data-docsmith-nav><a class="" href="architecture/" data-nav-item data-title="Architecture">Architecture</a><a class="" href="development/" data-nav-item data-title="Development">Development</a><a class="active" href="./" data-nav-item data-title="Docsmith">Docsmith</a><a class="" href="installation/" data-nav-item data-title="Installation">Installation</a><a class="" href="usage/" data-nav-item data-title="Usage">Usage</a></nav>
+        </aside>
+        <main class="content">
+            <article>
+                <h1>Docsmith</h1>
+<p>Docsmith is a small PHP package for turning Markdown files into a static documentation site.</p>
+<h2>Current capabilities</h2>
+<ul>
+<li>Build a multi-page documentation site from a Markdown directory.</li>
+<li>Generate one HTML page per Markdown file.</li>
+<li>Publish local CSS assets into the output directory.</li>
+<li>Support both a static entry point and a fluent builder API.</li>
+<li>Render Markdown through League CommonMark with GitHub-flavored extensions.</li>
+<li>Validate the package with Pest, PHPStan, Rector, and Pint.</li>
+</ul>
+<h2>Current status</h2>
+<p>This repository is still in the first implementation phase.</p>
+<p>The current build pipeline supports:</p>
+<ul>
+<li>directory scanning</li>
+<li>title extraction from the first Markdown heading</li>
+<li>HTML generation</li>
+<li>generated navigation links</li>
+<li>separate source and output directories</li>
+</ul>
+<p>The next planned steps are frontmatter support, richer site metadata, theme abstraction, and compatibility importers for existing packages.</p>
+<h2>Documentation pages</h2>
+<ul>
+<li>Installation</li>
+<li>Usage</li>
+<li>Architecture</li>
+<li>Development</li>
+</ul>
+
+            </article>
+        </main>
+    </div>
+</body>
+</html>

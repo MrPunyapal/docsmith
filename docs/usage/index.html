@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usage | Docsmith</title>
+    <meta name="description" content="Craft static documentation sites from Markdown with minimal setup.">
+    <link rel="stylesheet" href="../assets/app.css">
+    <script src="../assets/app.js" defer></script>
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar">
+            <h1 class="brand">Docsmith</h1>
+            <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+            <div class="search">
+                <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+            </div>
+            <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage">Usage</a></nav>
+        </aside>
+        <main class="content">
+            <article>
+                <h1>Usage</h1>
+<h2>Static API</h2>
+<pre><code class="language-php">use Docsmith\Docsmith;
+
+Docsmith::build(
+    source: __DIR__ . '/md',
+    output: __DIR__ . '/dist',
+    title: 'Project Docs',
+    description: 'Internal package documentation.',
+);
+</code></pre>
+<h2>Fluent API</h2>
+<pre><code class="language-php">use Docsmith\Docsmith;
+
+Docsmith::make()
+    -&gt;source(__DIR__ . '/md')
+    -&gt;output(__DIR__ . '/dist')
+    -&gt;title('Project Docs')
+    -&gt;description('Internal package documentation.')
+    -&gt;build();
+</code></pre>
+<h2>Current output model</h2>
+<p>Each Markdown file becomes an HTML page.</p>
+<ul>
+<li><code>md/index.md</code> becomes <code>index.html</code></li>
+<li><code>md/installation.md</code> becomes <code>installation/index.html</code></li>
+<li><code>md/guides/configuration.md</code> becomes <code>guides/configuration/index.html</code></li>
+</ul>
+<p>If the source directory does not contain an <code>index.md</code>, Docsmith generates a landing page automatically.</p>
+
+            </article>
+        </main>
+    </div>
+</body>
+</html>
