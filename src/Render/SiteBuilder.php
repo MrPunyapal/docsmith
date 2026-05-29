@@ -196,11 +196,11 @@ HTML;
                 }
             }
 
-            $groupClasses = trim('nav-group is-open' . ($groupHasActive ? ' has-active' : ''));
+            $groupClasses = trim('nav-group' . ($groupHasActive ? ' is-open has-active' : ''));
             $markup .= '<section class="' . $groupClasses . '" data-nav-group>';
 
             $icon = $group['icon'] !== '' ? '<span class="nav-group-icon">' . $this->escape($group['icon']) . '</span>' : '';
-            $markup .= '<button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true">';
+            $markup .= '<button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="' . ($groupHasActive ? 'true' : 'false') . '">';
             $markup .= '<span class="nav-group-label">' . $icon . '<span>' . $this->escape($group['name']) . '</span></span>';
             $markup .= '<span class="nav-group-caret" aria-hidden="true">▾</span>';
             $markup .= '</button>';

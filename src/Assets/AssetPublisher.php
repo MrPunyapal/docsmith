@@ -564,6 +564,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    var openOnlyGroup = function (groupToOpen) {
+        groups.forEach(function (group) {
+            setGroupOpen(group, group === groupToOpen);
+        });
+    };
+
     toggles.forEach(function (toggle) {
         toggle.addEventListener('click', function () {
             var group = toggle.closest('[data-nav-group]');
@@ -573,7 +579,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             var isOpen = group.classList.contains('is-open');
-            setGroupOpen(group, !isOpen);
+
+            if (isOpen) {
+                setGroupOpen(group, false);
+                return;
+            }
+
+            openOnlyGroup(group);
         });
     });
 
@@ -599,11 +611,23 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             group.style.display = groupVisible ? '' : 'none';
-
-            if (query !== '' && groupVisible) {
-                setGroupOpen(group, true);
-            }
         });
+
+        var openVisibleGroup = groups.find(function (group) {
+            return group.classList.contains('is-open') && group.style.display !== 'none';
+        });
+
+        if (openVisibleGroup) {
+            openOnlyGroup(openVisibleGroup);
+        } else {
+            var firstVisibleGroup = groups.find(function (group) {
+                return group.style.display !== 'none';
+            });
+
+            if (firstVisibleGroup) {
+                openOnlyGroup(firstVisibleGroup);
+            }
+        }
 
         empty.style.display = visible === 0 ? 'block' : 'none';
     };
@@ -612,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (activeItem) {
         var activeGroup = activeItem.closest('[data-nav-group]');
-        setGroupOpen(activeGroup, true);
+        openOnlyGroup(activeGroup);
 
         requestAnimationFrame(function () {
             activeItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
