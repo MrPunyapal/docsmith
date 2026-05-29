@@ -228,8 +228,8 @@ a {
 }
 
 .nav-group.has-active {
-    border-color: var(--accent-strong);
-    box-shadow: 0 0 0 1px var(--ring);
+    border-color: var(--border);
+    box-shadow: none;
 }
 
 .nav-group-toggle {

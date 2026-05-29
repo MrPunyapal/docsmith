@@ -19,7 +19,7 @@
                 <div class="search-results" data-docsmith-search-results hidden></div>
                 <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
             </div>
-            <nav class="nav" data-docsmith-nav><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></div></section></nav>
+            <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
         </aside>
         <main class="content">
             <article>
@@ -67,6 +67,17 @@ Docsmith::make()
     -&gt;build();
 </code></pre>
 <p>Use hex colors for the best results because Docsmith derives the hover, focus, and dark-mode variants from the accent.</p>
+<h3 id="custom-css">Custom CSS</h3>
+<p>If you need to apply project-specific tweaks, you can append raw CSS or a CSS file during the build:</p>
+<pre><code class="hljs language-php">Docsmith::make()
+    -&gt;source(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/md'</span>)
+    -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
+    -&gt;customCss(<span class="hljs-string">'body { background: #fff }'</span>)
+    -&gt;build();
+</code></pre>
+<p>Or:</p>
+<pre><code class="hljs language-php">    -&gt;customCss(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/overrides.css'</span>)
+</code></pre>
 <h2 id="search">Search</h2>
 <p>Docsmith generates <code>search-index.json</code> and uses it for global result search in the sidebar.</p>
 <ul>

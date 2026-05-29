@@ -314,6 +314,28 @@ it('renders global search UI markup and root metadata', function (): void {
         ->toContain('data-docsmith-search-results');
 });
 
+it('omits general group wrapper when it is the only navigation group', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-general-only-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-single-general-' . uniqid();
+
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Home\n\nGeneral-only nav.\n");
+    file_put_contents($sourcePath . '/usage.md', "# Usage\n\nSingle group page.\n");
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Docsmith Docs',
+        description: 'Generated documentation for testing.',
+    );
+
+    $usagePage = file_get_contents($outputPath . '/usage/index.html');
+
+    expect(str_contains((string) $usagePage, 'nav-group-toggle'))->toBeFalse();
+    expect(str_contains((string) $usagePage, '<span>General</span>'))->toBeFalse();
+    expect((string) $usagePage)->toContain('data-nav-item');
+});
+
 it('allows overriding the accent color during builds', function (): void {
     $sourcePath = __DIR__ . '/../Fixtures/Content';
     $outputPath = sys_get_temp_dir() . '/docsmith-accent-' . uniqid();

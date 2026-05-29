@@ -219,6 +219,14 @@ HTML;
 
         $markup = '';
 
+        if (count($groups) === 1) {
+            $firstGroup = array_values($groups)[0];
+
+            if (strtolower((string) $firstGroup['name']) === 'general') {
+                return $this->navigationItems($firstGroup['items'], $activeDocument, $currentOutputPath);
+            }
+        }
+
         foreach ($groups as $group) {
             $groupHasActive = false;
 
@@ -239,32 +247,38 @@ HTML;
             $markup .= '</button>';
             $markup .= '<div class="nav-group-items" data-nav-items>';
 
-            $items = array_map(
-                function (Document $document) use ($activeDocument, $currentOutputPath): string {
-                    $isActive = $activeDocument instanceof Document && $activeDocument->relativePath === $document->relativePath;
-                    $class = $isActive ? 'active' : '';
-                    $href = $this->relativePagePath($currentOutputPath, $document->outputPath);
-                    $label = $document->sidebarLabel !== '' ? $document->sidebarLabel : $document->title;
-                    $search = trim($document->title . ' ' . $label . ' ' . $document->description);
-
-                    return sprintf(
-                        '<a class="%s" href="%s" data-nav-item data-title="%s" data-search="%s">%s</a>',
-                        trim($class),
-                        htmlspecialchars($href, ENT_QUOTES, 'UTF-8'),
-                        htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
-                        htmlspecialchars($search, ENT_QUOTES, 'UTF-8'),
-                        $this->escape($label)
-                    );
-                },
-                $group['items']
-            );
-
-            $markup .= implode('', $items);
+            $markup .= $this->navigationItems($group['items'], $activeDocument, $currentOutputPath);
             $markup .= '</div>';
             $markup .= '</section>';
         }
 
         return $markup;
+    }
+
+    /** @param list<Document> $items */
+    private function navigationItems(array $items, ?Document $activeDocument, string $currentOutputPath): string
+    {
+        $markup = array_map(
+            function (Document $document) use ($activeDocument, $currentOutputPath): string {
+                $isActive = $activeDocument instanceof Document && $activeDocument->relativePath === $document->relativePath;
+                $class = $isActive ? 'active' : '';
+                $href = $this->relativePagePath($currentOutputPath, $document->outputPath);
+                $label = $document->sidebarLabel !== '' ? $document->sidebarLabel : $document->title;
+                $search = trim($document->title . ' ' . $label . ' ' . $document->description);
+
+                return sprintf(
+                    '<a class="%s" href="%s" data-nav-item data-title="%s" data-search="%s">%s</a>',
+                    trim($class),
+                    htmlspecialchars($href, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($search, ENT_QUOTES, 'UTF-8'),
+                    $this->escape($label)
+                );
+            },
+            $items
+        );
+
+        return implode('', $markup);
     }
 
     private function groupNameFor(Document $document): string
