@@ -8,7 +8,7 @@ use Docsmith\Builder\Builder;
 
 final class Docsmith
 {
-    public static function build(string $source, string $output, string $title = 'Documentation', string $description = 'Project documentation.', string $baseUrl = '/'): void
+    public static function build(string $source, string $output = 'docs', string $title = 'Documentation', string $description = 'Project documentation.', string $baseUrl = '/'): void
     {
         self::make()
             ->source($source)

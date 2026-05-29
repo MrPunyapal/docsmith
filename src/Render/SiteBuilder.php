@@ -26,11 +26,14 @@ final readonly class SiteBuilder
         $this->assets = $assets ?? new AssetPublisher();
     }
 
-    public function build(BuildConfig $config): void
+    /** @param list<Document>|null $documents */
+    public function build(BuildConfig $config, ?array $documents = null): void
     {
         $documents = array_map(
-            fn (Document $document): Document => $document->withHtml($this->renderer->render($document->markdown)),
-            $this->scanner->scan($config->sourcePath)
+            fn (Document $document): Document => $document->html === ''
+                ? $document->withHtml($this->renderer->render($document->markdown))
+                : $document,
+            $documents ?? $this->scanner->scan($config->sourcePath)
         );
 
         if ($documents === []) {
@@ -93,7 +96,13 @@ final readonly class SiteBuilder
         </aside>
         <main class="content">
             <article>
-                {$document->html}
+                <header class="doc-head">
+                    <h1>{$this->escape($document->title)}</h1>
+                    {$this->descriptionBlock($document)}
+                </header>
+                <div class="doc-body">
+                    {$document->html}
+                </div>
             </article>
         </main>
     </div>
@@ -110,7 +119,7 @@ HTML;
                 '<li><a href="%s"><strong>%s</strong><span>%s</span></a></li>',
                 htmlspecialchars(ltrim($document->url(), '/'), ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($document->title, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($document->relativePath, ENT_QUOTES, 'UTF-8')
+                htmlspecialchars($document->description !== '' ? $document->description : $document->relativePath, ENT_QUOTES, 'UTF-8')
             ),
             $documents
         );
@@ -158,24 +167,87 @@ HTML;
     /** @param list<Document> $documents */
     private function navigation(array $documents, ?Document $activeDocument, string $currentOutputPath): string
     {
-        $links = array_map(
-            function (Document $document) use ($activeDocument, $currentOutputPath): string {
-                $isActive = $activeDocument instanceof Document && $activeDocument->relativePath === $document->relativePath;
-                $class = $isActive ? 'active' : '';
-                $href = $this->relativePagePath($currentOutputPath, $document->outputPath);
+        $groups = [];
 
-                return sprintf(
-                    '<a class="%s" href="%s" data-nav-item data-title="%s">%s</a>',
-                    trim($class),
-                    htmlspecialchars($href, ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($document->title, ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($document->title, ENT_QUOTES, 'UTF-8')
-                );
-            },
-            $documents
-        );
+        foreach ($documents as $document) {
+            $groupName = $this->groupNameFor($document);
+            $groupKey = strtolower($groupName);
 
-        return implode('', $links);
+            if (! array_key_exists($groupKey, $groups)) {
+                $groups[$groupKey] = [
+                    'name' => $groupName,
+                    'icon' => $document->groupIcon,
+                    'items' => [],
+                ];
+            }
+
+            $groups[$groupKey]['items'][] = $document;
+        }
+
+        $markup = '';
+
+        foreach ($groups as $group) {
+            $groupHasActive = false;
+
+            foreach ($group['items'] as $item) {
+                if ($activeDocument instanceof Document && $activeDocument->relativePath === $item->relativePath) {
+                    $groupHasActive = true;
+                    break;
+                }
+            }
+
+            $groupClasses = trim('nav-group is-open' . ($groupHasActive ? ' has-active' : ''));
+            $markup .= '<section class="' . $groupClasses . '" data-nav-group>';
+
+            $icon = $group['icon'] !== '' ? '<span class="nav-group-icon">' . $this->escape($group['icon']) . '</span>' : '';
+            $markup .= '<button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true">';
+            $markup .= '<span class="nav-group-label">' . $icon . '<span>' . $this->escape($group['name']) . '</span></span>';
+            $markup .= '<span class="nav-group-caret" aria-hidden="true">▾</span>';
+            $markup .= '</button>';
+            $markup .= '<div class="nav-group-items" data-nav-items>';
+
+            $items = array_map(
+                function (Document $document) use ($activeDocument, $currentOutputPath): string {
+                    $isActive = $activeDocument instanceof Document && $activeDocument->relativePath === $document->relativePath;
+                    $class = $isActive ? 'active' : '';
+                    $href = $this->relativePagePath($currentOutputPath, $document->outputPath);
+                    $search = trim($document->title . ' ' . $document->description);
+
+                    return sprintf(
+                        '<a class="%s" href="%s" data-nav-item data-title="%s" data-search="%s">%s</a>',
+                        trim($class),
+                        htmlspecialchars($href, ENT_QUOTES, 'UTF-8'),
+                        htmlspecialchars($document->title, ENT_QUOTES, 'UTF-8'),
+                        htmlspecialchars($search, ENT_QUOTES, 'UTF-8'),
+                        $this->escape($document->title)
+                    );
+                },
+                $group['items']
+            );
+
+            $markup .= implode('', $items);
+            $markup .= '</div>';
+            $markup .= '</section>';
+        }
+
+        return $markup;
+    }
+
+    private function groupNameFor(Document $document): string
+    {
+        if ($document->group !== '') {
+            return $document->group;
+        }
+
+        $directory = trim(dirname($document->relativePath), '/.');
+
+        if ($directory === '') {
+            return 'General';
+        }
+
+        $firstSegment = explode('/', $directory)[0];
+
+        return ucwords(str_replace(['-', '_'], ' ', $firstSegment));
     }
 
     private function assetPath(string $outputPath): string
@@ -229,5 +301,19 @@ HTML;
         }
 
         return false;
+    }
+
+    private function descriptionBlock(Document $document): string
+    {
+        if ($document->description === '') {
+            return '';
+        }
+
+        return '<p class="doc-description">' . $this->escape($document->description) . '</p>';
+    }
+
+    private function escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 }

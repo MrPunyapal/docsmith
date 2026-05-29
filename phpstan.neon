@@ -5,4 +5,4 @@ parameters:
         - tests
 
     excludePaths:
-        - tests/Fixtures/Expected
+        - tests/Fixtures/Expected (?)

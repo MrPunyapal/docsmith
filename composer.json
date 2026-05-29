@@ -5,7 +5,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "league/commonmark": "^2.7"
+        "league/commonmark": "^2.7",
+        "scrivo/highlight.php": "^9.18"
     },
     "require-dev": {
         "laravel/pint": "^1.18",

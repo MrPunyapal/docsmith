@@ -12,7 +12,10 @@ final readonly class Document
         public string $outputPath,
         public string $title,
         public string $markdown,
-        public string $html = ''
+        public string $html = '',
+        public string $description = '',
+        public string $group = '',
+        public string $groupIcon = ''
     ) {
     }
 
@@ -25,6 +28,9 @@ final readonly class Document
             title: $this->title,
             markdown: $this->markdown,
             html: $html,
+            description: $this->description,
+            group: $this->group,
+            groupIcon: $this->groupIcon,
         );
     }
 
