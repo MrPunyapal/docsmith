@@ -10,6 +10,7 @@ Docsmith::build(
     output: __DIR__ . '/dist',
     title: 'Project Docs',
     description: 'Internal package documentation.',
+    accentColor: '#ff2d20',
 );
 ```
 
@@ -23,11 +24,47 @@ Docsmith::make()
     ->output(__DIR__ . '/dist')
     ->title('Project Docs')
     ->description('Internal package documentation.')
+    ->accentColor('#ff2d20')
+    ->accentColorDark('#ff6b61')
     ->repositoryUrl('https://github.com/acme/project')
     ->siteUrl('https://acme.github.io/project')
     ->editBranch('main')
     ->rightSidebar()
     ->build();
+
+```
+
+## Theme Color
+
+Docsmith defaults to a Laravel red accent. Override it when building docs:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/dist')
+    ->accentColor('#1d4ed8')
+    ->accentColorDark('#60a5fa')
+    ->build();
+```
+
+Use hex colors for the best results because Docsmith derives the hover, focus, and dark-mode variants from the accent.
+
+### Custom CSS
+
+If you need to apply project-specific tweaks, you can append raw CSS or a CSS file during the build:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/dist')
+    ->customCss('body { background: #fff }')
+    ->build();
+```
+
+Or:
+
+```php
+    ->customCss(__DIR__ . '/overrides.css')
 ```
 
 ## Search

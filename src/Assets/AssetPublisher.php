@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Docsmith\Assets;
 
+use Docsmith\Config\SiteMetadata;
+
 final class AssetPublisher
 {
-    public function publish(string $outputPath): void
+    public function publish(string $outputPath, SiteMetadata $metadata): void
     {
         $assetsDirectory = rtrim($outputPath, '/') . '/assets';
 
@@ -14,28 +16,33 @@ final class AssetPublisher
             mkdir($assetsDirectory, 0777, true);
         }
 
-        file_put_contents($assetsDirectory . '/app.css', $this->css());
+        file_put_contents($assetsDirectory . '/app.css', $this->css($metadata));
         file_put_contents($assetsDirectory . '/app.js', $this->js());
     }
 
-    private function css(): string
+    private function css(SiteMetadata $metadata): string
     {
-        return <<<'CSS'
+        $accentColor = $this->normalizeHexColor($metadata->accentColor, '#ff2d20');
+        $accentColorDark = trim($metadata->accentColorDark) !== ''
+            ? $this->normalizeHexColor($metadata->accentColorDark, $this->mixHexColors($accentColor, '#ffffff', 0.34))
+            : $this->mixHexColors($accentColor, '#ffffff', 0.34);
+
+        $css = <<<'CSS'
 :root {
     color-scheme: light;
-    --bg: #eef4fb;
-    --bg-shade: #e2edf9;
+    --bg: #ffffff;
+    --bg-shade: #f8fafc;
     --panel: #ffffff;
-    --panel-soft: #f7fbff;
+    --panel-soft: #ffffff;
     --border: #c9d8ea;
     --text: #132235;
     --muted: #4d6178;
-    --accent: #0e7a66;
-    --accent-strong: #0a6554;
-    --accent-soft: #dbf4ee;
+    --accent: __ACCENT_LIGHT__;
+    --accent-strong: __ACCENT_STRONG_LIGHT__;
+    --accent-soft: __ACCENT_SOFT_LIGHT__;
     --code-bg: #0f2136;
     --code-text: #e9f1fb;
-    --ring: rgba(14, 122, 102, 0.22);
+    --ring: __RING_LIGHT__;
     --shadow: 0 16px 40px rgba(17, 37, 63, 0.08);
 }
 
@@ -48,12 +55,12 @@ final class AssetPublisher
     --border: #2a4157;
     --text: #e9f1fb;
     --muted: #a6b8cc;
-    --accent: #7dd7c1;
-    --accent-strong: #66c4ad;
-    --accent-soft: rgba(125, 215, 193, 0.14);
+    --accent: __ACCENT_DARK__;
+    --accent-strong: __ACCENT_STRONG_DARK__;
+    --accent-soft: __ACCENT_SOFT_DARK__;
     --code-bg: #08131f;
     --code-text: #dce7f7;
-    --ring: rgba(125, 215, 193, 0.28);
+    --ring: __RING_DARK__;
     --shadow: 0 16px 42px rgba(0, 0, 0, 0.32);
 }
 
@@ -221,8 +228,8 @@ a {
 }
 
 .nav-group.has-active {
-    border-color: #9ecdbf;
-    box-shadow: 0 0 0 1px rgba(14, 122, 102, 0.15);
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 1px var(--ring);
 }
 
 .nav-group-toggle {
@@ -342,6 +349,12 @@ a {
 .toc-link:hover {
     background: var(--accent-soft);
     color: var(--accent);
+}
+
+.toc-link.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
 }
 
 .toc-link-level-3 {
@@ -702,6 +715,82 @@ pre code.hljs {
     }
 }
 CSS;
+
+        $result = strtr($css, [
+            '__ACCENT_LIGHT__' => $accentColor,
+            '__ACCENT_STRONG_LIGHT__' => $this->mixHexColors($accentColor, '#000000', 0.16),
+            '__ACCENT_SOFT_LIGHT__' => $this->rgbaFromHex($accentColor, 0.14),
+            '__RING_LIGHT__' => $this->rgbaFromHex($accentColor, 0.22),
+            '__ACCENT_DARK__' => $accentColorDark,
+            '__ACCENT_STRONG_DARK__' => $this->mixHexColors($accentColorDark, '#ffffff', 0.14),
+            '__ACCENT_SOFT_DARK__' => $this->rgbaFromHex($accentColorDark, 0.16),
+            '__RING_DARK__' => $this->rgbaFromHex($accentColorDark, 0.28),
+        ]);
+
+        // Append user-provided CSS. The value in SiteMetadata may be raw CSS or a path to a file.
+        if (trim($metadata->customCss) !== '') {
+            $custom = $metadata->customCss;
+
+            if (is_file($custom)) {
+                $read = @file_get_contents($custom);
+
+                if (is_string($read)) {
+                    $custom = $read;
+                }
+            }
+
+            $result .= "\n\n/* user custom css */\n" . $custom;
+        }
+
+        return $result;
+    }
+
+    private function normalizeHexColor(string $color, string $fallback): string
+    {
+        $trimmed = ltrim(trim($color), '#');
+
+        if (strlen($trimmed) === 3) {
+            $trimmed = $trimmed[0] . $trimmed[0] . $trimmed[1] . $trimmed[1] . $trimmed[2] . $trimmed[2];
+        }
+
+        if (strlen($trimmed) !== 6 || ! ctype_xdigit($trimmed)) {
+            return $fallback;
+        }
+
+        return '#' . strtolower($trimmed);
+    }
+
+    /** @return array{0:int,1:int,2:int} */
+    private function hexToRgb(string $color): array
+    {
+        $hex = ltrim($this->normalizeHexColor($color, '#ff2d20'), '#');
+
+        return [
+            (int) hexdec(substr($hex, 0, 2)),
+            (int) hexdec(substr($hex, 2, 2)),
+            (int) hexdec(substr($hex, 4, 2)),
+        ];
+    }
+
+    private function rgbaFromHex(string $color, float $alpha): string
+    {
+        [$red, $green, $blue] = $this->hexToRgb($color);
+
+        return sprintf('rgba(%d, %d, %d, %s)', $red, $green, $blue, rtrim(rtrim(number_format($alpha, 2, '.', ''), '0'), '.'));
+    }
+
+    private function mixHexColors(string $color, string $mixColor, float $amount): string
+    {
+        [$red, $green, $blue] = $this->hexToRgb($color);
+        [$mixRed, $mixGreen, $mixBlue] = $this->hexToRgb($mixColor);
+
+        $amount = max(0.0, min(1.0, $amount));
+
+        $mixedRed = (int) round($red * (1 - $amount) + $mixRed * $amount);
+        $mixedGreen = (int) round($green * (1 - $amount) + $mixGreen * $amount);
+        $mixedBlue = (int) round($blue * (1 - $amount) + $mixBlue * $amount);
+
+        return sprintf('#%02x%02x%02x', $mixedRed, $mixedGreen, $mixedBlue);
     }
 
     private function js(): string
@@ -825,6 +914,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var nav = document.querySelector('[data-docsmith-nav]');
     var empty = document.querySelector('[data-docsmith-empty]');
     var results = document.querySelector('[data-docsmith-search-results]');
+    var tocLinks = Array.prototype.slice.call(document.querySelectorAll('[data-docsmith-toc-link], .toc-links a[href^="#"]'));
+    var tocHeadings = tocLinks.map(function (link) {
+        var targetId = String(link.getAttribute('data-docsmith-toc-link') || link.getAttribute('href') || '').replace(/^#/, '');
+
+        return targetId ? document.getElementById(targetId) : null;
+    }).filter(function (heading) {
+        return heading !== null;
+    });
 
     if (!search || !nav || !empty) {
         return;
@@ -874,6 +971,85 @@ document.addEventListener('DOMContentLoaded', function () {
             setGroupOpen(group, group === groupToOpen);
         });
     };
+
+    var setActiveTocLink = function (hash) {
+        var activeId = String(hash || '').replace(/^#/, '');
+
+        tocLinks.forEach(function (link) {
+            var linkTarget = String(link.getAttribute('data-docsmith-toc-link') || link.getAttribute('href') || '').replace(/^#/, '');
+            var isActive = activeId !== '' && linkTarget === activeId;
+            link.classList.toggle('is-active', isActive);
+
+            if (isActive) {
+                link.setAttribute('aria-current', 'location');
+            } else {
+                link.removeAttribute('aria-current');
+            }
+        });
+    };
+
+    var syncTocToScroll = function () {
+        if (tocHeadings.length === 0) {
+            return;
+        }
+
+        var currentHeading = null;
+
+        for (var index = 0; index < tocHeadings.length; index++) {
+            var heading = tocHeadings[index];
+
+            if (!heading) {
+                continue;
+            }
+
+            var headingRect = heading.getBoundingClientRect();
+
+            if (headingRect.top <= 120) {
+                currentHeading = heading;
+            }
+        }
+
+        if (!currentHeading) {
+            currentHeading = tocHeadings[0];
+        }
+
+        if (currentHeading && currentHeading.id) {
+            setActiveTocLink('#' + currentHeading.id);
+        }
+    };
+
+    var syncTocScheduled = false;
+    var requestTocSync = function () {
+        if (syncTocScheduled) {
+            return;
+        }
+
+        syncTocScheduled = true;
+
+        window.requestAnimationFrame(function () {
+            syncTocScheduled = false;
+            syncTocToScroll();
+        });
+    };
+
+    if (tocLinks.length > 0) {
+        setActiveTocLink(window.location.hash);
+        syncTocToScroll();
+
+        window.addEventListener('hashchange', function () {
+            setActiveTocLink(window.location.hash);
+        });
+
+        window.addEventListener('scroll', requestTocSync, { passive: true });
+
+        tocLinks.forEach(function (link) {
+            link.addEventListener('click', function () {
+                var targetHash = String(link.getAttribute('href') || '');
+
+                setActiveTocLink(targetHash);
+            });
+        });
+    }
 
     toggles.forEach(function (toggle) {
         toggle.addEventListener('click', function () {

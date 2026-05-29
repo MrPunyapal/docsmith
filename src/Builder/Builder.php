@@ -21,6 +21,12 @@ final class Builder
 
     private string $description = 'Project documentation.';
 
+    private string $accentColor = '#ff2d20';
+
+    private string $accentColorDark = '';
+
+    private string $customCss = '';
+
     private string $baseUrl = '/';
 
     private bool $rightSidebar = false;
@@ -64,6 +70,30 @@ final class Builder
     public function description(string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function accentColor(string $accentColor): self
+    {
+        $this->accentColor = trim($accentColor);
+
+        return $this;
+    }
+
+    public function accentColorDark(string $accentColorDark): self
+    {
+        $this->accentColorDark = trim($accentColorDark);
+
+        return $this;
+    }
+
+    /**
+     * Accept raw CSS or a path to a CSS file to append to generated assets/app.css.
+     */
+    public function customCss(string $cssOrPath): self
+    {
+        $this->customCss = trim($cssOrPath);
 
         return $this;
     }
@@ -149,6 +179,9 @@ final class Builder
             metadata: new SiteMetadata(
                 title: $this->title,
                 description: $this->description,
+                accentColor: $this->accentColor !== '' ? $this->accentColor : '#ff2d20',
+                accentColorDark: $this->accentColorDark,
+                customCss: $this->customCss,
                 repositoryUrl: $this->normalizedRepositoryUrl(),
                 siteUrl: $this->normalizedSiteUrl(),
                 editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',

@@ -37,6 +37,7 @@ Docsmith::build(
     output: <span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>,
     title: <span class="hljs-string">'Project Docs'</span>,
     description: <span class="hljs-string">'Internal package documentation.'</span>,
+    accentColor: <span class="hljs-string">'#ff2d20'</span>,
 );
 </code></pre>
 <h2 id="fluent-api">Fluent API</h2>
@@ -47,12 +48,25 @@ Docsmith::make()
     -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
     -&gt;title(<span class="hljs-string">'Project Docs'</span>)
     -&gt;description(<span class="hljs-string">'Internal package documentation.'</span>)
+    -&gt;accentColor(<span class="hljs-string">'#ff2d20'</span>)
+    -&gt;accentColorDark(<span class="hljs-string">'#ff6b61'</span>)
     -&gt;repositoryUrl(<span class="hljs-string">'https://github.com/acme/project'</span>)
     -&gt;siteUrl(<span class="hljs-string">'https://acme.github.io/project'</span>)
     -&gt;editBranch(<span class="hljs-string">'main'</span>)
     -&gt;rightSidebar()
     -&gt;build();
+
 </code></pre>
+<h2 id="theme-color">Theme Color</h2>
+<p>Docsmith defaults to a Laravel red accent. Override it when building docs:</p>
+<pre><code class="hljs language-php">Docsmith::make()
+    -&gt;source(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/md'</span>)
+    -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
+    -&gt;accentColor(<span class="hljs-string">'#1d4ed8'</span>)
+    -&gt;accentColorDark(<span class="hljs-string">'#60a5fa'</span>)
+    -&gt;build();
+</code></pre>
+<p>Use hex colors for the best results because Docsmith derives the hover, focus, and dark-mode variants from the accent.</p>
 <h2 id="search">Search</h2>
 <p>Docsmith generates <code>search-index.json</code> and uses it for global result search in the sidebar.</p>
 <ul>

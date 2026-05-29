@@ -116,6 +116,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var nav = document.querySelector('[data-docsmith-nav]');
     var empty = document.querySelector('[data-docsmith-empty]');
     var results = document.querySelector('[data-docsmith-search-results]');
+    var tocLinks = Array.prototype.slice.call(document.querySelectorAll('[data-docsmith-toc-link], .toc-links a[href^="#"]'));
+    var tocHeadings = tocLinks.map(function (link) {
+        var targetId = String(link.getAttribute('data-docsmith-toc-link') || link.getAttribute('href') || '').replace(/^#/, '');
+
+        return targetId ? document.getElementById(targetId) : null;
+    }).filter(function (heading) {
+        return heading !== null;
+    });
 
     if (!search || !nav || !empty) {
         return;
@@ -165,6 +173,85 @@ document.addEventListener('DOMContentLoaded', function () {
             setGroupOpen(group, group === groupToOpen);
         });
     };
+
+    var setActiveTocLink = function (hash) {
+        var activeId = String(hash || '').replace(/^#/, '');
+
+        tocLinks.forEach(function (link) {
+            var linkTarget = String(link.getAttribute('data-docsmith-toc-link') || link.getAttribute('href') || '').replace(/^#/, '');
+            var isActive = activeId !== '' && linkTarget === activeId;
+            link.classList.toggle('is-active', isActive);
+
+            if (isActive) {
+                link.setAttribute('aria-current', 'location');
+            } else {
+                link.removeAttribute('aria-current');
+            }
+        });
+    };
+
+    var syncTocToScroll = function () {
+        if (tocHeadings.length === 0) {
+            return;
+        }
+
+        var currentHeading = null;
+
+        for (var index = 0; index < tocHeadings.length; index++) {
+            var heading = tocHeadings[index];
+
+            if (!heading) {
+                continue;
+            }
+
+            var headingRect = heading.getBoundingClientRect();
+
+            if (headingRect.top <= 120) {
+                currentHeading = heading;
+            }
+        }
+
+        if (!currentHeading) {
+            currentHeading = tocHeadings[0];
+        }
+
+        if (currentHeading && currentHeading.id) {
+            setActiveTocLink('#' + currentHeading.id);
+        }
+    };
+
+    var syncTocScheduled = false;
+    var requestTocSync = function () {
+        if (syncTocScheduled) {
+            return;
+        }
+
+        syncTocScheduled = true;
+
+        window.requestAnimationFrame(function () {
+            syncTocScheduled = false;
+            syncTocToScroll();
+        });
+    };
+
+    if (tocLinks.length > 0) {
+        setActiveTocLink(window.location.hash);
+        syncTocToScroll();
+
+        window.addEventListener('hashchange', function () {
+            setActiveTocLink(window.location.hash);
+        });
+
+        window.addEventListener('scroll', requestTocSync, { passive: true });
+
+        tocLinks.forEach(function (link) {
+            link.addEventListener('click', function () {
+                var targetHash = String(link.getAttribute('href') || '');
+
+                setActiveTocLink(targetHash);
+            });
+        });
+    }
 
     toggles.forEach(function (toggle) {
         toggle.addEventListener('click', function () {

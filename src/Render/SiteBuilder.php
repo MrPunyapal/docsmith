@@ -47,7 +47,7 @@ final readonly class SiteBuilder
             mkdir($config->outputPath, 0777, true);
         }
 
-        $this->assets->publish($config->outputPath);
+        $this->assets->publish($config->outputPath, $config->metadata);
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
@@ -670,8 +670,9 @@ HTML;
                 $levelClass = $item['level'] === 3 ? 'toc-link toc-link-level-3' : 'toc-link toc-link-level-2';
 
                 return sprintf(
-                    '<a class="%s" href="#%s">%s</a>',
+                    '<a class="%s" href="#%s" data-docsmith-toc-link="%s">%s</a>',
                     $levelClass,
+                    htmlspecialchars($item['id'], ENT_QUOTES, 'UTF-8'),
                     htmlspecialchars($item['id'], ENT_QUOTES, 'UTF-8'),
                     htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8')
                 );

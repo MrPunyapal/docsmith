@@ -13,6 +13,9 @@ final class Docsmith
         string $output = 'docs',
         string $title = 'Documentation',
         string $description = 'Project documentation.',
+        string $accentColor = '#ff2d20',
+        string $accentColorDark = '',
+        string $customCss = '',
         string $baseUrl = '/',
         bool $rightSidebar = false,
         string $repositoryUrl = '',
@@ -24,6 +27,9 @@ final class Docsmith
             ->output($output)
             ->title($title)
             ->description($description)
+            ->accentColor($accentColor)
+            ->accentColorDark($accentColorDark)
+            ->customCss($customCss)
             ->baseUrl($baseUrl)
             ->rightSidebar($rightSidebar)
             ->repositoryUrl($repositoryUrl)

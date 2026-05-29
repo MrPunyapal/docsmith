@@ -24,6 +24,7 @@ it('builds a static site from markdown files', function (): void {
     $landingPage = file_get_contents($outputPath . '/index.html');
     $installationPage = file_get_contents($outputPath . '/installation/index.html');
     $configurationPage = file_get_contents($outputPath . '/guides/configuration/index.html');
+    $appCss = file_get_contents($outputPath . '/assets/app.css');
 
     expect($landingPage)->toContain('Docsmith Docs')
         ->toContain('installation/')
@@ -35,7 +36,8 @@ it('builds a static site from markdown files', function (): void {
         ->toContain('assets/app.js')
         ->and($configurationPage)->toContain('<h1>Configuration</h1>')
         ->toContain('../../assets/app.css')
-        ->toContain('../../assets/app.js');
+        ->toContain('../../assets/app.js')
+        ->and($appCss)->toContain('--accent: #ff2d20;');
 });
 
 it('can build into the same folder as the markdown source', function (): void {
@@ -310,4 +312,43 @@ it('renders global search UI markup and root metadata', function (): void {
     expect($installationPage)
         ->toContain('data-docsmith-root="../"')
         ->toContain('data-docsmith-search-results');
+});
+
+it('allows overriding the accent color during builds', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-accent-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->accentColor('#1d4ed8')
+        ->accentColorDark('#60a5fa')
+        ->build();
+
+    $appCss = file_get_contents($outputPath . '/assets/app.css');
+
+    expect($appCss)
+        ->toContain('--accent: #1d4ed8;')
+        ->toContain('--accent: #60a5fa;')
+        ->toContain('rgba(29, 78, 216, 0.14)')
+        ->toContain('rgba(96, 165, 250, 0.16)');
+});
+
+it('allows appending custom css as raw string', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-customcss-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->customCss('/* my override */ .brand { color: #123456 }')
+        ->build();
+
+    $appCss = file_get_contents($outputPath . '/assets/app.css');
+
+    expect($appCss)->toContain('/* my override */ .brand { color: #123456 }');
 });
