@@ -39,6 +39,24 @@ final class AssetPublisher
     --shadow: 0 16px 40px rgba(17, 37, 63, 0.08);
 }
 
+:root[data-docsmith-theme='dark'] {
+    color-scheme: dark;
+    --bg: #0c141d;
+    --bg-shade: #111c29;
+    --panel: #132231;
+    --panel-soft: #16293c;
+    --border: #2a4157;
+    --text: #e9f1fb;
+    --muted: #a6b8cc;
+    --accent: #7dd7c1;
+    --accent-strong: #66c4ad;
+    --accent-soft: rgba(125, 215, 193, 0.14);
+    --code-bg: #08131f;
+    --code-text: #dce7f7;
+    --ring: rgba(125, 215, 193, 0.28);
+    --shadow: 0 16px 42px rgba(0, 0, 0, 0.32);
+}
+
 * {
     box-sizing: border-box;
 }
@@ -48,7 +66,7 @@ body {
     font-family: "DM Sans", "Segoe UI", sans-serif;
     font-size: 16px;
     color: var(--text);
-    background: radial-gradient(circle at 0% 0%, #ffffff 0%, var(--bg) 42%, var(--bg-shade) 100%);
+    background: radial-gradient(circle at 0% 0%, var(--panel-soft) 0%, var(--bg) 42%, var(--bg-shade) 100%);
 }
 
 a {
@@ -59,6 +77,10 @@ a {
     min-height: 100vh;
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.shell.has-right-rail {
+    grid-template-columns: 320px minmax(0, 1fr) 260px;
 }
 
 .sidebar {
@@ -90,10 +112,40 @@ a {
     margin-bottom: 0.85rem;
 }
 
+.sidebar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.85rem;
+}
+
+.sidebar-action-link,
+.theme-toggle {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 0.55rem;
+    padding: 0.35rem 0.58rem;
+    font: inherit;
+    font-size: 0.8rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.theme-toggle {
+    margin-left: auto;
+}
+
+.sidebar-action-link:hover,
+.theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 .search input {
     width: 100%;
     border: 1px solid var(--border);
-    background: #ffffff;
+    background: var(--panel);
     color: var(--text);
     border-radius: 0.65rem;
     padding: 0.62rem 0.74rem;
@@ -113,6 +165,48 @@ a {
     margin-top: 0.75rem;
 }
 
+.search-results {
+    margin-top: 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    background: var(--panel);
+    overflow: hidden;
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.search-result {
+    display: block;
+    text-decoration: none;
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 0.58rem;
+    color: var(--text);
+}
+
+.search-result:first-child {
+    border-top: 0;
+}
+
+.search-result:hover {
+    background: var(--accent-soft);
+}
+
+.search-result-title {
+    display: block;
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    font-size: 0.87rem;
+    color: var(--text);
+    line-height: 1.25;
+}
+
+.search-result-meta {
+    display: block;
+    margin-top: 0.22rem;
+    font-size: 0.77rem;
+    color: var(--muted);
+    line-height: 1.3;
+}
+
 .nav {
     display: grid;
     gap: 0.45rem;
@@ -121,7 +215,7 @@ a {
 .nav-group {
     border: 1px solid var(--border);
     border-radius: 0.85rem;
-    background: #ffffff;
+    background: var(--panel);
     overflow: hidden;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -135,7 +229,7 @@ a {
     width: 100%;
     border: 0;
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
     color: var(--text);
     display: flex;
     align-items: center;
@@ -151,7 +245,7 @@ a {
 }
 
 .nav-group-toggle:hover {
-    background: #f3f9ff;
+    background: var(--accent-soft);
 }
 
 .nav-group-label {
@@ -211,6 +305,50 @@ a {
     padding: 1rem;
 }
 
+.toc-sidebar {
+    border-left: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+    padding: 1.15rem 0.85rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.toc-title {
+    margin: 0 0 0.55rem;
+    color: var(--muted);
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.toc-links {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.toc-link {
+    display: block;
+    text-decoration: none;
+    color: var(--muted);
+    border-radius: 0.5rem;
+    padding: 0.34rem 0.45rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.toc-link:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.toc-link-level-3 {
+    margin-left: 0.6rem;
+    font-size: 0.84rem;
+}
+
 .content article {
     width: 100%;
     max-width: none;
@@ -228,6 +366,29 @@ a {
     border-bottom: 1px solid var(--border);
 }
 
+.breadcrumbs {
+    margin: 0 0 0.55rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.33rem;
+    font-size: 0.83rem;
+}
+
+.breadcrumbs a {
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    color: var(--accent);
+}
+
+.breadcrumb-sep {
+    color: var(--muted);
+    opacity: 0.8;
+}
+
 .doc-head h1 {
     margin: 0;
 }
@@ -236,6 +397,66 @@ a {
     margin: 0.55rem 0 0;
     color: var(--muted);
     max-width: 72ch;
+}
+
+.doc-meta {
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.edit-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.86rem;
+}
+
+.edit-link:hover {
+    color: var(--accent);
+}
+
+.pager {
+    margin-top: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.7rem;
+}
+
+.pager-link {
+    min-width: 0;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.65rem;
+    color: var(--text);
+}
+
+.pager-link-next {
+    margin-left: auto;
+    text-align: right;
+}
+
+.pager-link span {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pager-link strong {
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    font-size: 0.92rem;
+}
+
+.pager-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 h1,
@@ -437,6 +658,10 @@ pre code.hljs {
         grid-template-columns: 1fr;
     }
 
+    .shell.has-right-rail {
+        grid-template-columns: 1fr;
+    }
+
     .sidebar {
         position: static;
         height: auto;
@@ -455,6 +680,18 @@ pre code.hljs {
         padding: 0.95rem;
     }
 
+    .sidebar-actions {
+        margin-bottom: 0.7rem;
+    }
+
+    .pager {
+        flex-direction: column;
+    }
+
+    .toc-sidebar {
+        display: none;
+    }
+
     .page-list a {
         display: block;
     }
@@ -471,6 +708,52 @@ CSS;
     {
         return <<<'JS'
 document.addEventListener('DOMContentLoaded', function () {
+    var applyTheme = function (theme) {
+        if (theme !== 'dark' && theme !== 'light') {
+            return;
+        }
+
+        document.documentElement.setAttribute('data-docsmith-theme', theme);
+    };
+
+    var savedTheme = null;
+
+    try {
+        savedTheme = window.localStorage.getItem('docsmith-theme');
+    } catch (error) {
+        savedTheme = null;
+    }
+
+    var initialTheme = savedTheme === 'dark' || savedTheme === 'light'
+        ? savedTheme
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    applyTheme(initialTheme);
+
+    var themeToggle = document.querySelector('[data-docsmith-theme-toggle]');
+
+    if (themeToggle) {
+        var updateThemeLabel = function () {
+            var activeTheme = document.documentElement.getAttribute('data-docsmith-theme') === 'dark' ? 'Dark' : 'Light';
+            themeToggle.textContent = activeTheme;
+        };
+
+        updateThemeLabel();
+
+        themeToggle.addEventListener('click', function () {
+            var currentTheme = document.documentElement.getAttribute('data-docsmith-theme') === 'dark' ? 'dark' : 'light';
+            var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+
+            try {
+                window.localStorage.setItem('docsmith-theme', nextTheme);
+            } catch (error) {
+            }
+
+            updateThemeLabel();
+        });
+    }
+
     var copyCode = function (value) {
         if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
             return navigator.clipboard.writeText(value);
@@ -541,10 +824,32 @@ document.addEventListener('DOMContentLoaded', function () {
     var search = document.querySelector('[data-docsmith-search]');
     var nav = document.querySelector('[data-docsmith-nav]');
     var empty = document.querySelector('[data-docsmith-empty]');
+    var results = document.querySelector('[data-docsmith-search-results]');
 
     if (!search || !nav || !empty) {
         return;
     }
+
+    var rootPrefix = document.body && document.body.getAttribute('data-docsmith-root')
+        ? String(document.body.getAttribute('data-docsmith-root'))
+        : './';
+    var searchIndexPromise = fetch(rootPrefix + 'search-index.json').then(function (response) {
+        if (!response.ok) {
+            return [];
+        }
+
+        return response.json();
+    }).catch(function () {
+        return [];
+    });
+    var escapeHtml = function (value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
 
     var items = Array.prototype.slice.call(nav.querySelectorAll('[data-nav-item]'));
     var groups = Array.prototype.slice.call(nav.querySelectorAll('[data-nav-group]'));
@@ -630,6 +935,104 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         empty.style.display = visible === 0 ? 'block' : 'none';
+
+        if (!results) {
+            return;
+        }
+
+        if (query.length < 2) {
+            results.innerHTML = '';
+            results.hidden = true;
+            return;
+        }
+
+        searchIndexPromise.then(function (entries) {
+            if (!Array.isArray(entries)) {
+                results.innerHTML = '';
+                results.hidden = true;
+                return;
+            }
+
+            var scored = entries.map(function (entry) {
+                if (!entry || typeof entry !== 'object') {
+                    return null;
+                }
+
+                var title = String(entry.title || '');
+                var description = String(entry.description || '');
+                var headings = String(entry.headings || '');
+                var content = String(entry.content || '');
+                var haystack = (title + ' ' + description + ' ' + headings + ' ' + content).toLowerCase();
+
+                if (haystack.indexOf(query) === -1) {
+                    return null;
+                }
+
+                var score = 1;
+                var lowerTitle = title.toLowerCase();
+                var lowerDescription = description.toLowerCase();
+                var lowerHeadings = headings.toLowerCase();
+
+                if (lowerTitle === query) {
+                    score += 120;
+                } else if (lowerTitle.indexOf(query) !== -1) {
+                    score += 70;
+                }
+
+                if (lowerHeadings.indexOf(query) !== -1) {
+                    score += 25;
+                }
+
+                if (lowerDescription.indexOf(query) !== -1) {
+                    score += 12;
+                }
+
+                return {
+                    title: title,
+                    description: description,
+                    url: String(entry.url || '/'),
+                    score: score
+                };
+            }).filter(function (entry) {
+                return entry !== null;
+            }).sort(function (left, right) {
+                if (left.score === right.score) {
+                    return left.title.localeCompare(right.title);
+                }
+
+                return right.score - left.score;
+            }).slice(0, 8);
+
+            if (scored.length === 0) {
+                results.innerHTML = '';
+                results.hidden = true;
+                return;
+            }
+
+            var normalizeHref = function (url) {
+                var normalized = String(url || '/').replace(/^\/+/, '');
+
+                if (normalized === '') {
+                    return rootPrefix;
+                }
+
+                if (!normalized.endsWith('/')) {
+                    normalized += '/';
+                }
+
+                return rootPrefix + normalized;
+            };
+
+            results.innerHTML = scored.map(function (entry) {
+                var meta = entry.description !== '' ? entry.description : entry.url;
+                return '<a class="search-result" href="' + normalizeHref(entry.url) + '">'
+                    + '<span class="search-result-title">' + escapeHtml(entry.title) + '</span>'
+                    + '<span class="search-result-meta">' + escapeHtml(meta) + '</span>'
+                    + '</a>';
+            }).join('');
+
+            results.hidden = false;
+        });
     };
 
     var activeItem = nav.querySelector('[data-nav-item].active');

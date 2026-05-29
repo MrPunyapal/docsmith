@@ -8,31 +8,34 @@
     <link rel="stylesheet" href="../assets/app.css">
     <script src="../assets/app.js" defer></script>
 </head>
-<body>
+<body data-docsmith-root="../">
     <div class="shell">
         <aside class="sidebar">
             <h1 class="brand">Docsmith</h1>
             <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+            <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
             <div class="search">
                 <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                <div class="search-results" data-docsmith-search-results hidden></div>
                 <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
             </div>
-            <nav class="nav" data-docsmith-nav><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture">Architecture</a><a class="active" href="./" data-nav-item data-title="Development" data-search="Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage">Usage</a></div></section></nav>
+            <nav class="nav" data-docsmith-nav><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="active" href="./" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></div></section></nav>
         </aside>
         <main class="content">
             <article>
                 <header class="doc-head">
+                    
                     <h1>Development</h1>
                     
                 </header>
                 <div class="doc-body">
-                    <h2>Quality commands</h2>
+                    <h2 id="quality-commands">Quality commands</h2>
 <pre><code class="hljs language-bash">composer <span class="hljs-built_in">test</span>:lint
 composer <span class="hljs-built_in">test</span>:types
 composer <span class="hljs-built_in">test</span>:unit
 composer <span class="hljs-built_in">test</span>
 </code></pre>
-<h2>Tooling</h2>
+<h2 id="tooling">Tooling</h2>
 <p>The repository is configured with:</p>
 <ul>
 <li>Pest for tests</li>
@@ -40,14 +43,19 @@ composer <span class="hljs-built_in">test</span>
 <li>Rector for automated refactoring</li>
 <li>Pint for formatting</li>
 </ul>
-<h2>Build the package docs</h2>
+<h2 id="build-the-package-docs">Build the package docs</h2>
 <pre><code class="hljs language-bash">composer docs:build
 </code></pre>
 <p>That command uses Docsmith itself to read Markdown from <code>md/</code> and regenerate the documentation site into <code>docs/</code>.</p>
 
                 </div>
+                <footer class="doc-meta">
+                    
+                </footer>
             </article>
+            <nav class="pager" aria-label="Page navigation"><a class="pager-link" href="../architecture/"><span>Previous</span><strong>Architecture</strong></a><a class="pager-link pager-link-next" href="../"><span>Next</span><strong>Docsmith</strong></a></nav>
         </main>
+        
     </div>
 </body>
 </html>

@@ -23,6 +23,18 @@ final class Builder
 
     private string $baseUrl = '/';
 
+    private bool $rightSidebar = false;
+
+    private string $repositoryUrl = '';
+
+    private string $siteUrl = '';
+
+    private string $editBranch = 'main';
+
+    private bool $generateSitemap = true;
+
+    private bool $generateNoJekyll = true;
+
     private ?string $readmeIndexPath = null;
 
     /** @var list<string> */
@@ -63,6 +75,48 @@ final class Builder
         return $this;
     }
 
+    public function rightSidebar(bool $rightSidebar = true): self
+    {
+        $this->rightSidebar = $rightSidebar;
+
+        return $this;
+    }
+
+    public function repositoryUrl(string $repositoryUrl): self
+    {
+        $this->repositoryUrl = $repositoryUrl;
+
+        return $this;
+    }
+
+    public function siteUrl(string $siteUrl): self
+    {
+        $this->siteUrl = $siteUrl;
+
+        return $this;
+    }
+
+    public function editBranch(string $editBranch): self
+    {
+        $this->editBranch = $editBranch;
+
+        return $this;
+    }
+
+    public function generateSitemap(bool $generateSitemap = true): self
+    {
+        $this->generateSitemap = $generateSitemap;
+
+        return $this;
+    }
+
+    public function generateNoJekyll(bool $generateNoJekyll = true): self
+    {
+        $this->generateNoJekyll = $generateNoJekyll;
+
+        return $this;
+    }
+
     public function readmeIndex(string $readmeIndexPath = 'README.md'): self
     {
         $this->readmeIndexPath = $readmeIndexPath;
@@ -92,8 +146,17 @@ final class Builder
         $config = BuildConfig::fromInput(
             sourcePath: $sourcePath ?? $this->requireSourcePath(),
             outputPath: $this->requireOutputPath(),
-            metadata: new SiteMetadata($this->title, $this->description),
+            metadata: new SiteMetadata(
+                title: $this->title,
+                description: $this->description,
+                repositoryUrl: $this->normalizedRepositoryUrl(),
+                siteUrl: $this->normalizedSiteUrl(),
+                editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',
+                generateSitemap: $this->generateSitemap,
+                generateNoJekyll: $this->generateNoJekyll,
+            ),
             baseUrl: $this->baseUrl,
+            rightSidebar: $this->rightSidebar,
         );
 
         (new SiteBuilder())->build($config, $documents);
@@ -122,5 +185,15 @@ final class Builder
         }
 
         return str_replace('\\', '/', $realPath);
+    }
+
+    private function normalizedRepositoryUrl(): string
+    {
+        return rtrim(trim($this->repositoryUrl), '/');
+    }
+
+    private function normalizedSiteUrl(): string
+    {
+        return rtrim(trim($this->siteUrl), '/');
     }
 }

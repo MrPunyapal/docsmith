@@ -27,6 +27,7 @@ final readonly class ReadmeIndexImporter
         $readme = str_replace("\r\n", "\n", (string) file_get_contents($readmePath));
         $effectiveSkipSections = array_values(array_unique(array_merge(['Contributing', 'Author', 'Install', 'Notes'], $skipSections)));
         $documents = [];
+        $documentOrder = 1;
         $currentGroupName = '';
         $currentGroupIcon = '';
 
@@ -75,6 +76,8 @@ final readonly class ReadmeIndexImporter
                 description: $description,
                 group: $currentGroupName,
                 groupIcon: $currentGroupIcon,
+                order: $documentOrder++,
+                sidebarLabel: $title,
             );
         }
 

@@ -23,8 +23,22 @@ Docsmith::make()
     ->output(__DIR__ . '/dist')
     ->title('Project Docs')
     ->description('Internal package documentation.')
+    ->repositoryUrl('https://github.com/acme/project')
+    ->siteUrl('https://acme.github.io/project')
+    ->editBranch('main')
+    ->rightSidebar()
     ->build();
 ```
+
+## Search
+
+Docsmith generates `search-index.json` and uses it for global result search in the sidebar.
+
+- Type at least 2 characters to see global matches.
+- Results include title, description, headings, and page content text.
+- Selecting a result navigates to that page.
+
+The existing sidebar filter search still works for quick navigation filtering.
 
 ## Current output model
 

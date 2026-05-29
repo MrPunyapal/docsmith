@@ -8,25 +8,28 @@
     <link rel="stylesheet" href="../assets/app.css">
     <script src="../assets/app.js" defer></script>
 </head>
-<body>
+<body data-docsmith-root="../">
     <div class="shell">
         <aside class="sidebar">
             <h1 class="brand">Docsmith</h1>
             <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+            <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
             <div class="search">
                 <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                <div class="search-results" data-docsmith-search-results hidden></div>
                 <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
             </div>
-            <nav class="nav" data-docsmith-nav><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage">Usage</a></div></section></nav>
+            <nav class="nav" data-docsmith-nav><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></div></section></nav>
         </aside>
         <main class="content">
             <article>
                 <header class="doc-head">
+                    
                     <h1>Usage</h1>
                     
                 </header>
                 <div class="doc-body">
-                    <h2>Static API</h2>
+                    <h2 id="static-api">Static API</h2>
 <pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
 
 Docsmith::build(
@@ -36,7 +39,7 @@ Docsmith::build(
     description: <span class="hljs-string">'Internal package documentation.'</span>,
 );
 </code></pre>
-<h2>Fluent API</h2>
+<h2 id="fluent-api">Fluent API</h2>
 <pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
 
 Docsmith::make()
@@ -44,9 +47,21 @@ Docsmith::make()
     -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
     -&gt;title(<span class="hljs-string">'Project Docs'</span>)
     -&gt;description(<span class="hljs-string">'Internal package documentation.'</span>)
+    -&gt;repositoryUrl(<span class="hljs-string">'https://github.com/acme/project'</span>)
+    -&gt;siteUrl(<span class="hljs-string">'https://acme.github.io/project'</span>)
+    -&gt;editBranch(<span class="hljs-string">'main'</span>)
+    -&gt;rightSidebar()
     -&gt;build();
 </code></pre>
-<h2>Current output model</h2>
+<h2 id="search">Search</h2>
+<p>Docsmith generates <code>search-index.json</code> and uses it for global result search in the sidebar.</p>
+<ul>
+<li>Type at least 2 characters to see global matches.</li>
+<li>Results include title, description, headings, and page content text.</li>
+<li>Selecting a result navigates to that page.</li>
+</ul>
+<p>The existing sidebar filter search still works for quick navigation filtering.</p>
+<h2 id="current-output-model">Current output model</h2>
 <p>Each Markdown file becomes an HTML page.</p>
 <ul>
 <li><code>md/index.md</code> becomes <code>index.html</code></li>
@@ -54,7 +69,7 @@ Docsmith::make()
 <li><code>md/guides/configuration.md</code> becomes <code>guides/configuration/index.html</code></li>
 </ul>
 <p>If the source directory does not contain an <code>index.md</code>, Docsmith generates a landing page automatically.</p>
-<h2>README index compatibility mode</h2>
+<h2 id="readme-index-compatibility-mode">README index compatibility mode</h2>
 <p>Docsmith can import README index formats used by existing projects like <code>laravel-undocumented</code> and <code>laravel-attributes-list</code>.</p>
 <pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
 
@@ -72,8 +87,13 @@ Docsmith::make()
 </ul>
 
                 </div>
+                <footer class="doc-meta">
+                    
+                </footer>
             </article>
+            <nav class="pager" aria-label="Page navigation"><a class="pager-link" href="../installation/"><span>Previous</span><strong>Installation</strong></a></nav>
         </main>
+        
     </div>
 </body>
 </html>

@@ -160,3 +160,154 @@ it('defaults output directory to docs when not configured', function (): void {
         ->and($projectPath . '/docs/assets/app.css')->toBeFile()
         ->and($projectPath . '/docs/assets/app.js')->toBeFile();
 });
+
+it('renders an optional right sidebar toc when enabled', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-right-sidebar-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->rightSidebar()
+        ->build();
+
+    $configurationPage = file_get_contents($outputPath . '/guides/configuration/index.html');
+
+    expect($configurationPage)
+        ->toContain('data-docsmith-toc')
+        ->toContain('On this page')
+        ->toContain('href="#example"');
+});
+
+it('uses frontmatter metadata for order, slug, and sidebar labels', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-frontmatter-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-frontmatter-dist-' . uniqid();
+
+    mkdir($sourcePath, 0777, true);
+
+    file_put_contents($sourcePath . '/first.md', <<<'MD'
+---
+title: First Page
+order: 2
+sidebar_label: Second in Nav
+slug: custom/first-page
+description: First description
+---
+
+# First Page
+
+First body.
+MD);
+
+    file_put_contents($sourcePath . '/second.md', <<<'MD'
+---
+title: Second Page
+order: 1
+sidebar_label: First in Nav
+---
+
+# Second Page
+
+Second body.
+MD);
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Frontmatter Docs',
+        description: 'Frontmatter test docs.',
+    );
+
+    expect($outputPath . '/custom/first-page/index.html')->toBeFile();
+
+    $customPage = file_get_contents($outputPath . '/custom/first-page/index.html');
+
+    expect($customPage)->not->toBeFalse();
+
+    if (! is_string($customPage)) {
+        return;
+    }
+
+    expect($customPage)
+        ->toContain('First description')
+        ->toContain('First in Nav')
+        ->toContain('Second in Nav');
+
+    $firstLabelPosition = strpos($customPage, 'First in Nav');
+    $secondLabelPosition = strpos($customPage, 'Second in Nav');
+
+    expect($firstLabelPosition)->toBeInt();
+    expect($secondLabelPosition)->toBeInt();
+
+    if (! is_int($firstLabelPosition) || ! is_int($secondLabelPosition)) {
+        return;
+    }
+
+    expect($firstLabelPosition)->toBeLessThan($secondLabelPosition);
+});
+
+it('writes nojekyll, sitemap, and search index artifacts when configured', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-artifacts-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->siteUrl('https://example.com/docs')
+        ->build();
+
+    expect($outputPath . '/.nojekyll')->toBeFile()
+        ->and($outputPath . '/sitemap.xml')->toBeFile()
+        ->and($outputPath . '/search-index.json')->toBeFile();
+
+    $sitemap = file_get_contents($outputPath . '/sitemap.xml');
+    $searchIndex = file_get_contents($outputPath . '/search-index.json');
+
+    expect($sitemap)->toContain('https://example.com/docs/installation')
+        ->and($searchIndex)->toContain('"title": "Installation"')
+        ->toContain('"url": "/installation"');
+});
+
+it('renders edit links and previous next pager from repository metadata', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-navigation-meta-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->repositoryUrl('https://github.com/acme/docs')
+        ->editBranch('develop')
+        ->build();
+
+    $installationPage = file_get_contents($outputPath . '/installation/index.html');
+
+    expect($installationPage)
+        ->toContain('Edit this page')
+        ->toContain('https://github.com/acme/docs/edit/develop/installation.md')
+        ->toContain('aria-label="Page navigation"')
+        ->toContain('Previous');
+});
+
+it('renders global search UI markup and root metadata', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-global-search-' . uniqid();
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Docsmith Docs',
+        description: 'Generated documentation for testing.',
+    );
+
+    $installationPage = file_get_contents($outputPath . '/installation/index.html');
+
+    expect($installationPage)
+        ->toContain('data-docsmith-root="../"')
+        ->toContain('data-docsmith-search-results');
+});

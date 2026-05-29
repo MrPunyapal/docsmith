@@ -7,23 +7,22 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Build a multi-page documentation site from a Markdown directory.
 - Generate one HTML page per Markdown file.
 - Publish local CSS assets into the output directory.
+- Publish local JS assets for search, theme toggle, and code-copy UX.
 - Support both a static entry point and a fluent builder API.
 - Render Markdown through League CommonMark with GitHub-flavored extensions.
+- Parse frontmatter metadata (`title`, `description`, `slug`, `order`, `sidebar_label`).
+- Generate `search-index.json`, `sitemap.xml`, and `.nojekyll`.
+- Support repository/edit links and previous/next page navigation.
 - Validate the package with Pest, PHPStan, Rector, and Pint.
 
 ## Current status
 
-This repository is still in the first implementation phase.
+Docsmith is actively used to generate documentation for multiple packages and supports static-hosting workflows out of the box.
 
-The current build pipeline supports:
+Search includes both:
 
-- directory scanning
-- title extraction from the first Markdown heading
-- HTML generation
-- generated navigation links
-- separate source and output directories
-
-The next planned steps are frontmatter support, richer site metadata, theme abstraction, and compatibility importers for existing packages.
+- sidebar link filtering
+- global index search powered by generated `search-index.json`
 
 ## Documentation pages
 

@@ -15,7 +15,9 @@ final readonly class Document
         public string $html = '',
         public string $description = '',
         public string $group = '',
-        public string $groupIcon = ''
+        public string $groupIcon = '',
+        public int $order = 999,
+        public string $sidebarLabel = '',
     ) {
     }
 
@@ -31,6 +33,8 @@ final readonly class Document
             description: $this->description,
             group: $this->group,
             groupIcon: $this->groupIcon,
+            order: $this->order,
+            sidebarLabel: $this->sidebarLabel,
         );
     }
 

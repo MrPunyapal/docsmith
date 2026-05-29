@@ -8,33 +8,36 @@
     <link rel="stylesheet" href="../assets/app.css">
     <script src="../assets/app.js" defer></script>
 </head>
-<body>
+<body data-docsmith-root="../">
     <div class="shell">
         <aside class="sidebar">
             <h1 class="brand">Docsmith</h1>
             <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+            <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
             <div class="search">
                 <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                <div class="search-results" data-docsmith-search-results hidden></div>
                 <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
             </div>
-            <nav class="nav" data-docsmith-nav><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith">Docsmith</a><a class="active" href="./" data-nav-item data-title="Installation" data-search="Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage">Usage</a></div></section></nav>
+            <nav class="nav" data-docsmith-nav><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="active" href="./" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></div></section></nav>
         </aside>
         <main class="content">
             <article>
                 <header class="doc-head">
+                    
                     <h1>Installation</h1>
                     
                 </header>
                 <div class="doc-body">
-                    <h2>Requirements</h2>
+                    <h2 id="requirements">Requirements</h2>
 <ul>
 <li>PHP 8.3 or newer</li>
 <li>Composer</li>
 </ul>
-<h2>Install the package</h2>
+<h2 id="install-the-package">Install the package</h2>
 <pre><code class="hljs language-bash">composer require mrpunyapal/docsmith
 </code></pre>
-<h2>Build documentation</h2>
+<h2 id="build-documentation">Build documentation</h2>
 <p>Docsmith can build a static site from any Markdown directory.</p>
 <pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
 
@@ -48,8 +51,13 @@ Docsmith::build(
 <p>That setup keeps the Markdown source in <code>md/</code> and writes the generated site into <code>docs/</code>. The main entry page is written to <code>docs/index.html</code>.</p>
 
                 </div>
+                <footer class="doc-meta">
+                    
+                </footer>
             </article>
+            <nav class="pager" aria-label="Page navigation"><a class="pager-link" href="../"><span>Previous</span><strong>Docsmith</strong></a><a class="pager-link pager-link-next" href="../usage/"><span>Next</span><strong>Usage</strong></a></nav>
         </main>
+        
     </div>
 </body>
 </html>

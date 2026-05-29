@@ -1,0 +1,37 @@
+[
+    {
+        "title": "Architecture",
+        "description": "",
+        "url": "/architecture",
+        "content": "Current pipeline The current implementation is intentionally small. Docsmith exposes the public API. Builder collects configuration. BuildConfig validates source and output paths. SourceScanner discovers Markdown files. CommonMarkRenderer converts Markdown into HTML. SiteBuilder writes HTML pages and publishes CSS assets. Current source model Every discovered Markdown file is normalized into a Document object containing: source path relative path output path title raw Markdown rendered HTML Current renderer The current renderer produces: a sidebar navigation a main content area a generated landing page when needed local CSS under assets/app.css This is the minimal implementation baseline, not the final architecture.",
+        "headings": "Current pipeline Current source model Current renderer"
+    },
+    {
+        "title": "Development",
+        "description": "",
+        "url": "/development",
+        "content": "Quality commands composer test:lint composer test:types composer test:unit composer test Tooling The repository is configured with: Pest for tests PHPStan for static analysis Rector for automated refactoring Pint for formatting Build the package docs composer docs:build That command uses Docsmith itself to read Markdown from md/ and regenerate the documentation site into docs/.",
+        "headings": "Quality commands Tooling Build the package docs"
+    },
+    {
+        "title": "Docsmith",
+        "description": "",
+        "url": "/",
+        "content": "Docsmith is a small PHP package for turning Markdown files into a static documentation site. Current capabilities Build a multi-page documentation site from a Markdown directory. Generate one HTML page per Markdown file. Publish local CSS assets into the output directory. Publish local JS assets for search, theme toggle, and code-copy UX. Support both a static entry point and a fluent builder API. Render Markdown through League CommonMark with GitHub-flavored extensions. Parse frontmatter metadata (title, description, slug, order, sidebar_label). Generate search-index.json, sitemap.xml, and .nojekyll. Support repository/edit links and previous/next page navigation. Validate the package with Pest, PHPStan, Rector, and Pint. Current status Docsmith is actively used to generate documentation for multiple packages and supports static-hosting workflows out of the box. Search includes both: sidebar link filtering global index search powered by generated search-index.json Documentation pages Installation Usage Architecture Development",
+        "headings": "Current capabilities Current status Documentation pages"
+    },
+    {
+        "title": "Installation",
+        "description": "",
+        "url": "/installation",
+        "content": "Requirements PHP 8.3 or newer Composer Install the package composer require mrpunyapal/docsmith Build documentation Docsmith can build a static site from any Markdown directory. use Docsmith\\Docsmith; Docsmith::build( source: __DIR__ . '/md', output: __DIR__ . '/docs', title: 'Docsmith', description: 'Craft static documentation sites from Markdown with minimal setup.', ); That setup keeps the Markdown source in md/ and writes the generated site into docs/. The main entry page is written to docs/index.html.",
+        "headings": "Requirements Install the package Build documentation"
+    },
+    {
+        "title": "Usage",
+        "description": "",
+        "url": "/usage",
+        "content": "Static API use Docsmith\\Docsmith; Docsmith::build( source: __DIR__ . '/md', output: __DIR__ . '/dist', title: 'Project Docs', description: 'Internal package documentation.', ); Fluent API use Docsmith\\Docsmith; Docsmith::make() ->source(__DIR__ . '/md') ->output(__DIR__ . '/dist') ->title('Project Docs') ->description('Internal package documentation.') ->repositoryUrl('https://github.com/acme/project') ->siteUrl('https://acme.github.io/project') ->editBranch('main') ->rightSidebar() ->build(); Search Docsmith generates search-index.json and uses it for global result search in the sidebar. Type at least 2 characters to see global matches. Results include title, description, headings, and page content text. Selecting a result navigates to that page. The existing sidebar filter search still works for quick navigation filtering. Current output model Each Markdown file becomes an HTML page. md/index.md becomes index.html md/installation.md becomes installation/index.html md/guides/configuration.md becomes guides/configuration/index.html If the source directory does not contain an index.md, Docsmith generates a landing page automatically. README index compatibility mode Docsmith can import README index formats used by existing projects like laravel-undocumented and laravel-attributes-list. use Docsmith\\Docsmith; Docsmith::make() ->readmeIndex(__DIR__ . '/README.md') ->output(__DIR__ . '/dist') ->title('Project Docs') ->description('Generated from README index.') ->build(); Supported README item styles: - [withAggregate()](features/eloquent/withAggregate.md) — description * [#[Table]](attributes/eloquent/Table.md) — description",
+        "headings": "Static API Fluent API Search Current output model README index compatibility mode"
+    }
+]

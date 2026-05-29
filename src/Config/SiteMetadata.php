@@ -8,7 +8,12 @@ final readonly class SiteMetadata
 {
     public function __construct(
         public string $title = 'Documentation',
-        public string $description = 'Project documentation.'
+        public string $description = 'Project documentation.',
+        public string $repositoryUrl = '',
+        public string $siteUrl = '',
+        public string $editBranch = 'main',
+        public bool $generateSitemap = true,
+        public bool $generateNoJekyll = true,
     ) {
     }
 }
