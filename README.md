@@ -26,7 +26,7 @@ Docsmith is designed for package and project documentation where you want a fast
 ## Installation
 
 ```bash
-composer require --dev mrpunyapal/docsmith:^0.0.2
+composer require --dev mrpunyapal/docsmith
 ```
 
 ## Quick Start
