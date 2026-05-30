@@ -10,17 +10,25 @@
 </head>
 <body data-docsmith-root="../">
     <div class="shell">
-        <aside class="sidebar">
-            <h1 class="brand">Docsmith</h1>
-            <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
-            <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
-            <div class="search">
-                <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
-                <div class="search-results" data-docsmith-search-results hidden></div>
-                <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+        <aside class="sidebar" data-docsmith-sidebar>
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h1 class="brand">Docsmith</h1>
+                    <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+                </div>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
-            <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="active" href="./" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
+            <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
+                <div class="search">
+                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <div class="search-results" data-docsmith-search-results hidden></div>
+                    <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+                </div>
+                <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="active" href="./" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
+            </div>
         </aside>
+        <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
         <main class="content">
             <article>
                 <header class="doc-head">
@@ -30,11 +38,12 @@
                 </header>
                 <div class="doc-body">
                     <h2 id="quality-commands">Quality commands</h2>
-<pre><code class="hljs language-bash">composer <span class="hljs-built_in">test</span>:lint
-composer <span class="hljs-built_in">test</span>:types
-composer <span class="hljs-built_in">test</span>:unit
-composer <span class="hljs-built_in">test</span>
-</code></pre>
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">composer</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">test:lint</span><span class="token">
+</span></span><span class="line"><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">composer</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">test:types</span><span class="token">
+</span></span><span class="line"><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">composer</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">test:unit</span><span class="token">
+</span></span><span class="line"><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">composer</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">test</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <h2 id="tooling">Tooling</h2>
 <p>The repository is configured with:</p>
 <ul>
@@ -44,8 +53,9 @@ composer <span class="hljs-built_in">test</span>
 <li>Pint for formatting</li>
 </ul>
 <h2 id="build-the-package-docs">Build the package docs</h2>
-<pre><code class="hljs language-bash">composer docs:build
-</code></pre>
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">composer</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">docs:build</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <p>That command uses Docsmith itself to read Markdown from <code>md/</code> and regenerate the documentation site into <code>docs/</code>.</p>
 
                 </div>

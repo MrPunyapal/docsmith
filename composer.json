@@ -6,7 +6,7 @@
     "require": {
         "php": "^8.3",
         "league/commonmark": "^2.7",
-        "scrivo/highlight.php": "^9.18"
+        "phiki/phiki": "^2.2"
     },
     "require-dev": {
         "laravel/pint": "^1.18",

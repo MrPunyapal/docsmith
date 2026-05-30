@@ -108,17 +108,25 @@ final readonly class SiteBuilder
 </head>
 <body data-docsmith-root="{$rootPrefix}">
     <div class="{$shellClass}">
-        <aside class="sidebar">
-            <h1 class="brand">{$siteTitle}</h1>
-            <p class="tagline">{$description}</p>
-            {$this->sidebarActions($config)}
-            <div class="search">
-                <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
-                <div class="search-results" data-docsmith-search-results hidden></div>
-                <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+        <aside class="sidebar" data-docsmith-sidebar>
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h1 class="brand">{$siteTitle}</h1>
+                    <p class="tagline">{$description}</p>
+                </div>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
-            <nav class="nav" data-docsmith-nav>{$navigation}</nav>
+            <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                {$this->sidebarActions($config)}
+                <div class="search">
+                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <div class="search-results" data-docsmith-search-results hidden></div>
+                    <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+                </div>
+                <nav class="nav" data-docsmith-nav>{$navigation}</nav>
+            </div>
         </aside>
+        <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
         <main class="content">
             <article>
                 <header class="doc-head">
@@ -173,17 +181,25 @@ HTML;
 </head>
 <body data-docsmith-root="./">
     <div class="shell">
-        <aside class="sidebar">
-            <h1 class="brand">{$title}</h1>
-            <p class="tagline">{$description}</p>
-            {$this->sidebarActions($config)}
-            <div class="search">
-                <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
-                <div class="search-results" data-docsmith-search-results hidden></div>
-                <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+        <aside class="sidebar" data-docsmith-sidebar>
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h1 class="brand">{$title}</h1>
+                    <p class="tagline">{$description}</p>
+                </div>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
-            <nav class="nav" data-docsmith-nav>{$navigation}</nav>
+            <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                {$this->sidebarActions($config)}
+                <div class="search">
+                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <div class="search-results" data-docsmith-search-results hidden></div>
+                    <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+                </div>
+                <nav class="nav" data-docsmith-nav>{$navigation}</nav>
+            </div>
         </aside>
+        <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
         <main class="content">
             <section class="hero">
                 <h1>{$title}</h1>

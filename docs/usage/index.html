@@ -10,17 +10,25 @@
 </head>
 <body data-docsmith-root="../">
     <div class="shell">
-        <aside class="sidebar">
-            <h1 class="brand">Docsmith</h1>
-            <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
-            <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
-            <div class="search">
-                <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
-                <div class="search-results" data-docsmith-search-results hidden></div>
-                <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+        <aside class="sidebar" data-docsmith-sidebar>
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h1 class="brand">Docsmith</h1>
+                    <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+                </div>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
-            <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
+            <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
+                <div class="search">
+                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <div class="search-results" data-docsmith-search-results hidden></div>
+                    <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+                </div>
+                <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
+            </div>
         </aside>
+        <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
         <main class="content">
             <article>
                 <header class="doc-head">
@@ -30,54 +38,59 @@
                 </header>
                 <div class="doc-body">
                     <h2 id="static-api">Static API</h2>
-<pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
-
-Docsmith::build(
-    source: <span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/md'</span>,
-    output: <span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>,
-    title: <span class="hljs-string">'Project Docs'</span>,
-    description: <span class="hljs-string">'Internal package documentation.'</span>,
-    accentColor: <span class="hljs-string">'#ff2d20'</span>,
-);
-</code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">use</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">\</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">::</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">build</span><span class="token">(</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">source</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/md</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">output</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/dist</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">title</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Project Docs</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">description</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Internal package documentation.</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">accentColor</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">#ff2d20</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <h2 id="fluent-api">Fluent API</h2>
-<pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
-
-Docsmith::make()
-    -&gt;source(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/md'</span>)
-    -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
-    -&gt;title(<span class="hljs-string">'Project Docs'</span>)
-    -&gt;description(<span class="hljs-string">'Internal package documentation.'</span>)
-    -&gt;accentColor(<span class="hljs-string">'#ff2d20'</span>)
-    -&gt;accentColorDark(<span class="hljs-string">'#ff6b61'</span>)
-    -&gt;repositoryUrl(<span class="hljs-string">'https://github.com/acme/project'</span>)
-    -&gt;siteUrl(<span class="hljs-string">'https://acme.github.io/project'</span>)
-    -&gt;editBranch(<span class="hljs-string">'main'</span>)
-    -&gt;rightSidebar()
-    -&gt;build();
-
-</code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">use</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">\</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">::</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">make</span><span class="token">(</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">source</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/md</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">output</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/dist</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">title</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Project Docs</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">description</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Internal package documentation.</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">accentColor</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">#ff2d20</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">accentColorDark</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">#ff6b61</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">repositoryUrl</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">https://github.com/acme/project</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">siteUrl</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">https://acme.github.io/project</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">editBranch</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">main</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">rightSidebar</span><span class="token">(</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <h2 id="theme-color">Theme Color</h2>
 <p>Docsmith defaults to a Laravel red accent. Override it when building docs:</p>
-<pre><code class="hljs language-php">Docsmith::make()
-    -&gt;source(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/md'</span>)
-    -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
-    -&gt;accentColor(<span class="hljs-string">'#1d4ed8'</span>)
-    -&gt;accentColorDark(<span class="hljs-string">'#60a5fa'</span>)
-    -&gt;build();
-</code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">::</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">make</span><span class="token">(</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">source</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/md</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">output</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/dist</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">accentColor</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">#1d4ed8</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">accentColorDark</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">#60a5fa</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <p>Use hex colors for the best results because Docsmith derives the hover, focus, and dark-mode variants from the accent.</p>
 <h3 id="custom-css">Custom CSS</h3>
 <p>If you need to apply project-specific tweaks, you can append raw CSS or a CSS file during the build:</p>
-<pre><code class="hljs language-php">Docsmith::make()
-    -&gt;source(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/md'</span>)
-    -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
-    -&gt;customCss(<span class="hljs-string">'body { background: #fff }'</span>)
-    -&gt;build();
-</code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">::</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">make</span><span class="token">(</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">source</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/md</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">output</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/dist</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">customCss</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">body { background: #fff }</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <p>Or:</p>
-<pre><code class="hljs language-php">    -&gt;customCss(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/overrides.css'</span>)
-</code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">customCss</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/overrides.css</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <h2 id="search">Search</h2>
 <p>Docsmith generates <code>search-index.json</code> and uses it for global result search in the sidebar.</p>
 <ul>
@@ -96,15 +109,16 @@ Docsmith::make()
 <p>If the source directory does not contain an <code>index.md</code>, Docsmith generates a landing page automatically.</p>
 <h2 id="readme-index-compatibility-mode">README index compatibility mode</h2>
 <p>Docsmith can import README index formats used by existing projects like <code>laravel-undocumented</code> and <code>laravel-attributes-list</code>.</p>
-<pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
-
-Docsmith::make()
-    -&gt;readmeIndex(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/README.md'</span>)
-    -&gt;output(<span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/dist'</span>)
-    -&gt;title(<span class="hljs-string">'Project Docs'</span>)
-    -&gt;description(<span class="hljs-string">'Generated from README index.'</span>)
-    -&gt;build();
-</code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">use</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">\</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">::</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">make</span><span class="token">(</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">readmeIndex</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/README.md</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">output</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/dist</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">title</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Project Docs</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">description</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Generated from README index.</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <p>Supported README item styles:</p>
 <ul>
 <li><code>- [withAggregate()](features/eloquent/withAggregate.md) — description</code></li>

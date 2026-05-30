@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace Docsmith\Markdown;
 
-use Highlight\Highlighter;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\MarkdownConverter;
+use Phiki\Grammar\Grammar;
+use Phiki\Phiki;
+use Phiki\Theme\Theme;
 use Throwable;
 
 final readonly class CommonMarkRenderer
 {
     private MarkdownConverter $converter;
 
-    private Highlighter $highlighter;
+    private Phiki $highlighter;
 
     public function __construct()
     {
@@ -28,7 +30,7 @@ final readonly class CommonMarkRenderer
         $environment->addExtension(new GithubFlavoredMarkdownExtension());
 
         $this->converter = new MarkdownConverter($environment);
-        $this->highlighter = new Highlighter();
+        $this->highlighter = new Phiki();
     }
 
     public function render(string $markdown): string
@@ -46,17 +48,14 @@ final readonly class CommonMarkRenderer
             function (array $matches): string {
                 $classList = $matches[1];
                 $rawCode = html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $language = $this->extractLanguage($classList);
+                $grammar = $this->grammarForClassList($classList);
 
                 try {
-                    $result = $language !== null
-                        ? $this->highlighter->highlight($language, $rawCode)
-                        : $this->highlighter->highlightAuto($rawCode);
-                    $detectedLanguage = is_string($result->language) ? $result->language : '';
-                    $highlightedCode = is_string($result->value) ? $result->value : '';
-                    $detectedLanguageClass = $detectedLanguage !== '' ? ' language-' . $detectedLanguage : '';
-
-                    return '<pre><code class="hljs' . $detectedLanguageClass . '">' . $highlightedCode . '</code></pre>';
+                    return (string) $this->highlighter->codeToHtml(
+                        $rawCode,
+                        $grammar,
+                        ['light' => Theme::GithubLight, 'dark' => Theme::GithubDark]
+                    );
                 } catch (Throwable) {
                     $safeCode = htmlspecialchars($rawCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                     $safeClassList = trim($classList);
@@ -71,6 +70,30 @@ final readonly class CommonMarkRenderer
         );
 
         return $highlighted ?? $html;
+    }
+
+    private function grammarForClassList(string $classList): Grammar
+    {
+        $language = $this->extractLanguage($classList);
+
+        if ($language === null) {
+            return Grammar::Txt;
+        }
+
+        $aliases = [
+            'js' => 'javascript',
+            'ts' => 'typescript',
+            'bash' => 'shellscript',
+            'sh' => 'shellscript',
+            'shell' => 'shellscript',
+            'zsh' => 'shellscript',
+            'c++' => 'cpp',
+            'c#' => 'csharp',
+        ];
+
+        $resolved = $aliases[$language] ?? $language;
+
+        return Grammar::tryFrom($resolved) ?? Grammar::Txt;
     }
 
     private function extractLanguage(string $classList): ?string

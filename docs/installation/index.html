@@ -10,17 +10,25 @@
 </head>
 <body data-docsmith-root="../">
     <div class="shell">
-        <aside class="sidebar">
-            <h1 class="brand">Docsmith</h1>
-            <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
-            <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
-            <div class="search">
-                <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
-                <div class="search-results" data-docsmith-search-results hidden></div>
-                <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+        <aside class="sidebar" data-docsmith-sidebar>
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h1 class="brand">Docsmith</h1>
+                    <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+                </div>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
-            <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="active" href="./" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
+            <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
+                <div class="search">
+                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <div class="search-results" data-docsmith-search-results hidden></div>
+                    <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+                </div>
+                <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="active" href="./" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
+            </div>
         </aside>
+        <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
         <main class="content">
             <article>
                 <header class="doc-head">
@@ -35,19 +43,21 @@
 <li>Composer</li>
 </ul>
 <h2 id="install-the-package">Install the package</h2>
-<pre><code class="hljs language-bash">composer require mrpunyapal/docsmith
-</code></pre>
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">composer</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">require</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">mrpunyapal/docsmith</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <h2 id="build-documentation">Build documentation</h2>
 <p>Docsmith can build a static site from any Markdown directory.</p>
-<pre><code class="hljs language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">Docsmith</span>\<span class="hljs-title">Docsmith</span>;
-
-Docsmith::build(
-    source: <span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/md'</span>,
-    output: <span class="hljs-keyword">__DIR__</span> . <span class="hljs-string">'/docs'</span>,
-    title: <span class="hljs-string">'Docsmith'</span>,
-    description: <span class="hljs-string">'Craft static documentation sites from Markdown with minimal setup.'</span>,
-);
-</code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">use</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">\</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">::</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">build</span><span class="token">(</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">source</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/md</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">output</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/docs</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">title</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Docsmith</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">description</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Craft static documentation sites from Markdown with minimal setup.</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
 <p>That setup keeps the Markdown source in <code>md/</code> and writes the generated site into <code>docs/</code>. The main entry page is written to <code>docs/index.html</code>.</p>
 
                 </div>
