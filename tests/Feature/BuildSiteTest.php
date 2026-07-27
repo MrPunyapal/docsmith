@@ -427,7 +427,7 @@ MD);
     );
     $found = array_filter(
         is_array($searchIndex) ? $searchIndex : [],
-        fn (array $entry): bool => ($entry['title'] ?? '') === 'Hidden Page'
+        fn (mixed $entry): bool => is_array($entry) && ($entry['title'] ?? '') === 'Hidden Page'
     );
     expect($found)->toBeEmpty();
 
