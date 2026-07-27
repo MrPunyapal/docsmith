@@ -17,6 +17,7 @@ final readonly class SiteMetadata
         public string $editBranch = 'main',
         public bool $generateSitemap = true,
         public bool $generateNoJekyll = true,
+        public bool $llmsExport = true,
     ) {
     }
 }

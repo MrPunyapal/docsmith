@@ -45,6 +45,8 @@ final class Builder
 
     private bool $generateNoJekyll = true;
 
+    private bool $llmsExport = true;
+
     private ?string $readmeIndexPath = null;
 
     /** @var list<string> */
@@ -180,6 +182,13 @@ final class Builder
         return $this;
     }
 
+    public function llmsExport(bool $llmsExport = true): self
+    {
+        $this->llmsExport = $llmsExport;
+
+        return $this;
+    }
+
     public function readmeIndex(string $readmeIndexPath = 'README.md'): self
     {
         $this->readmeIndexPath = $readmeIndexPath;
@@ -225,6 +234,7 @@ final class Builder
                 editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',
                 generateSitemap: $this->generateSitemap,
                 generateNoJekyll: $this->generateNoJekyll,
+                llmsExport: $this->llmsExport,
             ),
             baseUrl: $this->baseUrl,
             rightSidebar: $this->rightSidebar,
