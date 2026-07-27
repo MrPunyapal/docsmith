@@ -81,8 +81,83 @@ final readonly class SiteBuilder
         }
     }
 
+    /** @param list<array{slug: string, label: string, default: bool}> $versions */
+    public function buildVersion(
+        BuildConfig $config,
+        array $versions,
+        string $currentSlug,
+        bool $isDefault,
+        string $rootOutput,
+    ): void {
+        $documents = array_map(
+            fn (Document $document): Document => $document->html === ''
+                ? $document->withHtml($this->renderer->render($document->markdown))
+                : $document,
+            $this->scanner->scan($config->sourcePath)
+        );
+
+        if ($documents === []) {
+            throw new RuntimeException('The source directory does not contain any markdown files.');
+        }
+
+        if (! is_dir($config->outputPath)) {
+            mkdir($config->outputPath, 0777, true);
+        }
+
+        $this->assets->publish($config->outputPath, $config->metadata);
+        $hasRootIndex = $this->hasRootIndex($documents);
+
+        $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug);
+
+        foreach ($documents as $document) {
+            $absoluteOutputPath = rtrim($config->outputPath, '/') . '/' . $document->outputPath;
+            $directory = dirname($absoluteOutputPath);
+
+            if (! is_dir($directory)) {
+                mkdir($directory, 0777, true);
+            }
+
+            file_put_contents(
+                $absoluteOutputPath,
+                $this->page($config, $document, $documents, $versionSwitcher),
+            );
+
+            if ($isDefault) {
+                $rootPath = rtrim($rootOutput, '/') . '/' . $document->outputPath;
+                $rootDir = dirname($rootPath);
+                if (! is_dir($rootDir)) {
+                    mkdir($rootDir, 0777, true);
+                }
+
+                file_put_contents(
+                    $rootPath,
+                    $this->page($config, $document, $documents, $versionSwitcher),
+                );
+            }
+        }
+
+        if (! $hasRootIndex) {
+            $landing = $this->landingPage($config, $documents, $versionSwitcher);
+            file_put_contents(rtrim($config->outputPath, '/') . '/index.html', $landing);
+
+            if ($isDefault) {
+                file_put_contents(rtrim($rootOutput, '/') . '/index.html', $landing);
+            }
+        }
+
+        $this->writeSearchIndex($config, $documents, ! $hasRootIndex);
+
+        if ($config->metadata->generateSitemap) {
+            $this->writeSitemap($config, $documents, ! $hasRootIndex);
+        }
+
+        if ($config->metadata->generateNoJekyll) {
+            $this->writeNoJekyll($config);
+        }
+    }
+
     /** @param list<Document> $documents */
-    private function page(BuildConfig $config, Document $document, array $documents): string
+    private function page(BuildConfig $config, Document $document, array $documents, string $versionSwitcher = ''): string
     {
         $tocData = $this->tocFromHtml($document->html);
         $toc = $tocData['items'];
@@ -122,6 +197,7 @@ final readonly class SiteBuilder
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                {$versionSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
                     <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
@@ -156,7 +232,7 @@ HTML;
     }
 
     /** @param list<Document> $documents */
-    private function landingPage(BuildConfig $config, array $documents): string
+    private function landingPage(BuildConfig $config, array $documents, string $versionSwitcher = ''): string
     {
         $pageLinks = array_map(
             fn (Document $document): string => sprintf(
@@ -195,6 +271,7 @@ HTML;
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                {$versionSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
                     <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
@@ -716,5 +793,31 @@ HTML;
         );
 
         return '<aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links">' . implode('', $links) . '</nav></aside>';
+    }
+
+    /** @param list<array{slug: string, label: string, default: bool}> $versions */
+    private function versionSwitcherHtml(array $versions, string $currentSlug): string
+    {
+        if (count($versions) < 2) {
+            return '';
+        }
+
+        $options = array_map(
+            function (array $version) use ($currentSlug): string {
+                $selected = $version['slug'] === $currentSlug;
+                $label = htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8');
+                $slug = htmlspecialchars($version['slug'], ENT_QUOTES, 'UTF-8');
+
+                return sprintf(
+                    '<a class="version-link%s" href="%s/">%s</a>',
+                    $selected ? ' version-link-current' : '',
+                    $slug,
+                    $label,
+                );
+            },
+            $versions,
+        );
+
+        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version">' . implode('', $options) . '</nav>';
     }
 }
