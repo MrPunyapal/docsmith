@@ -50,6 +50,7 @@ final class SourceScanner
             $description = $this->stringValue($frontMatter['description'] ?? null);
             $sidebarLabel = $this->stringValue($frontMatter['sidebar_label'] ?? null);
             $order = $this->intValue($frontMatter['order'] ?? null, 999);
+            $hidden = $this->boolValue($frontMatter['hidden'] ?? null);
 
             $documents[] = new Document(
                 sourcePath: $absolutePath,
@@ -60,6 +61,7 @@ final class SourceScanner
                 description: $description,
                 order: $order,
                 sidebarLabel: $sidebarLabel,
+                hidden: $hidden,
             );
         }
 
@@ -167,5 +169,18 @@ final class SourceScanner
     private function intValue(mixed $value, int $fallback): int
     {
         return is_int($value) ? $value : $fallback;
+    }
+
+    private function boolValue(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            return strtolower(trim($value)) === 'true';
+        }
+
+        return false;
     }
 }

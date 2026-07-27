@@ -374,3 +374,63 @@ it('allows appending custom css as raw string', function (): void {
 
     expect($appCss)->toContain('/* my override */ .brand { color: #123456 }');
 });
+
+it('excludes hidden pages from navigation, pagination, and search index', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-hidden-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-hidden-dist-' . uniqid();
+
+    mkdir($sourcePath, 0777, true);
+
+    file_put_contents($sourcePath . '/visible.md', <<<'MD'
+---
+title: Visible Page
+order: 1
+---
+# Visible Page
+
+Content visible in nav.
+MD);
+
+    file_put_contents($sourcePath . '/hidden.md', <<<'MD'
+---
+title: Hidden Page
+order: 2
+hidden: true
+---
+# Hidden Page
+
+Content hidden from nav.
+MD);
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Hidden Test',
+        description: 'Testing hidden pages.',
+    );
+
+    // Hidden page is still built and accessible
+    expect($outputPath . '/hidden/index.html')->toBeFile()
+        ->and(file_get_contents($outputPath . '/hidden/index.html'))
+        ->toContain('Hidden Page');
+
+    // Hidden page does NOT appear in navigation
+    $visiblePage = file_get_contents($outputPath . '/visible/index.html');
+    expect($visiblePage)
+        ->not->toContain('Hidden Page')
+        ->toContain('Visible Page');
+
+    // Hidden page does NOT appear in search index
+    $searchIndex = json_decode(
+        (string) file_get_contents($outputPath . '/search-index.json'),
+        true
+    );
+    $found = array_filter(
+        is_array($searchIndex) ? $searchIndex : [],
+        fn (array $entry): bool => ($entry['title'] ?? '') === 'Hidden Page'
+    );
+    expect($found)->toBeEmpty();
+
+    // Hidden page is excluded from pagination
+    expect($visiblePage)->not->toContain('Next');
+});
