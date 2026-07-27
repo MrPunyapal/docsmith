@@ -275,6 +275,99 @@ a {
     line-height: 1.3;
 }
 
+.search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10vh;
+}
+
+.search-overlay[hidden] {
+    display: none;
+}
+
+.search-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.search-overlay-panel {
+    position: relative;
+    width: min(640px, calc(100vw - 2rem));
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    max-height: min(480px, calc(100vh - 20vh));
+    display: flex;
+    flex-direction: column;
+}
+
+.search-overlay-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.search-overlay-icon {
+    flex-shrink: 0;
+    color: var(--muted);
+}
+
+.search-overlay-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 1.05rem;
+    outline: 0;
+}
+
+.search-overlay-input::placeholder {
+    color: var(--muted);
+}
+
+.search-overlay-hint {
+    flex-shrink: 0;
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 0.35rem;
+    color: var(--muted);
+    background: var(--panel);
+}
+
+.search-overlay-results {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.search-overlay-results .search-result {
+    padding: 0.6rem 0.85rem;
+}
+
+.search-overlay-results .search-result.is-highlighted {
+    background: var(--accent-soft);
+}
+
+.search-overlay-empty {
+    padding: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
 .nav {
     display: grid;
     gap: 0.45rem;
@@ -1540,6 +1633,203 @@ document.addEventListener('DOMContentLoaded', function () {
 
     search.addEventListener('input', update);
     update();
+
+    var searchOverlay = document.querySelector('[data-docsmith-search-overlay]');
+    var searchOverlayInput = document.querySelector('[data-docsmith-search-overlay-input]');
+    var searchOverlayResults = document.querySelector('[data-docsmith-search-overlay-results]');
+    var searchOverlayEmpty = document.querySelector('[data-docsmith-search-overlay-empty]');
+
+    if (searchOverlay && searchOverlayInput && searchOverlayResults) {
+        var openSearchOverlay = function () {
+            searchOverlay.hidden = false;
+            searchOverlayInput.value = '';
+            searchOverlayResults.innerHTML = '';
+            if (searchOverlayEmpty) {
+                searchOverlayEmpty.hidden = true;
+            }
+            searchOverlayInput.focus();
+        };
+
+        var closeSearchOverlay = function () {
+            searchOverlay.hidden = true;
+            searchOverlayInput.value = '';
+            searchOverlayResults.innerHTML = '';
+            if (searchOverlayEmpty) {
+                searchOverlayEmpty.hidden = true;
+            }
+            if (search) {
+                search.focus();
+            }
+        };
+
+        document.addEventListener('keydown', function (event) {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                openSearchOverlay();
+            }
+        });
+
+        var overlayCloseTriggers = document.querySelectorAll('[data-docsmith-search-overlay-close]');
+        Array.prototype.slice.call(overlayCloseTriggers).forEach(function (el) {
+            el.addEventListener('click', function () {
+                closeSearchOverlay();
+            });
+        });
+
+        var overlayHighlightIndex = -1;
+        var overlayResultsList = [];
+
+        var updateSearchOverlayHighlight = function () {
+            overlayResultsList.forEach(function (el, index) {
+                el.classList.toggle('is-highlighted', index === overlayHighlightIndex);
+            });
+        };
+
+        searchOverlayInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeSearchOverlay();
+                return;
+            }
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                overlayHighlightIndex = Math.min(overlayHighlightIndex + 1, overlayResultsList.length - 1);
+                updateSearchOverlayHighlight();
+                if (overlayResultsList[overlayHighlightIndex]) {
+                    overlayResultsList[overlayHighlightIndex].scrollIntoView({ block: 'nearest' });
+                }
+                return;
+            }
+
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                overlayHighlightIndex = Math.max(overlayHighlightIndex - 1, 0);
+                updateSearchOverlayHighlight();
+                if (overlayResultsList[overlayHighlightIndex]) {
+                    overlayResultsList[overlayHighlightIndex].scrollIntoView({ block: 'nearest' });
+                }
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (overlayHighlightIndex >= 0 && overlayResultsList[overlayHighlightIndex]) {
+                    var link = overlayResultsList[overlayHighlightIndex];
+                    if (link.tagName === 'A') {
+                        window.location.href = link.getAttribute('href');
+                    }
+                }
+                return;
+            }
+        });
+
+        searchOverlayInput.addEventListener('input', function () {
+            var query = String(searchOverlayInput.value || '').toLowerCase().trim();
+
+            if (query.length < 2) {
+                searchOverlayResults.innerHTML = '';
+                if (searchOverlayEmpty) {
+                    searchOverlayEmpty.hidden = true;
+                }
+                overlayHighlightIndex = -1;
+                overlayResultsList = [];
+                return;
+            }
+
+            searchIndexPromise.then(function (entries) {
+                if (!Array.isArray(entries)) {
+                    searchOverlayResults.innerHTML = '';
+                    if (searchOverlayEmpty) {
+                        searchOverlayEmpty.hidden = false;
+                    }
+                    return;
+                }
+
+                var scored = entries.map(function (entry) {
+                    if (!entry || typeof entry !== 'object') {
+                        return null;
+                    }
+
+                    var title = String(entry.title || '');
+                    var description = String(entry.description || '');
+                    var headings = String(entry.headings || '');
+                    var content = String(entry.content || '');
+                    var haystack = (title + ' ' + description + ' ' + headings + ' ' + content).toLowerCase();
+
+                    if (haystack.indexOf(query) === -1) {
+                        return null;
+                    }
+
+                    var score = 1;
+                    var lowerTitle = title.toLowerCase();
+                    var lowerDescription = description.toLowerCase();
+                    var lowerHeadings = headings.toLowerCase();
+
+                    if (lowerTitle === query) {
+                        score += 120;
+                    } else if (lowerTitle.indexOf(query) !== -1) {
+                        score += 70;
+                    }
+
+                    if (lowerHeadings.indexOf(query) !== -1) {
+                        score += 25;
+                    }
+
+                    if (lowerDescription.indexOf(query) !== -1) {
+                        score += 12;
+                    }
+
+                    return {
+                        title: title,
+                        description: description,
+                        url: String(entry.url || '/'),
+                        score: score
+                    };
+                }).filter(function (entry) {
+                    return entry !== null;
+                }).sort(function (left, right) {
+                    if (left.score === right.score) {
+                        return left.title.localeCompare(right.title);
+                    }
+
+                    return right.score - left.score;
+                }).slice(0, 8);
+
+                if (scored.length === 0) {
+                    searchOverlayResults.innerHTML = '';
+                    if (searchOverlayEmpty) {
+                        searchOverlayEmpty.hidden = false;
+                    }
+                    overlayHighlightIndex = -1;
+                    overlayResultsList = [];
+                    return;
+                }
+
+                if (searchOverlayEmpty) {
+                    searchOverlayEmpty.hidden = true;
+                }
+
+                searchOverlayResults.innerHTML = scored.map(function (entry) {
+                    var meta = entry.description !== '' ? entry.description : entry.url;
+                    return '<a class="search-result" href="' + normalizeHref(entry.url) + '">'
+                        + '<span class="search-result-title">' + escapeHtml(entry.title) + '</span>'
+                        + '<span class="search-result-meta">' + escapeHtml(meta) + '</span>'
+                        + '</a>';
+                }).join('');
+
+                overlayResultsList = Array.prototype.slice.call(searchOverlayResults.querySelectorAll('.search-result'));
+                overlayHighlightIndex = -1;
+                updateSearchOverlayHighlight();
+            });
+        });
+
+        searchOverlay.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeSearchOverlay();
+            }
+        });
+    }
 });
 JS;
     }

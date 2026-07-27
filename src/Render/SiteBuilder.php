@@ -192,7 +192,7 @@ final readonly class SiteBuilder
                 {$versionSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
-                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
                     <div class="search-results" data-docsmith-search-results hidden></div>
                     <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
                 </div>
@@ -218,6 +218,7 @@ final readonly class SiteBuilder
         </main>
         {$this->tocSidebar($showRightSidebar ? $toc : [])}
     </div>
+    {$this->searchOverlay()}
 </body>
 </html>
 HTML;
@@ -266,7 +267,7 @@ HTML;
                 {$versionSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
-                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
                     <div class="search-results" data-docsmith-search-results hidden></div>
                     <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
                 </div>
@@ -282,6 +283,7 @@ HTML;
             </section>
         </main>
     </div>
+    {$this->searchOverlay()}
 </body>
 </html>
 HTML;
@@ -822,5 +824,23 @@ HTML;
         );
 
         return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version">' . implode('', $options) . '</nav>';
+    }
+
+    private function searchOverlay(): string
+    {
+        return <<<'HTML'
+<div class="search-overlay" data-docsmith-search-overlay hidden role="dialog" aria-label="Search documentation">
+    <div class="search-overlay-backdrop" data-docsmith-search-overlay-close></div>
+    <div class="search-overlay-panel">
+        <div class="search-overlay-input-wrap">
+            <svg class="search-overlay-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="search" class="search-overlay-input" placeholder="Search documentation..." aria-label="Search documentation" data-docsmith-search-overlay-input autocomplete="off">
+            <kbd class="search-overlay-hint">ESC</kbd>
+        </div>
+        <div class="search-overlay-results" data-docsmith-search-overlay-results></div>
+        <div class="search-overlay-empty" data-docsmith-search-overlay-empty hidden>No results found.</div>
+    </div>
+</div>
+HTML;
     }
 }

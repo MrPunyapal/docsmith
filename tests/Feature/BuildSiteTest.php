@@ -484,3 +484,23 @@ it('builds multiple versions with version switcher', function (): void {
     // Non-default version links are slug-prefixed
     expect($rootUsage)->toContain('href="/v1/usage/"');
 });
+
+it('renders a kb search overlay with keyboard shortcut hint', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-search-overlay-' . uniqid();
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Docsmith Docs',
+        description: 'Generated documentation for testing.',
+    );
+
+    $installationPage = file_get_contents($outputPath . '/installation/index.html');
+
+    expect($installationPage)
+        ->toContain('data-docsmith-search-overlay')
+        ->toContain('data-docsmith-search-overlay-input')
+        ->toContain('data-docsmith-search-overlay-results')
+        ->toContain('(⌘K)');
+});
