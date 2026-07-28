@@ -1657,9 +1657,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (searchOverlayEmpty) {
                 searchOverlayEmpty.hidden = true;
             }
-            if (search) {
-                search.focus();
-            }
         };
 
         document.addEventListener('keydown', function (event) {
@@ -1668,6 +1665,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 openSearchOverlay();
             }
         });
+
+        if (search) {
+            search.addEventListener('focus', function () {
+                search.blur();
+                openSearchOverlay();
+            });
+        }
 
         var overlayCloseTriggers = document.querySelectorAll('[data-docsmith-search-overlay-close]');
         Array.prototype.slice.call(overlayCloseTriggers).forEach(function (el) {
