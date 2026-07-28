@@ -39,6 +39,11 @@ final readonly class SiteBuilder
             $documents ?? $this->scanner->scan($config->sourcePath)
         );
 
+        $visibleDocuments = array_values(array_filter(
+            $documents,
+            fn (Document $document): bool => ! $document->hidden,
+        ));
+
         if ($documents === []) {
             throw new RuntimeException('The source directory does not contain any markdown files.');
         }
@@ -58,14 +63,14 @@ final readonly class SiteBuilder
                 mkdir($directory, 0777, true);
             }
 
-            file_put_contents($absoluteOutputPath, $this->page($config, $document, $documents));
+            file_put_contents($absoluteOutputPath, $this->page($config, $document, $visibleDocuments));
         }
 
         if (! $hasRootIndex) {
-            file_put_contents(rtrim($config->outputPath, '/') . '/index.html', $this->landingPage($config, $documents));
+            file_put_contents(rtrim($config->outputPath, '/') . '/index.html', $this->landingPage($config, $visibleDocuments));
         }
 
-        $this->writeSearchIndex($config, $documents, ! $hasRootIndex);
+        $this->writeSearchIndex($config, $visibleDocuments, ! $hasRootIndex);
 
         if ($config->metadata->generateSitemap) {
             $this->writeSitemap($config, $documents, ! $hasRootIndex);

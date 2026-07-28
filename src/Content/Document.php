@@ -18,6 +18,7 @@ final readonly class Document
         public string $groupIcon = '',
         public int $order = 999,
         public string $sidebarLabel = '',
+        public bool $hidden = false,
     ) {
     }
 
@@ -35,6 +36,25 @@ final readonly class Document
             groupIcon: $this->groupIcon,
             order: $this->order,
             sidebarLabel: $this->sidebarLabel,
+            hidden: $this->hidden,
+        );
+    }
+
+    public function withHidden(bool $hidden): self
+    {
+        return new self(
+            sourcePath: $this->sourcePath,
+            relativePath: $this->relativePath,
+            outputPath: $this->outputPath,
+            title: $this->title,
+            markdown: $this->markdown,
+            html: $this->html,
+            description: $this->description,
+            group: $this->group,
+            groupIcon: $this->groupIcon,
+            order: $this->order,
+            sidebarLabel: $this->sidebarLabel,
+            hidden: $hidden,
         );
     }
 
