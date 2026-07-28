@@ -35,3 +35,5 @@ Search includes both:
 - Usage
 - Architecture
 - Development
+- Versioned Docs
+- LLM Export

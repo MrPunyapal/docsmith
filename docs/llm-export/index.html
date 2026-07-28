@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Export | Docsmith</title>
+    <meta name="description" content="Craft static documentation sites from Markdown with minimal setup.">
+    <link rel="stylesheet" href="../assets/app.css">
+    <script src="../assets/app.js" defer></script>
+</head>
+<body data-docsmith-root="../">
+    <div class="shell has-right-rail">
+        <aside class="sidebar" data-docsmith-sidebar>
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h1 class="brand">Docsmith</h1>
+                    <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+                </div>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
+            </div>
+            <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                
+                <div class="sidebar-actions"><a class="sidebar-action-link" href="https://github.com/MrPunyapal/docsmith">Repository</a><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
+                <div class="search">
+                    <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
+                    <div class="search-results" data-docsmith-search-results hidden></div>
+                    <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+                </div>
+                <nav class="nav" data-docsmith-nav><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="LLM Export" data-search="LLM Export LLM Export">LLM Export</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a><a class="" href="../versioned-docs/" data-nav-item data-title="Versioned Docs" data-search="Versioned Docs Versioned Docs">Versioned Docs</a></nav>
+            </div>
+        </aside>
+        <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
+        <main class="content">
+            <article>
+                <header class="doc-head">
+                    
+                    <h1>LLM Export</h1>
+                    
+                </header>
+                <div class="doc-body">
+                    <p>Docsmith can generate AI-consumable exports of your documentation for use with LLMs and AI agents.</p>
+<h2 id="enabling-the-export">Enabling the export</h2>
+<p>Export is <strong>enabled by default</strong>. Disable it with:</p>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">Docsmith</span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">::</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">make</span><span class="token">(</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">source</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/md</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">output</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">.</span><span class="token"> </span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">/dist</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">title</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">Project Docs</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">siteUrl</span><span class="token">(</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">https://acme.github.io/project</span><span class="token" style="color: #032f62;;--phiki-dark-color: #9ecbff">'</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">llmsExport</span><span class="token">(</span><span class="token" style="color: #005cc5;;--phiki-dark-color: #79b8ff">false</span><span class="token">)</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;;--phiki-dark-color: #f97583">-&gt;</span><span class="token" style="color: #6f42c1;;--phiki-dark-color: #b392f0">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
+<h2 id="generated-files">Generated files</h2>
+<p>Three files are written to the output directory:</p>
+<h3 id="llms-txt"><code>llms.txt</code></h3>
+<p>A directory listing per the <a href="https://llmstxt.org/">llms.txt</a> standard:</p>
+<pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token"># Project Docs
+</span></span><span class="line"><span class="token">&gt; Description.
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">## Docs
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">- https://example.com/installation: Installation
+</span></span><span class="line"><span class="token">- https://example.com/guides/configuration: Configuration
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
+<h3 id="llms-full-txt"><code>llms-full.txt</code></h3>
+<p>Every page rendered as plain text, concatenated:</p>
+<pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token"># Installation
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">Install the package with composer...
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">---
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token"># Configuration
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">Set environment variables...
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
+<h3 id="export-docs-md"><code>export/docs.md</code></h3>
+<p>Every page's raw Markdown merged into a single file with frontmatter metadata:</p>
+<pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8"><code><span class="line"><span class="token"># Installation
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">&gt; Install the package with composer...
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">## Requirements
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token">...
+</span></span><span class="line"><span class="token">
+</span></span></code></pre>
+<h2 id="requirements">Requirements</h2>
+<p><code>siteUrl</code> must be set for correct URL generation in <code>llms.txt</code>.</p>
+<p>If no <code>index.md</code> exists in the source directory, a generated landing page is included in the export.</p>
+
+                </div>
+                <footer class="doc-meta">
+                    <a class="edit-link" href="https://github.com/MrPunyapal/docsmith/edit/main/llm-export.md">Edit this page</a>
+                </footer>
+            </article>
+            <nav class="pager" aria-label="Page navigation"><a class="pager-link" href="../installation/"><span>Previous</span><strong>Installation</strong></a><a class="pager-link pager-link-next" href="../usage/"><span>Next</span><strong>Usage</strong></a></nav>
+        </main>
+        <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#enabling-the-export" data-docsmith-toc-link="enabling-the-export">Enabling the export</a><a class="toc-link toc-link-level-2" href="#generated-files" data-docsmith-toc-link="generated-files">Generated files</a><a class="toc-link toc-link-level-3" href="#llms-txt" data-docsmith-toc-link="llms-txt">llms.txt</a><a class="toc-link toc-link-level-3" href="#llms-full-txt" data-docsmith-toc-link="llms-full-txt">llms-full.txt</a><a class="toc-link toc-link-level-3" href="#export-docs-md" data-docsmith-toc-link="export-docs-md">export/docs.md</a><a class="toc-link toc-link-level-2" href="#requirements" data-docsmith-toc-link="requirements">Requirements</a></nav></aside>
+    </div>
+    <div class="search-overlay" data-docsmith-search-overlay hidden role="dialog" aria-label="Search documentation">
+    <div class="search-overlay-backdrop" data-docsmith-search-overlay-close></div>
+    <div class="search-overlay-panel">
+        <div class="search-overlay-input-wrap">
+            <svg class="search-overlay-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="search" class="search-overlay-input" placeholder="Search documentation..." aria-label="Search documentation" data-docsmith-search-overlay-input autocomplete="off">
+            <kbd class="search-overlay-hint">ESC</kbd>
+        </div>
+        <div class="search-overlay-results" data-docsmith-search-overlay-results></div>
+        <div class="search-overlay-empty" data-docsmith-search-overlay-empty hidden>No results found.</div>
+    </div>
+</div>
+</body>
+</html>

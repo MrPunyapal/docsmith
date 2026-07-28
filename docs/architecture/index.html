@@ -9,7 +9,7 @@
     <script src="../assets/app.js" defer></script>
 </head>
 <body data-docsmith-root="../">
-    <div class="shell">
+    <div class="shell has-right-rail">
         <aside class="sidebar" data-docsmith-sidebar>
             <div class="sidebar-header">
                 <div class="sidebar-title">
@@ -19,13 +19,14 @@
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
-                <div class="sidebar-actions"><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
+                
+                <div class="sidebar-actions"><a class="sidebar-action-link" href="https://github.com/MrPunyapal/docsmith">Repository</a><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
                 <div class="search">
-                    <input type="search" placeholder="Search pages" aria-label="Search pages" data-docsmith-search>
+                    <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
                     <div class="search-results" data-docsmith-search-results hidden></div>
                     <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
                 </div>
-                <nav class="nav" data-docsmith-nav><a class="active" href="./" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a></nav>
+                <nav class="nav" data-docsmith-nav><a class="active" href="./" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../llm-export/" data-nav-item data-title="LLM Export" data-search="LLM Export LLM Export">LLM Export</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a><a class="" href="../versioned-docs/" data-nav-item data-title="Versioned Docs" data-search="Versioned Docs Versioned Docs">Versioned Docs</a></nav>
             </div>
         </aside>
         <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
@@ -41,11 +42,12 @@
 <p>The current implementation is intentionally small.</p>
 <ol>
 <li><code>Docsmith</code> exposes the public API.</li>
-<li><code>Builder</code> collects configuration.</li>
+<li><code>Builder</code> collects configuration (versions, llms-export, readme-index, theme, etc.).</li>
 <li><code>BuildConfig</code> validates source and output paths.</li>
-<li><code>SourceScanner</code> discovers Markdown files.</li>
+<li><code>SourceScanner</code> discovers Markdown files (respects per-version source directories).</li>
 <li><code>CommonMarkRenderer</code> converts Markdown into HTML.</li>
-<li><code>SiteBuilder</code> writes HTML pages and publishes CSS assets.</li>
+<li><code>SiteBuilder</code> writes HTML pages, version switcher, search overlay, and publishes CSS/JS assets.</li>
+<li><code>AssetPublisher</code> generates <code>search-index.json</code>, <code>sitemap.xml</code>, <code>.nojekyll</code>, <code>llms.txt</code>, <code>llms-full.txt</code>, and <code>export/docs.md</code>.</li>
 </ol>
 <h2 id="current-source-model">Current source model</h2>
 <p>Every discovered Markdown file is normalized into a <code>Document</code> object containing:</p>
@@ -69,12 +71,24 @@
 
                 </div>
                 <footer class="doc-meta">
-                    
+                    <a class="edit-link" href="https://github.com/MrPunyapal/docsmith/edit/main/architecture.md">Edit this page</a>
                 </footer>
             </article>
             <nav class="pager" aria-label="Page navigation"><a class="pager-link pager-link-next" href="../development/"><span>Next</span><strong>Development</strong></a></nav>
         </main>
-        
+        <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#current-pipeline" data-docsmith-toc-link="current-pipeline">Current pipeline</a><a class="toc-link toc-link-level-2" href="#current-source-model" data-docsmith-toc-link="current-source-model">Current source model</a><a class="toc-link toc-link-level-2" href="#current-renderer" data-docsmith-toc-link="current-renderer">Current renderer</a></nav></aside>
     </div>
+    <div class="search-overlay" data-docsmith-search-overlay hidden role="dialog" aria-label="Search documentation">
+    <div class="search-overlay-backdrop" data-docsmith-search-overlay-close></div>
+    <div class="search-overlay-panel">
+        <div class="search-overlay-input-wrap">
+            <svg class="search-overlay-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="search" class="search-overlay-input" placeholder="Search documentation..." aria-label="Search documentation" data-docsmith-search-overlay-input autocomplete="off">
+            <kbd class="search-overlay-hint">ESC</kbd>
+        </div>
+        <div class="search-overlay-results" data-docsmith-search-overlay-results></div>
+        <div class="search-overlay-empty" data-docsmith-search-overlay-empty hidden>No results found.</div>
+    </div>
+</div>
 </body>
 </html>
