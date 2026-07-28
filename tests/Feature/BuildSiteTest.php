@@ -504,3 +504,36 @@ it('renders a kb search overlay with keyboard shortcut hint', function (): void 
         ->toContain('data-docsmith-search-overlay-results')
         ->toContain('(⌘K)');
 });
+
+it('generates llms.txt, llms-full.txt, and export/docs.md for ai consumption', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-llm-export-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->siteUrl('https://example.com/docs')
+        ->build();
+
+    expect($outputPath . '/llms.txt')->toBeFile();
+    $llms = file_get_contents($outputPath . '/llms.txt');
+    expect($llms)
+        ->toContain('# Docsmith Docs')
+        ->toContain('https://example.com/docs/installation')
+        ->toContain('https://example.com/docs/guides/configuration')
+        ->toContain('## Docs');
+
+    expect($outputPath . '/llms-full.txt')->toBeFile();
+    $full = file_get_contents($outputPath . '/llms-full.txt');
+    expect($full)
+        ->toContain('# Installation')
+        ->toContain('# Configuration');
+
+    expect($outputPath . '/export/docs.md')->toBeFile();
+    $docsMd = file_get_contents($outputPath . '/export/docs.md');
+    expect($docsMd)
+        ->toContain('# Installation')
+        ->toContain('# Configuration');
+});

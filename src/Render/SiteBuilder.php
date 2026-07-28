@@ -79,6 +79,10 @@ final readonly class SiteBuilder
         if ($config->metadata->generateNoJekyll) {
             $this->writeNoJekyll($config);
         }
+
+        if ($config->metadata->llmsExport) {
+            $this->writeLlmExport($config, $documents, ! $hasRootIndex);
+        }
     }
 
     /** @param list<array{slug: string, label: string, default: bool}> $versions */
@@ -145,6 +149,10 @@ final readonly class SiteBuilder
 
         if ($config->metadata->generateNoJekyll) {
             $this->writeNoJekyll($config, $writeTarget);
+        }
+
+        if ($config->metadata->llmsExport) {
+            $this->writeLlmExport($config, $documents, ! $hasRootIndex);
         }
     }
 
@@ -842,5 +850,82 @@ HTML;
     </div>
 </div>
 HTML;
+    }
+
+    /** @param list<Document> $documents */
+    private function writeLlmExport(BuildConfig $config, array $documents, bool $includeGeneratedRoot): void
+    {
+        $outputPath = rtrim($config->outputPath, '/');
+
+        $siteUrl = rtrim($config->metadata->siteUrl, '/');
+
+        $entries = $documents;
+
+        if ($includeGeneratedRoot) {
+            array_unshift($entries, new Document(
+                sourcePath: '',
+                relativePath: '',
+                outputPath: 'index.html',
+                title: $config->metadata->title,
+                markdown: '# ' . $config->metadata->title . "\n\n" . $config->metadata->description,
+                description: $config->metadata->description,
+            ));
+        }
+
+        $llmsItems = array_map(
+            function (Document $doc) use ($siteUrl): string {
+                $url = $siteUrl !== '' ? $siteUrl . $doc->url() : $doc->url();
+                $desc = $doc->description !== '' ? $doc->description : $doc->title;
+                return '- ' . $url . ': ' . $desc;
+            },
+            $entries,
+        );
+
+        $llmsTitle = '# ' . $config->metadata->title;
+        $llmsDesc = '> ' . $config->metadata->description;
+
+        file_put_contents(
+            $outputPath . '/llms.txt',
+            $llmsTitle . "\n" . $llmsDesc . "\n\n## Docs\n\n" . implode("\n", $llmsItems) . "\n",
+        );
+
+        $fullParts = array_map(
+            function (Document $doc): string {
+                $text = '# ' . $doc->title . "\n\n";
+                if ($doc->description !== '') {
+                    $text .= $doc->description . "\n\n";
+                }
+
+                return $text . $this->plainText($doc->markdown !== '' ? $doc->markdown : ($doc->html));
+            },
+            $entries,
+        );
+
+        file_put_contents(
+            $outputPath . '/llms-full.txt',
+            implode("\n\n---\n\n", $fullParts) . "\n",
+        );
+
+        $exportDir = $outputPath . '/export';
+        if (! is_dir($exportDir)) {
+            mkdir($exportDir, 0777, true);
+        }
+
+        $mdParts = array_map(
+            function (Document $doc): string {
+                $md = '# ' . $doc->title . "\n\n";
+                if ($doc->description !== '') {
+                    $md .= '> ' . $doc->description . "\n\n";
+                }
+
+                return $md . $doc->markdown;
+            },
+            $entries,
+        );
+
+        file_put_contents(
+            $exportDir . '/docs.md',
+            implode("\n\n---\n\n", $mdParts) . "\n",
+        );
     }
 }
