@@ -1479,6 +1479,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    var normalizeHref = function (url) {
+        var normalized = String(url || '/').replace(/^\/+/, '');
+
+        if (normalized === '') {
+            return rootPrefix;
+        }
+
+        if (!normalized.endsWith('/')) {
+            normalized += '/';
+        }
+
+        return rootPrefix + normalized;
+    };
+
     var update = function () {
         var query = String(search.value || '').toLowerCase().trim();
         var visible = 0;
@@ -1593,20 +1607,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 results.hidden = true;
                 return;
             }
-
-            var normalizeHref = function (url) {
-                var normalized = String(url || '/').replace(/^\/+/, '');
-
-                if (normalized === '') {
-                    return rootPrefix;
-                }
-
-                if (!normalized.endsWith('/')) {
-                    normalized += '/';
-                }
-
-                return rootPrefix + normalized;
-            };
 
             results.innerHTML = scored.map(function (entry) {
                 var meta = entry.description !== '' ? entry.description : entry.url;
