@@ -457,25 +457,30 @@ it('builds multiple versions with version switcher', function (): void {
         ->description('Docs with versions.')
         ->build();
 
-    // Both versions are built
+    // Non-default version built to its slug directory
     expect($outputPath . '/v1/index.html')->toBeFile()
         ->and($outputPath . '/v1/usage/index.html')->toBeFile()
-        ->and($outputPath . '/v2/index.html')->toBeFile()
-        ->and($outputPath . '/v2/usage/index.html')->toBeFile()
         ->and($outputPath . '/assets/app.css')->toBeFile();
 
-    // Default version (v2) is mirrored at root
-    expect($outputPath . '/index.html')->toBeFile();
+    // Default version at root (no duplication)
+    expect($outputPath . '/index.html')->toBeFile()
+        ->and($outputPath . '/usage/index.html')->toBeFile();
 
     // Default version (v2) content is at root
     $rootPage = file_get_contents($outputPath . '/index.html');
     expect($rootPage)->toContain('V2 Home');
 
-    // Version switcher is present
-    $v2Usage = file_get_contents($outputPath . '/v2/usage/index.html');
-    expect($v2Usage)
+    // Version switcher present on all pages
+    $rootUsage = file_get_contents($outputPath . '/usage/index.html');
+    expect($rootUsage)
         ->toContain('version-switcher')
         ->toContain('1.x')
         ->toContain('2.x')
         ->toContain('version-link-current');
+
+    // Default version links point to root (no slug prefix)
+    expect($rootUsage)->toContain('href="/usage/"');
+
+    // Non-default version links are slug-prefixed
+    expect($rootUsage)->toContain('href="/v1/usage/"');
 });

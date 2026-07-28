@@ -100,17 +100,19 @@ final readonly class SiteBuilder
             throw new RuntimeException('The source directory does not contain any markdown files.');
         }
 
-        if (! is_dir($config->outputPath)) {
-            mkdir($config->outputPath, 0777, true);
+        $writeTarget = $isDefault ? $rootOutput : $config->outputPath;
+
+        if (! is_dir($writeTarget)) {
+            mkdir($writeTarget, 0777, true);
         }
 
-        $this->assets->publish($config->outputPath, $config->metadata);
+        $this->assets->publish($writeTarget, $config->metadata);
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
             $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug, $document, $config->baseUrl);
 
-            $absoluteOutputPath = rtrim($config->outputPath, '/') . '/' . $document->outputPath;
+            $absoluteOutputPath = rtrim($writeTarget, '/') . '/' . $document->outputPath;
             $directory = dirname($absoluteOutputPath);
 
             if (! is_dir($directory)) {
@@ -121,19 +123,6 @@ final readonly class SiteBuilder
                 $absoluteOutputPath,
                 $this->page($config, $document, $documents, $versionSwitcher),
             );
-
-            if ($isDefault) {
-                $rootPath = rtrim($rootOutput, '/') . '/' . $document->outputPath;
-                $rootDir = dirname($rootPath);
-                if (! is_dir($rootDir)) {
-                    mkdir($rootDir, 0777, true);
-                }
-
-                file_put_contents(
-                    $rootPath,
-                    $this->page($config, $document, $documents, $versionSwitcher),
-                );
-            }
         }
 
         if (! $hasRootIndex) {
@@ -145,21 +134,17 @@ final readonly class SiteBuilder
                 markdown: '',
             );
             $landing = $this->landingPage($config, $documents, $this->versionSwitcherHtml($versions, $currentSlug, $rootDoc, $config->baseUrl));
-            file_put_contents(rtrim($config->outputPath, '/') . '/index.html', $landing);
-
-            if ($isDefault) {
-                file_put_contents(rtrim($rootOutput, '/') . '/index.html', $landing);
-            }
+            file_put_contents(rtrim($writeTarget, '/') . '/index.html', $landing);
         }
 
-        $this->writeSearchIndex($config, $documents, ! $hasRootIndex);
+        $this->writeSearchIndex($config, $documents, ! $hasRootIndex, $writeTarget);
 
         if ($config->metadata->generateSitemap) {
-            $this->writeSitemap($config, $documents, ! $hasRootIndex);
+            $this->writeSitemap($config, $documents, ! $hasRootIndex, $writeTarget);
         }
 
         if ($config->metadata->generateNoJekyll) {
-            $this->writeNoJekyll($config);
+            $this->writeNoJekyll($config, $writeTarget);
         }
     }
 
@@ -570,18 +555,20 @@ HTML;
         return '<nav class="breadcrumbs" aria-label="Breadcrumbs">' . implode('<span class="breadcrumb-sep">/</span>', $parts) . '</nav>';
     }
 
-    private function writeNoJekyll(BuildConfig $config): void
+    private function writeNoJekyll(BuildConfig $config, ?string $outputPath = null): void
     {
-        file_put_contents(rtrim($config->outputPath, '/') . '/.nojekyll', '');
+        $target = $outputPath ?? $config->outputPath;
+        file_put_contents(rtrim($target, '/') . '/.nojekyll', '');
     }
 
     /** @param list<Document> $documents */
-    private function writeSitemap(BuildConfig $config, array $documents, bool $includeGeneratedRoot): void
+    private function writeSitemap(BuildConfig $config, array $documents, bool $includeGeneratedRoot, ?string $outputPath = null): void
     {
         if ($config->metadata->siteUrl === '') {
             return;
         }
 
+        $target = $outputPath ?? $config->outputPath;
         $entries = [];
 
         if ($includeGeneratedRoot) {
@@ -611,11 +598,11 @@ HTML;
 
         $xml .= "</urlset>\n";
 
-        file_put_contents(rtrim($config->outputPath, '/') . '/sitemap.xml', $xml);
+        file_put_contents(rtrim($target, '/') . '/sitemap.xml', $xml);
     }
 
     /** @param list<Document> $documents */
-    private function writeSearchIndex(BuildConfig $config, array $documents, bool $includeGeneratedRoot): void
+    private function writeSearchIndex(BuildConfig $config, array $documents, bool $includeGeneratedRoot, ?string $outputPath = null): void
     {
         $entries = array_map(
             function (Document $document): array {
@@ -642,8 +629,9 @@ HTML;
             ]);
         }
 
+        $target = $outputPath ?? $config->outputPath;
         file_put_contents(
-            rtrim($config->outputPath, '/') . '/search-index.json',
+            rtrim($target, '/') . '/search-index.json',
             json_encode($entries, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]'
         );
     }
@@ -809,8 +797,8 @@ HTML;
             return '';
         }
 
-        $pagePath = $document->url();
-        $pagePath = ltrim($pagePath, '/');
+        $pagePath = str_replace(['/index.html', 'index.html'], '/', $document->outputPath);
+        $pagePath = $pagePath === '/' ? '' : $pagePath;
 
         $basePath = rtrim($baseUrl, '/');
 
@@ -819,7 +807,9 @@ HTML;
                 $selected = $version['slug'] === $currentSlug;
                 $label = htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8');
                 $slug = htmlspecialchars($version['slug'], ENT_QUOTES, 'UTF-8');
-                $href = $basePath . '/' . $slug . '/' . $pagePath;
+                $href = $version['default']
+                    ? $basePath . '/' . $pagePath
+                    : $basePath . '/' . $slug . '/' . $pagePath;
 
                 return sprintf(
                     '<a class="version-link%s" href="%s">%s</a>',
