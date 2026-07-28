@@ -107,9 +107,9 @@ final readonly class SiteBuilder
         $this->assets->publish($config->outputPath, $config->metadata);
         $hasRootIndex = $this->hasRootIndex($documents);
 
-        $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug);
-
         foreach ($documents as $document) {
+            $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug, $document, $config->baseUrl);
+
             $absoluteOutputPath = rtrim($config->outputPath, '/') . '/' . $document->outputPath;
             $directory = dirname($absoluteOutputPath);
 
@@ -137,7 +137,14 @@ final readonly class SiteBuilder
         }
 
         if (! $hasRootIndex) {
-            $landing = $this->landingPage($config, $documents, $versionSwitcher);
+            $rootDoc = new Document(
+                sourcePath: '',
+                relativePath: '',
+                outputPath: 'index.html',
+                title: $config->metadata->title,
+                markdown: '',
+            );
+            $landing = $this->landingPage($config, $documents, $this->versionSwitcherHtml($versions, $currentSlug, $rootDoc, $config->baseUrl));
             file_put_contents(rtrim($config->outputPath, '/') . '/index.html', $landing);
 
             if ($isDefault) {
@@ -796,22 +803,28 @@ HTML;
     }
 
     /** @param list<array{slug: string, label: string, default: bool}> $versions */
-    private function versionSwitcherHtml(array $versions, string $currentSlug): string
+    private function versionSwitcherHtml(array $versions, string $currentSlug, Document $document, string $baseUrl = '/'): string
     {
         if (count($versions) < 2) {
             return '';
         }
 
+        $pagePath = $document->url();
+        $pagePath = ltrim($pagePath, '/');
+
+        $basePath = rtrim($baseUrl, '/');
+
         $options = array_map(
-            function (array $version) use ($currentSlug): string {
+            function (array $version) use ($currentSlug, $pagePath, $basePath): string {
                 $selected = $version['slug'] === $currentSlug;
                 $label = htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8');
                 $slug = htmlspecialchars($version['slug'], ENT_QUOTES, 'UTF-8');
+                $href = $basePath . '/' . $slug . '/' . $pagePath;
 
                 return sprintf(
-                    '<a class="version-link%s" href="%s/">%s</a>',
+                    '<a class="version-link%s" href="%s">%s</a>',
                     $selected ? ' version-link-current' : '',
-                    $slug,
+                    $href,
                     $label,
                 );
             },
