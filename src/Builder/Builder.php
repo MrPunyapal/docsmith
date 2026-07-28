@@ -7,9 +7,13 @@ namespace Docsmith\Builder;
 use Docsmith\Compatibility\ReadmeIndexImporter;
 use Docsmith\Config\BuildConfig;
 use Docsmith\Config\SiteMetadata;
+use Docsmith\Config\VersionConfig;
 use Docsmith\Markdown\CommonMarkRenderer;
 use Docsmith\Render\SiteBuilder;
 use LogicException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 
 final class Builder
 {
@@ -45,6 +49,35 @@ final class Builder
 
     /** @var list<string> */
     private array $readmeSkipSections = [];
+
+    /** @var list<VersionConfig> */
+    private array $versions = [];
+
+    /** @param array<string, array{label: string, source: string, default?: bool}> $versions */
+    public function versions(array $versions): self
+    {
+        $defaults = array_filter($versions, fn (array $v): bool => (bool) ($v['default'] ?? false));
+
+        if (count($defaults) > 1) {
+            throw new LogicException('Only one version can be marked as default.');
+        }
+
+        $this->versions = [];
+        foreach ($versions as $slug => $config) {
+            $this->versions[] = VersionConfig::fromArray((string) $slug, $config);
+        }
+
+        if ($this->versions !== [] && $defaults === []) {
+            $this->versions[0] = new VersionConfig(
+                slug: $this->versions[0]->slug,
+                label: $this->versions[0]->label,
+                sourcePath: $this->versions[0]->sourcePath,
+                isDefault: true,
+            );
+        }
+
+        return $this;
+    }
 
     public function source(string $sourcePath): self
     {
@@ -164,6 +197,11 @@ final class Builder
 
     public function build(): void
     {
+        if ($this->versions !== []) {
+            $this->buildVersions();
+            return;
+        }
+
         $documents = null;
         $sourcePath = $this->sourcePath;
 
@@ -193,6 +231,88 @@ final class Builder
         );
 
         (new SiteBuilder())->build($config, $documents);
+    }
+
+    private function buildVersions(): void
+    {
+        $outputPath = $this->requireOutputPath();
+
+        $versionsData = array_map(
+            fn (VersionConfig $v): array => ['slug' => $v->slug, 'label' => $v->label, 'default' => $v->isDefault],
+            $this->versions,
+        );
+
+        foreach ($this->versions as $version) {
+            $versionDocPath = rtrim($outputPath, '/') . '/' . $version->slug;
+            $isDefault = $version->isDefault;
+
+            $config = BuildConfig::fromInput(
+                sourcePath: $version->sourcePath,
+                outputPath: $versionDocPath,
+                metadata: new SiteMetadata(
+                    title: $this->title,
+                    description: $this->description,
+                    accentColor: $this->accentColor !== '' ? $this->accentColor : '#ff2d20',
+                    accentColorDark: $this->accentColorDark,
+                    customCss: $this->customCss,
+                    repositoryUrl: $this->normalizedRepositoryUrl(),
+                    siteUrl: $this->normalizedSiteUrl(),
+                    editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',
+                    generateSitemap: $this->generateSitemap,
+                    generateNoJekyll: $this->generateNoJekyll,
+                ),
+                baseUrl: $this->baseUrl,
+                rightSidebar: $this->rightSidebar,
+            );
+
+            (new SiteBuilder())->buildVersion(
+                config: $config,
+                versions: $versionsData,
+                currentSlug: $version->slug,
+                isDefault: $isDefault,
+                rootOutput: $outputPath,
+            );
+        }
+
+        $this->writeAssetsToRoot($outputPath);
+    }
+
+    private function writeAssetsToRoot(string $outputPath): void
+    {
+        $assetsSource = rtrim($outputPath, '/') . '/' . $this->versions[0]->slug . '/assets';
+        $assetsTarget = rtrim($outputPath, '/') . '/assets';
+
+        if (is_dir($assetsSource) && ! is_dir($assetsTarget)) {
+            $this->copyDirectory($assetsSource, $assetsTarget);
+        }
+    }
+
+    private function copyDirectory(string $source, string $target): void
+    {
+        if (! is_dir($target)) {
+            mkdir($target, 0777, true);
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST,
+        );
+
+        foreach ($iterator as $item) {
+            if (! $item instanceof SplFileInfo) {
+                continue;
+            }
+
+            $dest = $target . '/' . $iterator->getSubPathname();
+
+            if ($item->isDir()) {
+                if (! is_dir($dest)) {
+                    mkdir($dest, 0777, true);
+                }
+            } else {
+                copy($item->getRealPath() ?: (string) $item, $dest);
+            }
+        }
     }
 
     private function requireSourcePath(): string

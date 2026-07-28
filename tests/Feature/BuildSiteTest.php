@@ -434,3 +434,53 @@ MD);
     // Hidden page is excluded from pagination
     expect($visiblePage)->not->toContain('Next');
 });
+
+it('builds multiple versions with version switcher', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-versions-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-versions-dist-' . uniqid();
+
+    mkdir($projectPath . '/v1', 0777, true);
+    mkdir($projectPath . '/v2', 0777, true);
+
+    file_put_contents($projectPath . '/v1/index.md', "# V1 Home\n\nVersion 1 docs.\n");
+    file_put_contents($projectPath . '/v1/usage.md', "# V1 Usage\n\nUsing version 1.\n");
+    file_put_contents($projectPath . '/v2/index.md', "# V2 Home\n\nVersion 2 docs.\n");
+    file_put_contents($projectPath . '/v2/usage.md', "# V2 Usage\n\nUsing version 2.\n");
+
+    Docsmith::make()
+        ->versions([
+            'v1' => ['label' => '1.x', 'source' => $projectPath . '/v1'],
+            'v2' => ['label' => '2.x', 'source' => $projectPath . '/v2', 'default' => true],
+        ])
+        ->output($outputPath)
+        ->title('Versioned Docs')
+        ->description('Docs with versions.')
+        ->build();
+
+    // Non-default version built to its slug directory
+    expect($outputPath . '/v1/index.html')->toBeFile()
+        ->and($outputPath . '/v1/usage/index.html')->toBeFile()
+        ->and($outputPath . '/assets/app.css')->toBeFile();
+
+    // Default version at root (no duplication)
+    expect($outputPath . '/index.html')->toBeFile()
+        ->and($outputPath . '/usage/index.html')->toBeFile();
+
+    // Default version (v2) content is at root
+    $rootPage = file_get_contents($outputPath . '/index.html');
+    expect($rootPage)->toContain('V2 Home');
+
+    // Version switcher present on all pages
+    $rootUsage = file_get_contents($outputPath . '/usage/index.html');
+    expect($rootUsage)
+        ->toContain('version-switcher')
+        ->toContain('1.x')
+        ->toContain('2.x')
+        ->toContain('version-link-current');
+
+    // Default version links point to root (no slug prefix)
+    expect($rootUsage)->toContain('href="/usage/"');
+
+    // Non-default version links are slug-prefixed
+    expect($rootUsage)->toContain('href="/v1/usage/"');
+});
