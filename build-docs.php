@@ -6,9 +6,13 @@ require __DIR__ . '/vendor/autoload.php';
 
 use Docsmith\Docsmith;
 
-Docsmith::build(
-    source: __DIR__ . '/md',
-    output: __DIR__ . '/docs',
-    title: 'Docsmith',
-    description: 'Craft static documentation sites from Markdown with minimal setup.',
-);
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/docs')
+    ->title('Docsmith')
+    ->description('Craft static documentation sites from Markdown with minimal setup.')
+    ->repositoryUrl('https://github.com/MrPunyapal/docsmith')
+    ->siteUrl('https://mrpunyapal.github.io/docsmith')
+    ->editBranch('main')
+    ->rightSidebar()
+    ->build();
