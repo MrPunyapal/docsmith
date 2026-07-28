@@ -1539,7 +1539,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        if (query.length < 2) {
+        if (query.length < 1) {
             results.innerHTML = '';
             results.hidden = true;
             return;
@@ -1731,7 +1731,7 @@ document.addEventListener('DOMContentLoaded', function () {
         searchOverlayInput.addEventListener('input', function () {
             var query = String(searchOverlayInput.value || '').toLowerCase().trim();
 
-            if (query.length < 2) {
+            if (query.length < 1) {
                 searchOverlayResults.innerHTML = '';
                 if (searchOverlayEmpty) {
                     searchOverlayEmpty.hidden = true;
