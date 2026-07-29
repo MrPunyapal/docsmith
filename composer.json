@@ -5,8 +5,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "laravel/ai": "^0.10.1",
         "league/commonmark": "^2.7",
-        "phiki/phiki": "^2.2"
+        "phiki/phiki": "^2.2",
+        "symfony/console": "^8.1",
+        "symfony/process": "^8.1"
     },
     "require-dev": {
         "laravel/pint": "^1.18",
@@ -41,6 +44,7 @@
             "pint --test --parallel"
         ],
         "test:types": "phpstan analyse --ansi",
+        "test:ai": "pest tests/Unit/Ai tests/Feature/Ai --parallel",
         "test:unit": "pest --parallel",
         "test": [
             "Composer\\Config::disableProcessTimeout",
