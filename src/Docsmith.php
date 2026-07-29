@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Docsmith;
 
+use Docsmith\Ai\Mcp\DocsmithMcpServer;
+use Docsmith\Ai\Pipeline\DocsmithGenerate;
 use Docsmith\Builder\Builder;
 
 final class Docsmith
@@ -45,5 +47,26 @@ final class Docsmith
     public static function make(): Builder
     {
         return new Builder();
+    }
+
+    public static function generate(): DocsmithGenerate
+    {
+        return new DocsmithGenerate();
+    }
+
+    public static function serveMcp(
+        string $transport = 'stdio',
+        int $port = 8090,
+        string $sourcePath = '',
+        string $docsSourcePath = '',
+    ): void {
+        $server = new DocsmithMcpServer(
+            transport: $transport,
+            port: $port,
+            sourcePath: $sourcePath,
+            docsSourcePath: $docsSourcePath,
+        );
+
+        $server->run();
     }
 }
