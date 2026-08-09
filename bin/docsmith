@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Docsmith\Command\GenerateCommand;
+use Symfony\Component\Console\Application;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$application = new Application('Docsmith');
+$application->addCommands([new GenerateCommand()]);
+$application->run();

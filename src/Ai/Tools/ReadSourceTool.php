@@ -8,10 +8,18 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
-final class ReadSourceTool implements ToolInterface
+/**
+ * @phpstan-type ListedFile array{path: string, size: int, extension: string}
+ * @phpstan-type ReadResult array{path: string, content: string, lines: int, extension: string}
+ * @phpstan-type StructureEntry array{file: string, classes: array<int, string>, functions: array<int, string>, namespaces: array<int, string>}
+ */
+final readonly class ReadSourceTool implements ToolInterface
 {
-    public function __construct(private string $sourcePath)
+    private string $sourcePath;
+
+    public function __construct(string $sourcePath)
     {
+        $this->sourcePath = realpath($sourcePath) ?: $sourcePath;
     }
 
     public function name(): string
@@ -24,25 +32,40 @@ final class ReadSourceTool implements ToolInterface
         return 'Read and analyze source code files in the target project. Use list_files to discover files, read_file to get contents, and analyze_structure for class/function trees.';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function inputSchema(): array
     {
         return [
-            'action' => ['type' => 'string', 'enum' => ['list_files', 'read_file', 'analyze_structure'], 'description' => 'Action to perform'],
-            'path' => ['type' => 'string', 'description' => 'File path or pattern relative to source root'],
-            'pattern' => ['type' => 'string', 'description' => 'Glob pattern for file matching (e.g. "**/*.php")'],
+            'type' => 'object',
+            'properties' => [
+                'action' => ['type' => 'string', 'enum' => ['list_files', 'read_file', 'analyze_structure'], 'description' => 'Action to perform'],
+                'path' => ['type' => 'string', 'description' => 'File path or pattern relative to source root'],
+                'pattern' => ['type' => 'string', 'description' => 'Glob pattern for file matching (e.g. "**/*.php")'],
+            ],
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
     public function handle(array $input): array
     {
-        return match ($input['action']) {
-            'list_files' => $this->listFiles($input['pattern'] ?? '*'),
-            'read_file' => $this->readFile($input['path'] ?? ''),
-            'analyze_structure' => $this->analyzeStructure($input['path'] ?? ''),
-            default => ['error' => 'Unknown action: ' . ($input['action'] ?? 'none')],
+        $action = is_string($input['action'] ?? null) ? $input['action'] : '';
+
+        return match ($action) {
+            'list_files' => $this->listFiles(is_string($input['pattern'] ?? null) ? $input['pattern'] : '*'),
+            'read_file' => $this->readFile(is_string($input['path'] ?? null) ? $input['path'] : ''),
+            'analyze_structure' => $this->analyzeStructure(is_string($input['path'] ?? null) ? $input['path'] : ''),
+            default => ['error' => 'Unknown action: ' . $action],
         };
     }
 
+    /**
+     * @return array{files: array<int, ListedFile>, count: int}
+     */
     private function listFiles(string $pattern): array
     {
         $iterator = new RecursiveIteratorIterator(
@@ -74,15 +97,33 @@ final class ReadSourceTool implements ToolInterface
         return str_replace($sourceNormalized . '/', '', $fileNormalized);
     }
 
+    /**
+     * @return ReadResult|array{error: string}
+     */
     private function readFile(string $path): array
     {
         $fullPath = rtrim($this->sourcePath, '\\/') . '/' . ltrim($path, '\\/');
 
-        if (! file_exists($fullPath)) {
-            return ['error' => "File not found: {$path}"];
+        $sourceRoot = realpath($this->sourcePath);
+        $targetPath = realpath($fullPath);
+
+        if ($sourceRoot === false) {
+            return ['error' => 'Source root not found'];
         }
 
-        $content = file_get_contents($fullPath);
+        if ($targetPath === false) {
+            return ['error' => 'File not found: ' . $path];
+        }
+
+        if (! str_starts_with($targetPath, $sourceRoot . DIRECTORY_SEPARATOR) && $targetPath !== $sourceRoot) {
+            return ['error' => 'Access denied: path outside source root'];
+        }
+
+        $content = file_get_contents($targetPath);
+
+        if ($content === false) {
+            return ['error' => 'Unable to read file: ' . $path];
+        }
 
         return [
             'path' => $path,
@@ -92,6 +133,9 @@ final class ReadSourceTool implements ToolInterface
         ];
     }
 
+    /**
+     * @return array{structure: array<int, StructureEntry>}|array{error: string}
+     */
     private function analyzeStructure(string $path): array
     {
         $fullPath = $this->sourcePath . '/' . ltrim($path, '/');
@@ -100,14 +144,34 @@ final class ReadSourceTool implements ToolInterface
             $fullPath = dirname($fullPath);
         }
 
+        $sourceRoot = realpath($this->sourcePath);
+        $targetPath = realpath($fullPath);
+
+        if ($sourceRoot === false) {
+            return ['error' => 'Source root not found'];
+        }
+
+        if ($targetPath === false) {
+            return ['error' => 'Path not found: ' . $path];
+        }
+
+        if (! str_starts_with($targetPath, $sourceRoot . DIRECTORY_SEPARATOR) && $targetPath !== $sourceRoot) {
+            return ['error' => 'Access denied: path outside source root'];
+        }
+
         $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($fullPath, RecursiveDirectoryIterator::SKIP_DOTS),
+            new RecursiveDirectoryIterator($targetPath, RecursiveDirectoryIterator::SKIP_DOTS),
         );
 
         $structure = [];
         foreach ($iterator as $file) {
             if ($file instanceof SplFileInfo && $file->isFile() && $file->getExtension() === 'php') {
                 $content = file_get_contents($file->getPathname());
+
+                if ($content === false) {
+                    continue;
+                }
+
                 $structure[] = [
                     'file' => $this->normalizeRelativePath($file),
                     'classes' => $this->extractClasses($content),
@@ -120,21 +184,33 @@ final class ReadSourceTool implements ToolInterface
         return ['structure' => $structure];
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function extractClasses(string $content): array
     {
-        preg_match_all('/(?:abstract\s+|final\s+)?(?:class|interface|trait)\s+(\w+)/', $content, $matches);
-        return $matches[1] ?? [];
+        preg_match_all('/(?:(?:abstract|final|readonly)\s+)*(?:class|interface|trait)\s+(\w+)/', $content, $matches);
+
+        return $matches[1];
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function extractFunctions(string $content): array
     {
         preg_match_all('/function\s+(\w+)\s*\(/', $content, $matches);
-        return $matches[1] ?? [];
+
+        return $matches[1];
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function extractNamespaces(string $content): array
     {
         preg_match('/^namespace\s+([^;]+);/m', $content, $matches);
+
         return isset($matches[1]) ? [$matches[1]] : [];
     }
 }
