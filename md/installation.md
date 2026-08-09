@@ -13,7 +13,19 @@ composer require mrpunyapal/docsmith
 
 ## Build documentation
 
-Docsmith can build a static site from any Markdown directory.
+Docsmith can build a static site from any Markdown directory, either from PHP or from the command line.
+
+### Command line
+
+After installing the package, the binary is available at `vendor/bin/docsmith`:
+
+```bash
+vendor/bin/docsmith build --source=md --output=docs --title="Docsmith"
+```
+
+Run `vendor/bin/docsmith --help` for the full list of options.
+
+### PHP
 
 ```php
 use Docsmith\Docsmith;
