@@ -341,7 +341,9 @@ Return ONLY a JSON object, with no prose, no code fences:
 Rules:
 - filename: lowercase, hyphens, ends with .md, no directories.
 - purpose: one sentence describing the page's content.
-- Prefer pages a real user would open: overview, installation, usage, configuration, API/endpoints, developer guide, testing.
+- Prefer pages a real user would open: overview, installation, configuration, usage, commands, examples, testing.
+- NEVER create per-class or per-file reference pages that describe source code. Pages must tell the reader HOW TO USE the project (install, configure, run), not what the code does internally.
+- Adapt to the project kind: a composer package gets install/composer/configuration/usage pages for package consumers; a CLI tool gets command pages; a web app gets setup and end-user usage pages.
 PROMPT;
 
         $response = $this->aiProvider instanceof AiProviderInterface
@@ -390,7 +392,7 @@ PROMPT;
         string $purpose,
     ): string {
         $prompt = <<<PROMPT
-You are a technical writer. Write ONE markdown page for the documentation set of the project below.
+You are a technical writer. Write ONE markdown page for the documentation set of the project below. The page is for people who USE the project (end user, package consumer, developer) — it must explain how to install, configure, and use it, never how the source code works internally.
 
 Page title: {$title}
 Target file: {$filename}
@@ -416,8 +418,34 @@ PROMPT;
             : [];
 
         $content = is_string($response['text'] ?? null) ? $response['text'] : '';
+        $content = $this->extractLastMarkdownDocument($content);
 
         return trim($content) !== '' ? $content : "# {$title}\n";
+    }
+
+    /**
+     * Models may prefix their answer with thinking traces or emit multiple
+     * drafts (retried turns). Keep only the final markdown document.
+     */
+    private function extractLastMarkdownDocument(string $text): string
+    {
+        $text = trim($text);
+
+        if ($text === '') {
+            return $text;
+        }
+
+        if (preg_match_all('/```markdown\s*\n(.*?)```/s', $text, $matches) > 0) {
+            return trim((string) end($matches[1]));
+        }
+
+        $headings = preg_split('/(?m)^(?=# )/', $text);
+
+        if (is_array($headings) && count($headings) > 1) {
+            return trim((string) end($headings));
+        }
+
+        return $text;
     }
 
     /**
