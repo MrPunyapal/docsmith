@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith\Ai\Media;
 
-final class MediaStorage
+final readonly class MediaStorage
 {
     private string $basePath;
 
@@ -16,9 +16,9 @@ final class MediaStorage
 
     public function store(string $sourcePath, string $type = 'screenshots'): string
     {
-        $typeDir = "{$this->basePath}/{$type}";
+        $typeDir = sprintf('%s/%s', $this->basePath, $type);
         $filename = basename($sourcePath);
-        $destPath = "{$typeDir}/{$filename}";
+        $destPath = sprintf('%s/%s', $typeDir, $filename);
 
         if (! is_dir($typeDir)) {
             mkdir($typeDir, 0777, true);
@@ -28,7 +28,7 @@ final class MediaStorage
             copy($sourcePath, $destPath);
         }
 
-        return "media/{$type}/{$filename}";
+        return sprintf('media/%s/%s', $type, $filename);
     }
 
     public function relativePath(string $absolutePath): string
@@ -36,7 +36,7 @@ final class MediaStorage
         $baseDir = dirname($this->basePath, 2);
 
         return str_replace(
-            ['\\', "{$baseDir}/"],
+            ['\\', $baseDir . '/'],
             ['/', ''],
             $absolutePath,
         );
@@ -50,7 +50,7 @@ final class MediaStorage
     public function ensureDirectories(): void
     {
         foreach (['screenshots', 'video', 'gifs'] as $dir) {
-            $path = "{$this->basePath}/{$dir}";
+            $path = sprintf('%s/%s', $this->basePath, $dir);
             if (! is_dir($path)) {
                 mkdir($path, 0777, true);
             }

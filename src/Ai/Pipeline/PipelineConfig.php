@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace Docsmith\Ai\Pipeline;
 
-final class PipelineConfig
+final readonly class PipelineConfig
 {
     public function __construct(
-        public readonly string $sourcePath,
-        public readonly string $docsSourcePath,
-        public readonly string $outputPath,
-        public readonly string $title = 'Documentation',
-        public readonly ?string $provider = null,
-        public readonly ?string $apiKey = null,
-        public readonly ?string $model = null,
-        public readonly bool $mediaEnabled = false,
-        public readonly bool $reviewEnabled = false,
-        public readonly ?string $mediaOutputPath = null,
+        public string $sourcePath,
+        public string $docsSourcePath,
+        public string $outputPath,
+        public string $title = 'Documentation',
+        public ?string $provider = null,
+        public ?string $apiKey = null,
+        public ?string $model = null,
+        public ?string $baseUrl = null,
+        public bool $mediaEnabled = false,
+        public bool $reviewEnabled = false,
+        public ?string $mediaOutputPath = null,
     ) {
     }
 }

@@ -33,15 +33,20 @@ it('extracts classes from scanned files', function (): void {
     $agent = new CodeScanAgent(__DIR__ . '/../../../Fixtures/SampleProject');
     $result = $agent->run(['path' => __DIR__ . '/../../../Fixtures/SampleProject']);
 
-    $controllerFeature = current(array_filter(
-        $result['features'],
-        fn ($f) => $f['name'] === 'UserController',
-    ));
+    $controllerFeature = null;
+    foreach ($result['features'] as $feature) {
+        if ($feature['name'] === 'UserController') {
+            $controllerFeature = $feature;
+        }
+    }
 
-    expect($controllerFeature)->not->toBeEmpty()
-        ->and($controllerFeature['classes'])->toContain('UserController')
-        ->and($controllerFeature['functions'])->toContain('index')
-        ->toContain('show');
+    expect($controllerFeature)->not->toBeNull();
+
+    if (is_array($controllerFeature)) {
+        expect($controllerFeature['classes'])->toContain('UserController')
+            ->and($controllerFeature['functions'])->toContain('index')
+            ->toContain('show');
+    }
 });
 
 it('extracts functions from files without classes', function (): void {
@@ -50,7 +55,7 @@ it('extracts functions from files without classes', function (): void {
 
     $helperFiles = array_filter(
         $result['files'],
-        fn ($f) => $f['path'] === 'src/helpers.php',
+        fn (array $f): bool => $f['path'] === 'src/helpers.php',
     );
 
     expect($helperFiles)->not->toBeEmpty();

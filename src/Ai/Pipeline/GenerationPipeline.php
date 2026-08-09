@@ -12,15 +12,13 @@ use Docsmith\Ai\Provider\LaravelAiProvider;
 use Docsmith\Ai\Provider\ProviderConfig;
 use Docsmith\Docsmith;
 
-final class GenerationPipeline
+final readonly class GenerationPipeline
 {
-    private ?LaravelAiProvider $aiProvider = null;
-
     public function __construct(
-        private readonly CodeScanAgent $codeScanAgent,
-        private readonly DocWriterAgent $docWriterAgent,
-        private readonly MediaAgent $mediaAgent,
-        private readonly ReviewerAgent $reviewerAgent,
+        private CodeScanAgent $codeScanAgent,
+        private DocWriterAgent $docWriterAgent,
+        private MediaAgent $mediaAgent,
+        private ReviewerAgent $reviewerAgent,
     ) {
     }
 
@@ -33,13 +31,14 @@ final class GenerationPipeline
                 provider: $config->provider,
                 apiKey: $config->apiKey,
                 model: $config->model ?? 'claude-sonnet-4-6',
+                baseUrl: $config->baseUrl,
             ));
         }
 
         return new self(
             codeScanAgent: new CodeScanAgent($config->sourcePath),
             docWriterAgent: new DocWriterAgent($aiProvider, $config->docsSourcePath),
-            mediaAgent: new MediaAgent($config->sourcePath, $config->mediaOutputPath ?? $config->docsSourcePath . '/media'),
+            mediaAgent: new MediaAgent($config->mediaOutputPath ?? $config->docsSourcePath . '/media'),
             reviewerAgent: new ReviewerAgent($aiProvider),
         );
     }
@@ -48,20 +47,31 @@ final class GenerationPipeline
     {
         $result = new PipelineResult();
 
-        $result->start('code_scan');
+        $result->start();
+
         $scanResult = $this->codeScanAgent->run(['path' => $config->sourcePath]);
-        $features = $scanResult['features'] ?? [];
+        $features = $scanResult['features'];
         $result->complete('code_scan', features: $scanResult);
 
-        $result->start('doc_write');
-        foreach ($features as $feature) {
-            $docResult = $this->docWriterAgent->run($feature);
+        $result->start();
+        $docResults = [];
+
+        if ($this->docWriterAgent->hasAi()) {
+            $docResults = $this->docWriterAgent->runProject($scanResult);
+        } else {
+            foreach ($features as $feature) {
+                $docResults[] = $this->docWriterAgent->run($feature);
+            }
+        }
+
+        foreach ($docResults as $docResult) {
             $result->addGeneratedDoc($docResult);
         }
+
         $result->complete('doc_write');
 
         if ($config->mediaEnabled) {
-            $result->start('media');
+            $result->start();
             $mediaResult = $this->mediaAgent->run([
                 'features' => $features,
                 'outputPath' => $config->mediaOutputPath ?? $config->docsSourcePath . '/media',
@@ -70,12 +80,12 @@ final class GenerationPipeline
         }
 
         if ($config->reviewEnabled) {
-            $result->start('review');
+            $result->start();
             $reviewResult = $this->reviewerAgent->run(['path' => $config->docsSourcePath]);
             $result->complete('review', review: $reviewResult);
         }
 
-        $result->start('build');
+        $result->start();
         Docsmith::make()
             ->source($config->docsSourcePath)
             ->output($config->outputPath)

@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace Docsmith\Ai\Agent;
 
-use Docsmith\Ai\Media\MediaEmbedder;
 use Docsmith\Ai\Media\ScreenshotCapture;
 use Docsmith\Ai\Media\VideoRecorder;
+use Docsmith\Ai\Tools\ToolInterface;
 
-final class MediaAgent implements AgentInterface
+/**
+ * @phpstan-import-type Feature from CodeScanAgent
+ *
+ * @phpstan-type MediaResult array{captured: array<int, array<string, mixed>>, count: int, directories: array<string, string>}
+ */
+final readonly class MediaAgent implements AgentInterface
 {
     public function __construct(
-        private readonly string $sourcePath,
-        private readonly string $mediaOutputPath = 'docs-source/media',
+        private string $mediaOutputPath = 'docs-source/media',
     ) {
     }
 
@@ -26,36 +30,35 @@ final class MediaAgent implements AgentInterface
         return 'Analyze project features and determine what screenshots, videos, or GIFs are needed, then capture them.';
     }
 
+    /**
+     * @return list<ToolInterface>
+     */
     public function tools(): array
     {
         return [];
     }
 
+    /**
+     * @param  array{features?: array<int, Feature>, outputPath?: string}  $context
+     * @return MediaResult
+     */
     public function run(array $context): array
     {
         $features = $context['features'] ?? [];
         $outputPath = $context['outputPath'] ?? $this->mediaOutputPath;
         $captured = [];
 
-        $embedder = new MediaEmbedder();
         $mediaDirs = $this->ensureDirectories($outputPath);
 
         foreach ($features as $feature) {
             $score = $this->scoreMediaNeed($feature);
-            $featureName = $feature['name'] ?? 'unknown';
 
             if ($score >= 8) {
-                $result = $this->captureScreenshot($feature, $outputPath);
-                if ($result !== null) {
-                    $captured[] = $result;
-                }
+                $captured[] = $this->captureScreenshot($feature, $outputPath);
             }
 
             if ($score >= 9) {
-                $result = $this->recordVideo($feature, $outputPath);
-                if ($result !== null) {
-                    $captured[] = $result;
-                }
+                $captured[] = $this->recordVideo($feature, $outputPath);
             }
         }
 
@@ -66,13 +69,20 @@ final class MediaAgent implements AgentInterface
         ];
     }
 
+    /**
+     * @param  Feature  $feature
+     */
     private function scoreMediaNeed(array $feature): int
     {
         $score = 0;
-        $name = strtolower($feature['name'] ?? '');
-        $description = strtolower($feature['description'] ?? '');
-        $classes = array_map('strtolower', $feature['classes'] ?? []);
-        $files = $feature['files'] ?? [];
+        $name = strtolower($feature['name']);
+        $description = strtolower($feature['description']);
+        $classes = [];
+        foreach ($feature['classes'] as $class) {
+            $classes[] = strtolower($class);
+        }
+
+        $files = $feature['files'];
 
         $uiKeywords = ['controller', 'view', 'component', 'page', 'form', 'dashboard', 'ui', 'modal', 'button'];
         $animationKeywords = ['animation', 'transition', 'workflow', 'flow', 'process', 'step'];
@@ -112,12 +122,16 @@ final class MediaAgent implements AgentInterface
         return $score;
     }
 
-    private function captureScreenshot(array $feature, string $outputPath): ?array
+    /**
+     * @param  Feature  $feature
+     * @return array{type: string, feature: string, path: string}
+     */
+    private function captureScreenshot(array $feature, string $outputPath): array
     {
-        $name = $feature['name'] ?? 'screenshot';
+        $name = $feature['name'];
         $slug = $this->slugify($name);
-        $filename = "{$slug}-" . date('Ymd') . ".png";
-        $filepath = "{$outputPath}/screenshots/{$filename}";
+        $filename = $slug . '-' . date('Ymd') . '.png';
+        $filepath = sprintf('%s/screenshots/%s', $outputPath, $filename);
 
         $capture = new ScreenshotCapture();
         $result = $capture->capture('http://localhost:8000', $filepath);
@@ -129,12 +143,16 @@ final class MediaAgent implements AgentInterface
         ];
     }
 
-    private function recordVideo(array $feature, string $outputPath): ?array
+    /**
+     * @param  Feature  $feature
+     * @return array{type: string, feature: string, path: string}
+     */
+    private function recordVideo(array $feature, string $outputPath): array
     {
-        $name = $feature['name'] ?? 'video';
+        $name = $feature['name'];
         $slug = $this->slugify($name);
-        $filename = "{$slug}-" . date('Ymd') . ".mp4";
-        $filepath = "{$outputPath}/video/{$filename}";
+        $filename = $slug . '-' . date('Ymd') . '.mp4';
+        $filepath = sprintf('%s/video/%s', $outputPath, $filename);
 
         $recorder = new VideoRecorder();
         $result = $recorder->record('http://localhost:8000', $filepath, 10);
@@ -146,12 +164,15 @@ final class MediaAgent implements AgentInterface
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
     private function ensureDirectories(string $base): array
     {
         $dirs = [
-            'screenshots' => "{$base}/screenshots",
-            'video' => "{$base}/video",
-            'gifs' => "{$base}/gifs",
+            'screenshots' => $base . '/screenshots',
+            'video' => $base . '/video',
+            'gifs' => $base . '/gifs',
         ];
 
         foreach ($dirs as $dir) {
@@ -167,6 +188,7 @@ final class MediaAgent implements AgentInterface
     {
         $text = strtolower($text);
         $text = preg_replace('/[^a-z0-9]+/', '-', $text);
-        return trim($text, '-');
+
+        return trim((string) $text, '-');
     }
 }

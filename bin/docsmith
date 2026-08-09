@@ -3,16 +3,27 @@
 
 declare(strict_types=1);
 
+use Docsmith\Command\GenerateCommand;
+use Symfony\Component\Console\Application;
+
 require __DIR__ . '/../vendor/autoload.php';
 
 use Docsmith\Docsmith;
 use Docsmith\RemoteSources\RemoteSources;
 use Docsmith\RemoteSources\InvalidSourcesConfiguration;
 
+if (($argv[1] ?? null) === 'generate' && class_exists(GenerateCommand::class)) {
+    $application = new Application('Docsmith');
+    $application->addCommands([new GenerateCommand()]);
+
+    exit($application->run());
+}
+
 const USAGE = <<<TXT
 Usage:
   php bin/docsmith build [options]
   php bin/docsmith sync [options]
+  php bin/docsmith generate [options]   (AI-assisted documentation generation)
   php bin/docsmith --help
 
 Build options:
@@ -108,7 +119,7 @@ if (! is_dir($source)) {
     exit(1);
 }
 
-$builder = Docsmith::make()
+$builder = Docsmith\Docsmith::make()
     ->source($source)
     ->output(stringOption($options, 'output', 'docs'))
     ->title(stringOption($options, 'title', 'Documentation'))

@@ -23,7 +23,12 @@ final class MediaEmbedder
         }
 
         $content = file_get_contents($markdownPath);
-        $tag = "![{$caption}]({$mediaPath})";
+
+        if ($content === false) {
+            return;
+        }
+
+        $tag = sprintf('![%s](%s)', $caption, $mediaPath);
 
         $pattern = '/^(##\s*' . preg_quote($sectionHeading, '/') . '.*)$/m';
         if (preg_match($pattern, $content, $matches, PREG_OFFSET_CAPTURE)) {

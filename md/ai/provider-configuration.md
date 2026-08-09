@@ -9,6 +9,8 @@ Docsmith supports multiple AI providers for documentation generation. An API key
 | Anthropic | `anthropic` | `claude-sonnet-4-6` |
 | OpenAI | `openai` | `gpt-4o` |
 
+When using the CLI, if `--ai-model` is not specified, the default model for the selected provider is used automatically.
+
 ## Environment Variables
 
 Set your API key as an environment variable. The pipeline picks it up automatically when `--ai-provider` is set:
@@ -65,7 +67,7 @@ Docsmith::generate()
 
 When no AI provider is configured, `DocWriterAgent` generates documentation from the feature map produced by `CodeScanAgent`. Each page includes:
 - Feature name and namespace
-- List of classes with descriptions
+- List of class names
 - List of functions/methods
 - Source file references
 

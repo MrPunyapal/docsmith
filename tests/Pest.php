@@ -8,3 +8,20 @@ declare(strict_types=1);
  * against the currently pinned release.
  */
 require __DIR__ . '/stubs/git-reader-compat.php';
+
+function removeDirectory(string $directory): void
+{
+    if (! is_dir($directory)) {
+        return;
+    }
+
+    foreach (glob($directory . '/*') ?: [] as $item) {
+        if (is_dir($item)) {
+            removeDirectory($item);
+        } else {
+            unlink($item);
+        }
+    }
+
+    rmdir($directory);
+}

@@ -11,21 +11,23 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Throwable;
 
 final class GenerateCommand extends Command
 {
-    protected static $defaultName = 'generate';
-
     protected function configure(): void
     {
         $this
+            ->setName('generate')
             ->setDescription('Generate AI-powered documentation for a project')
-            ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Path to source code', getcwd())
-            ->addOption('output', null, InputOption::VALUE_REQUIRED, 'Output directory for built docs', getcwd() . '/docs')
-            ->addOption('docs-source', null, InputOption::VALUE_REQUIRED, 'Docs source directory (markdown)', getcwd() . '/docs-source')
+            ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Path to source code', getcwd() ?: '.')
+            ->addOption('output', null, InputOption::VALUE_REQUIRED, 'Output directory for built docs', (getcwd() ?: '.') . '/docs')
+            ->addOption('docs-source', null, InputOption::VALUE_REQUIRED, 'Docs source directory (markdown)', (getcwd() ?: '.') . '/docs-source')
             ->addOption('title', null, InputOption::VALUE_REQUIRED, 'Documentation title', 'Documentation')
             ->addOption('ai-provider', null, InputOption::VALUE_OPTIONAL, 'AI provider (anthropic, openai)')
-            ->addOption('ai-model', null, InputOption::VALUE_OPTIONAL, 'AI model name', 'claude-sonnet-4-6')
+            ->addOption('ai-model', null, InputOption::VALUE_OPTIONAL, 'AI model name (defaults based on provider)')
+            ->addOption('ai-api-key', null, InputOption::VALUE_OPTIONAL, 'AI API key (defaults to provider env var; any string for local endpoints)')
+            ->addOption('ai-base-url', null, InputOption::VALUE_OPTIONAL, 'OpenAI-compatible base URL (e.g. http://localhost:11434/v1 for Ollama)')
             ->addOption('media', null, InputOption::VALUE_NONE, 'Enable screenshot/video capture')
             ->addOption('review', null, InputOption::VALUE_NONE, 'Enable review pass');
     }
@@ -35,18 +37,54 @@ final class GenerateCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Docsmith — AI-Powered Documentation Generator');
 
-        $apiKey = $input->getOption('ai-provider') !== null
-            ? ($_SERVER['ANTHROPIC_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? '')
-            : null;
+        $providerOption = $input->getOption('ai-provider');
+        $provider = is_string($providerOption) ? $providerOption : null;
+        $apiKey = null;
+        $model = null;
+
+        if ($provider !== null) {
+            $apiKeyOption = $input->getOption('ai-api-key');
+            $apiKey = is_string($apiKeyOption) && $apiKeyOption !== ''
+                ? $apiKeyOption
+                : match ($provider) {
+                    'anthropic' => $this->envKey('ANTHROPIC_API_KEY'),
+                    'openai' => $this->envKey('OPENAI_API_KEY'),
+                    default => '',
+                };
+
+            if ($apiKey === '') {
+                $io->error(sprintf(
+                    'Missing API key for provider: %s. Set %s environment variable.',
+                    $provider,
+                    match ($provider) {
+                        'anthropic' => 'ANTHROPIC_API_KEY',
+                        'openai' => 'OPENAI_API_KEY',
+                        default => strtoupper($provider) . '_API_KEY',
+                    }
+                ));
+
+                return Command::FAILURE;
+            }
+
+            $modelOption = $input->getOption('ai-model');
+            $model = is_string($modelOption) && $modelOption !== ''
+                ? $modelOption
+                : match ($provider) {
+                    'anthropic' => 'claude-sonnet-4-6',
+                    'openai' => 'gpt-4o',
+                    default => 'claude-sonnet-4-6',
+                };
+        }
 
         $config = new PipelineConfig(
-            sourcePath: $input->getOption('source'),
-            docsSourcePath: $input->getOption('docs-source'),
-            outputPath: $input->getOption('output'),
-            title: $input->getOption('title'),
-            provider: $input->getOption('ai-provider'),
+            sourcePath: $this->stringOption($input, 'source', getcwd() ?: '.'),
+            docsSourcePath: $this->stringOption($input, 'docs-source', (getcwd() ?: '.') . '/docs-source'),
+            outputPath: $this->stringOption($input, 'output', (getcwd() ?: '.') . '/docs'),
+            title: $this->stringOption($input, 'title', 'Documentation'),
+            provider: $provider,
             apiKey: $apiKey,
-            model: $input->getOption('ai-model'),
+            model: $model,
+            baseUrl: $this->stringOption($input, 'ai-base-url', '') ?: null,
             mediaEnabled: (bool) $input->getOption('media'),
             reviewEnabled: (bool) $input->getOption('review'),
         );
@@ -77,14 +115,26 @@ final class GenerateCommand extends Command
 
             foreach ($result->phases() as $phase => $data) {
                 $duration = number_format($data['duration'], 2);
-                $io->text("  ✓ {$phase}: {$duration}s");
+                $io->text(sprintf('  ✓ %s: %ss', $phase, $duration));
             }
 
             return Command::SUCCESS;
-        } catch (\Throwable $e) {
-            $io->error($e->getMessage());
+        } catch (Throwable $throwable) {
+            $io->error($throwable->getMessage());
 
             return Command::FAILURE;
         }
+    }
+
+    private function stringOption(InputInterface $input, string $name, string $default): string
+    {
+        $value = $input->getOption($name);
+
+        return is_string($value) && $value !== '' ? $value : $default;
+    }
+
+    private function envKey(string $name): string
+    {
+        return is_string($_SERVER[$name] ?? null) ? $_SERVER[$name] : '';
     }
 }
