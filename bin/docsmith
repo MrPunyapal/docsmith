@@ -1,0 +1,107 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Docsmith\Docsmith;
+
+const USAGE = <<<TXT
+Usage:
+  php bin/docsmith build [options]
+  php bin/docsmith --help
+
+Options:
+  --source=DIR          Directory with markdown sources (required)
+  --output=DIR          Output directory (default: docs)
+  --title=TITLE         Site title (default: Documentation)
+  --description=DESC    Site description
+  --accent-color=HEX    Accent color (default: #ff2d20)
+  --accent-color-dark=HEX  Dark-mode accent color
+  --custom-css=FILE     Path to custom CSS file
+  --base-url=URL        Base URL (default: /)
+  --right-sidebar       Enable the right sidebar
+  --repository-url=URL  Repository URL for edit links
+  --site-url=URL        Canonical site URL
+  --edit-branch=BRANCH  Branch used for edit links (default: main)
+
+Example:
+  php bin/docsmith build --source=md --output=docs --title="My Docs" --site-url=https://example.com
+TXT;
+
+$options = parseArgs($argv);
+
+if (isset($options['help'])) {
+    echo USAGE;
+
+    exit(0);
+}
+
+$source = $options['source'] ?? null;
+
+if (! is_string($source) || $source === '') {
+    fwrite(STDERR, "Missing required option: --source\n\n" . USAGE);
+
+    exit(1);
+}
+
+if (! is_dir($source)) {
+    fwrite(STDERR, "Source directory does not exist: {$source}\n");
+
+    exit(1);
+}
+
+Docsmith::build(
+    source: $source,
+    output: stringOption($options, 'output', 'docs'),
+    title: stringOption($options, 'title', 'Documentation'),
+    description: stringOption($options, 'description', 'Project documentation.'),
+    accentColor: stringOption($options, 'accent-color', '#ff2d20'),
+    accentColorDark: stringOption($options, 'accent-color-dark', ''),
+    customCss: stringOption($options, 'custom-css', ''),
+    baseUrl: stringOption($options, 'base-url', '/'),
+    rightSidebar: boolOption($options, 'right-sidebar'),
+    repositoryUrl: stringOption($options, 'repository-url', ''),
+    siteUrl: stringOption($options, 'site-url', ''),
+    editBranch: stringOption($options, 'edit-branch', 'main'),
+);
+
+echo "Built docs from {$source} to " . stringOption($options, 'output', 'docs') . "\n";
+
+/**
+ * @param  array<int, string>  $argv
+ * @return array<string, string|bool>
+ */
+function parseArgs(array $argv): array
+{
+    $options = [];
+
+    foreach (array_slice($argv, 1) as $arg) {
+        if (! str_starts_with($arg, '--')) {
+            continue;
+        }
+
+        $pair = explode('=', substr($arg, 2), 2);
+
+        if (count($pair) === 2) {
+            $options[$pair[0]] = $pair[1];
+        } else {
+            $options[$pair[0]] = true;
+        }
+    }
+
+    return $options;
+}
+
+function stringOption(array $options, string $key, string $default): string
+{
+    return is_string($options[$key] ?? null) && $options[$key] !== '' ? $options[$key] : $default;
+}
+
+function boolOption(array $options, string $key): bool
+{
+    $value = $options[$key] ?? false;
+
+    return $value === true || $value === '1' || $value === 'true';
+}

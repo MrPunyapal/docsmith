@@ -19,6 +19,9 @@
             "Docsmith\\": "src/"
         }
     },
+    "bin": [
+        "bin/docsmith"
+    ],
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/"

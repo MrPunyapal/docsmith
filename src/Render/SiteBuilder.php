@@ -152,7 +152,7 @@ final readonly class SiteBuilder
         }
 
         if ($config->metadata->llmsExport) {
-            $this->writeLlmExport($config, $documents, ! $hasRootIndex);
+            $this->writeLlmExport($config, $documents, ! $hasRootIndex, $writeTarget);
         }
     }
 
@@ -853,9 +853,9 @@ HTML;
     }
 
     /** @param list<Document> $documents */
-    private function writeLlmExport(BuildConfig $config, array $documents, bool $includeGeneratedRoot): void
+    private function writeLlmExport(BuildConfig $config, array $documents, bool $includeGeneratedRoot, ?string $outputPath = null): void
     {
-        $outputPath = rtrim($config->outputPath, '/');
+        $outputPath = rtrim($outputPath ?? $config->outputPath, '/');
 
         $siteUrl = rtrim($config->metadata->siteUrl, '/');
 
