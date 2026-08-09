@@ -20,6 +20,8 @@ final class DocsmithGenerate
 
     private ?string $model = null;
 
+    private ?string $baseUrl = null;
+
     private bool $mediaEnabled = false;
 
     private bool $reviewEnabled = false;
@@ -56,10 +58,12 @@ final class DocsmithGenerate
         string $provider,
         string $apiKey,
         string $model = 'claude-sonnet-4-6',
+        ?string $baseUrl = null,
     ): self {
         $this->provider = $provider;
         $this->apiKey = $apiKey;
         $this->model = $model;
+        $this->baseUrl = $baseUrl;
 
         return $this;
     }
@@ -88,6 +92,7 @@ final class DocsmithGenerate
             provider: $this->provider,
             apiKey: $this->apiKey,
             model: $this->model,
+            baseUrl: $this->baseUrl,
             mediaEnabled: $this->mediaEnabled,
             reviewEnabled: $this->reviewEnabled,
         );

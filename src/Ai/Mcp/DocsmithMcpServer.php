@@ -5,25 +5,23 @@ declare(strict_types=1);
 namespace Docsmith\Ai\Mcp;
 
 use Docsmith\Ai\Tools\ReadSourceTool;
+use Docsmith\Ai\Tools\ToolInterface;
 use Docsmith\Ai\Tools\WriteMarkdownTool;
 use Docsmith\Docsmith;
+use RuntimeException;
+use Throwable;
 
 final class DocsmithMcpServer
 {
+    /** @var array<string, ToolInterface> */
     private array $tools = [];
 
-    private string $transport;
-
-    private int $port;
-
     public function __construct(
-        string $transport = 'stdio',
-        int $port = 8090,
+        private readonly string $transport = 'stdio',
+        private readonly int $port = 8090,
         string $sourcePath = '',
         string $docsSourcePath = '',
     ) {
-        $this->transport = $transport;
-        $this->port = $port;
         $this->registerTools($sourcePath, $docsSourcePath);
     }
 
@@ -36,15 +34,22 @@ final class DocsmithMcpServer
         }
     }
 
+    /**
+     * @return array<string, ToolInterface>
+     */
     public function getTools(): array
     {
         return $this->tools;
     }
 
+    /**
+     * @param  array<int|string, mixed>  $request
+     * @return array{jsonrpc: string, id: mixed, result?: array<string, mixed>, error?: array{code: int, message: string}}
+     */
     public function handleRequest(array $request): array
     {
-        $method = $request['method'] ?? '';
-        $params = $request['params'] ?? [];
+        $method = is_string($request['method'] ?? null) ? $request['method'] : '';
+        $params = is_array($request['params'] ?? null) ? $request['params'] : [];
         $id = $request['id'] ?? null;
 
         return match ($method) {
@@ -54,16 +59,16 @@ final class DocsmithMcpServer
                 'serverInfo' => ['name' => 'docsmith', 'version' => '1.0.0'],
             ]],
             'tools/list' => ['jsonrpc' => '2.0', 'id' => $id, 'result' => [
-                'tools' => array_map(fn ($t) => [
+                'tools' => array_map(fn (ToolInterface $t): array => [
                     'name' => $t->name(),
                     'description' => $t->description(),
                     'inputSchema' => $t->inputSchema(),
                 ], $this->tools),
             ]],
-            'tools/call' => $this->handleToolCall($params),
+            'tools/call' => $this->handleToolCall($params, $id),
             default => ['jsonrpc' => '2.0', 'id' => $id, 'error' => [
                 'code' => -32601,
-                'message' => "Method not found: {$method}",
+                'message' => 'Method not found: ' . $method,
             ]],
         };
     }
@@ -78,40 +83,57 @@ final class DocsmithMcpServer
             $this->tools['write_markdown'] = new WriteMarkdownTool($docsSourcePath);
         }
 
-        $this->tools['build_site'] = new class () implements \Docsmith\Ai\Tools\ToolInterface {
+        $this->tools['build_site'] = new class () implements ToolInterface {
             public function name(): string
             {
                 return 'build_site';
             }
+
             public function description(): string
             {
                 return 'Build the static documentation site from markdown source.';
             }
+
+            /**
+             * @return array<string, mixed>
+             */
             public function inputSchema(): array
             {
                 return [
-                    'source' => ['type' => 'string', 'description' => 'Docs source directory'],
-                    'output' => ['type' => 'string', 'description' => 'Output directory'],
-                    'title' => ['type' => 'string', 'description' => 'Site title'],
+                    'type' => 'object',
+                    'properties' => [
+                        'source' => ['type' => 'string', 'description' => 'Docs source directory'],
+                        'output' => ['type' => 'string', 'description' => 'Output directory'],
+                        'title' => ['type' => 'string', 'description' => 'Site title'],
+                    ],
                 ];
             }
+
+            /**
+             * @param  array<string, mixed>  $input
+             * @return array<string, mixed>
+             */
             public function handle(array $input): array
             {
                 Docsmith::make()
-                    ->source($input['source'] ?? 'docs-source')
-                    ->output($input['output'] ?? 'docs')
-                    ->title($input['title'] ?? 'Documentation')
+                    ->source(is_string($input['source'] ?? null) ? $input['source'] : 'docs-source')
+                    ->output(is_string($input['output'] ?? null) ? $input['output'] : 'docs')
+                    ->title(is_string($input['title'] ?? null) ? $input['title'] : 'Documentation')
                     ->build();
+
                 return ['success' => true];
             }
         };
     }
 
-    private function handleToolCall(array $params): array
+    /**
+     * @param  array<int|string, mixed>  $params
+     * @return array{jsonrpc: string, id: mixed, result?: array<string, mixed>, error?: array{code: int, message: string}}
+     */
+    private function handleToolCall(array $params, mixed $id): array
     {
-        $name = $params['name'] ?? '';
-        $arguments = $params['arguments'] ?? [];
-        $id = $params['id'] ?? null;
+        $name = is_string($params['name'] ?? null) ? $params['name'] : '';
+        $arguments = is_array($params['arguments'] ?? null) ? $params['arguments'] : [];
 
         $tool = $this->tools[$name] ?? null;
 
@@ -119,7 +141,7 @@ final class DocsmithMcpServer
             return [
                 'jsonrpc' => '2.0',
                 'id' => $id,
-                'error' => ['code' => -32602, 'message' => "Unknown tool: {$name}"],
+                'error' => ['code' => -32602, 'message' => 'Unknown tool: ' . $name],
             ];
         }
 
@@ -131,11 +153,11 @@ final class DocsmithMcpServer
                 'id' => $id,
                 'result' => ['content' => [['type' => 'text', 'text' => json_encode($result)]]],
             ];
-        } catch (\Throwable $e) {
+        } catch (Throwable $throwable) {
             return [
                 'jsonrpc' => '2.0',
                 'id' => $id,
-                'error' => ['code' => -32603, 'message' => $e->getMessage()],
+                'error' => ['code' => -32603, 'message' => $throwable->getMessage()],
             ];
         }
     }
@@ -156,7 +178,7 @@ final class DocsmithMcpServer
 
             $request = json_decode($line, true);
 
-            if ($request === null) {
+            if (! is_array($request)) {
                 continue;
             }
 
@@ -168,33 +190,41 @@ final class DocsmithMcpServer
 
     private function runHttp(): void
     {
-        $address = "0.0.0.0:{$this->port}";
-        $server = stream_socket_server("tcp://{$address}", $errno, $errstr);
+        $address = '127.0.0.1:' . $this->port;
+        $server = stream_socket_server('tcp://' . $address, $errno, $errstr);
 
         if ($server === false) {
-            throw new \RuntimeException("Failed to start HTTP server: {$errstr} ({$errno})");
+            throw new RuntimeException(sprintf('Failed to start HTTP server: %s (%s)', $errstr, $errno));
         }
 
         while ($conn = stream_socket_accept($server, -1)) {
             $data = fread($conn, 65536);
-            $request = $this->parseHttpRequest($data);
+            $request = $this->parseHttpRequest($data === false ? '' : $data);
 
             if ($request !== null) {
                 $response = $this->handleRequest($request);
-                $body = json_encode($response);
-                fwrite($conn, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " . strlen($body) . "\r\nConnection: close\r\n\r\n{$body}");
+                $body = json_encode($response) ?: '';
+                fwrite($conn, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " . strlen($body) . ('
+Connection: close
+
+' . $body));
             }
 
             fclose($conn);
         }
     }
 
+    /**
+     * @return array<int|string, mixed>|null
+     */
     private function parseHttpRequest(string $data): ?array
     {
         if (! preg_match('/\{.*\}/s', $data, $m)) {
             return null;
         }
 
-        return json_decode($m[0], true);
+        $decoded = json_decode($m[0], true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 }

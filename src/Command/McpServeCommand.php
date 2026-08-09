@@ -13,11 +13,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class McpServeCommand extends Command
 {
-    protected static $defaultName = 'mcp:serve';
-
     protected function configure(): void
     {
         $this
+            ->setName('mcp:serve')
             ->setDescription('Start the MCP server for AI assistant integration')
             ->addOption('transport', null, InputOption::VALUE_REQUIRED, 'Transport mode (stdio or http)', 'stdio')
             ->addOption('port', null, InputOption::VALUE_REQUIRED, 'HTTP port (for http transport)', '8090')
@@ -29,13 +28,20 @@ final class McpServeCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $transport = $input->getOption('transport');
-        $port = (int) $input->getOption('port');
-        $sourcePath = $input->getOption('source') ?? getcwd();
-        $docsSourcePath = $input->getOption('docs-source') ?? getcwd() . '/docs-source';
+        $transportOption = $input->getOption('transport');
+        $transport = is_string($transportOption) ? $transportOption : 'stdio';
+
+        $portOption = $input->getOption('port');
+        $port = (int) (is_string($portOption) ? $portOption : '8090');
+
+        $sourceOption = $input->getOption('source');
+        $sourcePath = is_string($sourceOption) && $sourceOption !== '' ? $sourceOption : (getcwd() ?: '.');
+
+        $docsOption = $input->getOption('docs-source');
+        $docsSourcePath = is_string($docsOption) && $docsOption !== '' ? $docsOption : (getcwd() ?: '.') . '/docs-source';
 
         if (! in_array($transport, ['stdio', 'http'], true)) {
-            $io->error("Invalid transport: {$transport}. Must be 'stdio' or 'http'.");
+            $io->error(sprintf("Invalid transport: %s. Must be 'stdio' or 'http'.", $transport));
 
             return Command::FAILURE;
         }
@@ -48,9 +54,7 @@ final class McpServeCommand extends Command
         );
 
         if ($transport === 'http') {
-            $io->success("MCP server listening on http://localhost:{$port}");
-        } else {
-            $io->success('MCP server running in stdio mode');
+            $io->success('MCP server listening on http://localhost:' . $port);
         }
 
         $server->run();

@@ -5,11 +5,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "illuminate/config": "^12.0 || ^13.0",
+        "illuminate/http": "^12.0 || ^13.0",
+        "illuminate/queue": "^12.0 || ^13.0",
         "laravel/ai": "^0.10.1",
         "league/commonmark": "^2.7",
         "phiki/phiki": "^2.2",
-        "symfony/console": "^8.1",
-        "symfony/process": "^8.1"
+        "symfony/console": "^7.4 || ^8.1",
+        "symfony/process": "^7.4 || ^8.1"
     },
     "require-dev": {
         "laravel/pao": "^1.1",
