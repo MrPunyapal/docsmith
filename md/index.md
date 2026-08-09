@@ -9,6 +9,7 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Publish local CSS assets into the output directory.
 - Publish local JS assets for search, theme toggle, and code-copy UX.
 - Support both a static entry point and a fluent builder API.
+- Build sites from the command line via the bundled `bin/docsmith` binary.
 - Render Markdown through League CommonMark with GitHub-flavored extensions.
 - Parse frontmatter metadata (`title`, `description`, `slug`, `order`, `sidebar_label`, `hidden`).
 - Hide pages from navigation, search, and pagination via frontmatter `hidden: true`.
