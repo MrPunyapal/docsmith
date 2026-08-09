@@ -134,6 +134,7 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Publish local CSS assets into the output directory.
 - Publish local JS assets for search, theme toggle, and code-copy UX.
 - Support both a static entry point and a fluent builder API.
+- Build sites from the command line via the bundled `bin/docsmith` binary.
 - Render Markdown through League CommonMark with GitHub-flavored extensions.
 - Parse frontmatter metadata (`title`, `description`, `slug`, `order`, `sidebar_label`, `hidden`).
 - Hide pages from navigation, search, and pagination via frontmatter `hidden: true`.
@@ -183,7 +184,19 @@ composer require mrpunyapal/docsmith
 
 ## Build documentation
 
-Docsmith can build a static site from any Markdown directory.
+Docsmith can build a static site from any Markdown directory, either from PHP or from the command line.
+
+### Command line
+
+After installing the package, the binary is available at `vendor/bin/docsmith`:
+
+```bash
+vendor/bin/docsmith build --source=md --output=docs --title="Docsmith"
+```
+
+Run `vendor/bin/docsmith --help` for the full list of options.
+
+### PHP
 
 ```php
 use Docsmith\Docsmith;
@@ -315,6 +328,53 @@ Docsmith::make()
     ->build();
 
 ```
+
+## Command Line
+
+Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
+
+```bash
+vendor/bin/docsmith build --source=md --output=docs --title="Project Docs"
+```
+
+When developing inside this repository, call it directly:
+
+```bash
+php bin/docsmith build --source=md --output=docs --title="Project Docs"
+```
+
+| Option | Description | Default |
+|---|---|---|
+| `--source=DIR` | Directory with Markdown sources (required) | — |
+| `--output=DIR` | Output directory | `docs` |
+| `--title=TITLE` | Site title | `Documentation` |
+| `--description=DESC` | Site description | `Project documentation.` |
+| `--accent-color=HEX` | Accent color | `#ff2d20` |
+| `--accent-color-dark=HEX` | Dark-mode accent color | — |
+| `--custom-css=FILE` | Path to a custom CSS file | — |
+| `--base-url=URL` | Base URL | `/` |
+| `--right-sidebar` | Enable the right sidebar | off |
+| `--repository-url=URL` | Repository URL for edit links | — |
+| `--site-url=URL` | Canonical site URL | — |
+| `--edit-branch=BRANCH` | Branch used for edit links | `main` |
+| `--help` | Show usage | — |
+
+Example with edit links, right sidebar, and search-ready output:
+
+```bash
+vendor/bin/docsmith build \
+    --source=md \
+    --output=docs \
+    --title="Project Docs" \
+    --description="Internal package documentation." \
+    --accent-color="#1d4ed8" \
+    --site-url=https://acme.github.io/project \
+    --repository-url=https://github.com/acme/project \
+    --edit-branch=main \
+    --right-sidebar
+```
+
+The binary is a thin wrapper around `Docsmith::build()` — every option maps to the static API parameter of the same name.
 
 ## Theme Color
 
