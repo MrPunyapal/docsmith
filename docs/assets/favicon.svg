@@ -1,4 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
     <rect width="64" height="64" rx="14" fill="#ff2d20"/>
-    <path d="M18 47V17h8l12 17V17h8v30h-8L26 29v18z" fill="#ffffff"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="34" font-weight="700" fill="#ffffff">D</text>
 </svg>
