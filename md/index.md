@@ -18,6 +18,7 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Build multiple documentation versions with a version switcher.
 - Search overlay with `Cmd+K` / `Ctrl+K` keyboard shortcut.
 - AI-consumable export: `llms.txt`, `llms-full.txt`, `export/docs.md`.
+- Open Graph / Twitter card tags and generated social preview images.
 - Validate the package with Pest, PHPStan, Rector, and Pint.
 
 ## Current status
@@ -38,3 +39,4 @@ Search includes both:
 - Development
 - Versioned Docs
 - LLM Export
+- Open Graph

@@ -30,6 +30,8 @@ Options:
   --og-scope=SCOPE      Open Graph image scope: all or per-page
   --og-url=URL          Open Graph image URL/path (required for --og-type=link)
   --og-template=FILE    Custom Open Graph card template path or raw HTML
+  --no-og-capture       Write OG previews/config only; skip screenshot capture
+  --force-og            Recapture every Open Graph image (ignore cache)
 
 Example:
   php bin/docsmith build --source=md --output=docs --title="My Docs" --site-url=https://example.com
@@ -87,6 +89,14 @@ if ($ogType !== '') {
         url: stringOption($options, 'og-url', ''),
         template: stringOption($options, 'og-template', ''),
     );
+}
+
+if (boolOption($options, 'no-og-capture')) {
+    $builder->captureOg(false);
+}
+
+if (boolOption($options, 'force-og')) {
+    $builder->forceOg();
 }
 
 $builder->build();

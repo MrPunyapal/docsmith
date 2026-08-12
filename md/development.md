@@ -30,7 +30,7 @@ That command uses Docsmith itself to read Markdown from `md/` and regenerate the
 
 The repository includes a workflow at `.github/workflows/docs.yml` that builds and commits `docs/` on every push that changes the source markdown or build script.
 
-For your own projects using Docsmith, here is a CI pattern you can adapt:
+If you enable generated Open Graph images, install Node, Playwright, and Chromium in CI as well:
 
 ```yaml
 name: Build docs
@@ -54,8 +54,20 @@ jobs:
           php-version: '8.3'
           tools: composer:v2
 
-      - name: Install dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
 
       - name: Generate docs
         run: php build-docs.php
@@ -73,4 +85,4 @@ jobs:
           fi
 ```
 
-Adjust the PHP version, source paths, and build command to match your project.
+Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node/Playwright steps.

@@ -13,7 +13,7 @@ it('publishes a default favicon and adds the favicon link to every page', functi
         ->output($outputPath)
         ->title('Docsmith Docs')
         ->description('Generated documentation for testing.')
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     expect($outputPath . '/assets/favicon.svg')->toBeFile();
@@ -38,7 +38,7 @@ it('copies a custom local favicon into the assets directory', function (): void 
         ->title('Docsmith Docs')
         ->description('Generated documentation for testing.')
         ->favicon($faviconPath)
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     expect($outputPath . '/assets/favicon.png')->toBeFile()
@@ -60,7 +60,7 @@ it('renders link og image meta tags from the config', function (): void {
         ->description('Generated documentation for testing.')
         ->siteUrl('https://example.com/docs')
         ->ogImage(type: 'link', url: 'https://example.com/docs/og/cover.png')
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     $installationPage = file_get_contents($outputPath . '/installation/index.html');
@@ -84,7 +84,7 @@ it('writes a single generated preview and capturist config for the all scope', f
         ->description('Generated documentation for testing.')
         ->siteUrl('https://example.com/docs')
         ->ogImage(type: 'generated', scope: 'all')
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     expect($outputPath . '/og/preview/cover/index.html')->toBeFile()
@@ -124,7 +124,7 @@ it('writes one generated preview per page for the per-page scope', function (): 
         ->title('Docsmith Docs')
         ->description('Generated documentation for testing.')
         ->ogImage(type: 'generated', scope: 'per-page')
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     expect($outputPath . '/og/preview/installation/index.html')->toBeFile()
@@ -173,7 +173,7 @@ MD);
         ->output($outputPath)
         ->title('Docsmith Docs')
         ->description('Generated documentation for testing.')
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     $customPage = file_get_contents($outputPath . '/custom/index.html');
@@ -205,7 +205,7 @@ it('uses a custom template for generated preview cards', function (): void {
         ->title('Docsmith Docs')
         ->description('Generated documentation for testing.')
         ->ogImage(type: 'generated', scope: 'per-page', template: $templatePath)
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     $preview = file_get_contents($outputPath . '/og/preview/installation/index.html');
@@ -226,7 +226,7 @@ it('enables capturist incremental cache in the generated config', function (): v
         ->title('Docsmith Docs')
         ->description('Generated documentation for testing.')
         ->ogGeneratedAll()
-        ->runCapturist(false)
+        ->captureOg(false)
         ->build();
 
     $configJson = (string) file_get_contents($outputPath . '/capturist.config.json');
@@ -237,4 +237,39 @@ it('enables capturist incremental cache in the generated config', function (): v
         ->and($config['cache']['adopt'] ?? null)->toBeTrue()
         ->and($config['cache']['prune'] ?? null)->toBeTrue()
         ->and($config['pages'][0]['htmlFile'] ?? null)->toBe('og/preview/cover/index.html');
+});
+
+it('warns when open graph is generated without a site url', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-og-siteurl-warn-' . uniqid();
+
+    ob_start();
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->ogGeneratedAll()
+        ->captureOg(false)
+        ->build();
+    $output = (string) ob_get_clean();
+
+    expect($output)->toContain('siteUrl');
+});
+
+it('keeps runCapturist as an alias of captureOg', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-og-alias-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->ogGeneratedAll()
+        ->runCapturist(false)
+        ->build();
+
+    expect($outputPath . '/capturist.config.json')->toBeFile()
+        ->and($outputPath . '/og/preview/cover/index.html')->toBeFile();
 });

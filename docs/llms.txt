@@ -3,6 +3,7 @@
 
 ## Docs
 
+- https://mrpunyapal.github.io/docsmith/open-graph: Open Graph Images
 - https://mrpunyapal.github.io/docsmith/architecture: Architecture
 - https://mrpunyapal.github.io/docsmith/development: Development
 - https://mrpunyapal.github.io/docsmith/: Docsmith

@@ -237,11 +237,32 @@ Skip the capture step (e.g. CI that installs Playwright later):
 ```php
 Docsmith::make()
     ->ogGeneratedAll()
-    ->runCapturist(false)
+    ->captureOg(false)
+    ->build();
+```
+
+Force a full recapture (ignore cache):
+
+```php
+Docsmith::make()
+    ->ogGeneratedAll()
+    ->forceOg()
     ->build();
 ```
 
 HTML card previews and `capturist.config.json` are still written under the output directory so a later capture step can use them.
+
+### CI with Open Graph
+
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: '20'
+    cache: 'npm'
+- run: npm install
+- run: npx playwright install chromium --with-deps
+- run: php build-docs.php
+```
 
 ## README Index Compatibility Mode
 

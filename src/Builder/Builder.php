@@ -57,6 +57,10 @@ final class Builder
 
     private bool $runCapturist = true;
 
+    private bool $forceOg = false;
+
+    private bool $siteUrlOgWarned = false;
+
     private string $capturistBinary = '';
 
     /** @var list<string> */
@@ -323,9 +327,29 @@ final class Builder
         return $this;
     }
 
+    /**
+     * Whether to run Open Graph image capture during build (default true).
+     * When false, preview HTML and capturist.config.json are still written.
+     */
+    public function captureOg(bool $capture = true): self
+    {
+        $this->runCapturist = $capture;
+
+        return $this;
+    }
+
+    /** @deprecated Use captureOg() */
     public function runCapturist(bool $runCapturist = true): self
     {
-        $this->runCapturist = $runCapturist;
+        return $this->captureOg($runCapturist);
+    }
+
+    /**
+     * Force recapture of every Open Graph image (ignores capturist cache).
+     */
+    public function forceOg(bool $force = true): self
+    {
+        $this->forceOg = $force;
 
         return $this;
     }
@@ -380,10 +404,15 @@ final class Builder
         $this->generateOgImages($config);
     }
 
-    private function generateOgImages(BuildConfig $config): void
+    private function generateOgImages(BuildConfig $config, ?string $outputPath = null): void
     {
         if (!$this->ogImage instanceof OgImageConfig || ! $this->ogImage->isGenerated()) {
             return;
+        }
+
+        if (! $this->siteUrlOgWarned && $config->metadata->siteUrl === '') {
+            $this->siteUrlOgWarned = true;
+            echo "[Docsmith] Open Graph images work better with ->siteUrl(...); crawlers prefer absolute og:image URLs.\n";
         }
 
         (new OgImageGenerator())->generate(
@@ -391,6 +420,8 @@ final class Builder
             null,
             $this->runCapturist,
             $this->capturistBinary,
+            $outputPath,
+            $this->forceOg,
         );
     }
 
@@ -439,15 +470,7 @@ final class Builder
                 rootOutput: $outputPath,
             );
 
-            if ($this->ogImage instanceof OgImageConfig && $this->ogImage->isGenerated()) {
-                (new OgImageGenerator())->generate(
-                    $config,
-                    null,
-                    $this->runCapturist,
-                    $this->capturistBinary,
-                    $writeTarget,
-                );
-            }
+            $this->generateOgImages($config, $writeTarget);
         }
 
         $this->writeAssetsToRoot($outputPath);

@@ -32,8 +32,14 @@ final readonly class OgImageGenerator
      *
      * @param list<Document>|null $documents
      */
-    public function generate(BuildConfig $config, ?array $documents = null, bool $runCapturist = true, string $capturistBinary = '', ?string $outputPath = null): void
-    {
+    public function generate(
+        BuildConfig $config,
+        ?array $documents = null,
+        bool $runCapturist = true,
+        string $capturistBinary = '',
+        ?string $outputPath = null,
+        bool $force = false,
+    ): void {
         $og = $config->ogImage;
 
         if (! $og instanceof OgImageConfig || ! $og->isGenerated()) {
@@ -59,7 +65,7 @@ final readonly class OgImageGenerator
             return;
         }
 
-        $this->runCapture($writeTarget, $capturistBinary);
+        $this->runCapture($writeTarget, $capturistBinary, $force);
     }
 
     /**
@@ -317,18 +323,17 @@ HTML;
         return '<div class="og-card">' . $contents . '</div>';
     }
 
-    private function runCapture(string $writeTarget, string $capturistBinary): void
+    private function runCapture(string $writeTarget, string $capturistBinary, bool $force): void
     {
         $projectRoot = $this->environment->resolveNodeProjectRoot($writeTarget);
         $this->environment->assertReadyForCapture($projectRoot);
 
-        $command = $this->resolveCommand($writeTarget, $projectRoot, $capturistBinary);
+        $command = $this->resolveCommand($writeTarget, $projectRoot, $capturistBinary, $force);
 
         if ($command === null) {
             throw new RuntimeException($this->environment->captureToolsInstallMessage());
         }
 
-        // Run from project root so Playwright resolves; capturist --cwd points at docs output.
         [$exitCode, $output, $errorOutput] = $this->environment->runShell($command, $projectRoot);
         $output = trim($output);
         $errorOutput = trim($errorOutput);
@@ -428,7 +433,7 @@ HTML;
      * Always pass --cwd so capturist reads config/html from the docs output dir
      * while the process runs from the Node project root (Playwright).
      */
-    private function resolveCommand(string $writeTarget, string $projectRoot, string $capturistBinary): ?string
+    private function resolveCommand(string $writeTarget, string $projectRoot, string $capturistBinary, bool $force): ?string
     {
         $binary = $capturistBinary !== ''
             ? $capturistBinary
@@ -439,9 +444,10 @@ HTML;
         }
 
         return sprintf(
-            '%s --cwd %s --config capturist.config.json --quiet --json',
+            '%s --cwd %s --config capturist.config.json --quiet --json%s',
             $this->environment->escapeShell($binary),
-            $this->environment->escapeShell($writeTarget)
+            $this->environment->escapeShell($writeTarget),
+            $force ? ' --force' : ''
         );
     }
 }
