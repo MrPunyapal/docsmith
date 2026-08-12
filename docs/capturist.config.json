@@ -1,4 +1,9 @@
 {
+    "cache": {
+        "path": "og/.capturist-cache.json",
+        "adopt": true,
+        "prune": true
+    },
     "outputDir": "og",
     "viewport": {
         "width": 1200,
