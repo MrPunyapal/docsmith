@@ -137,11 +137,11 @@ Docsmith can emit `og:` and `twitter:` card tags and generate social preview ima
 Generated images use **Node** with two packages: **Playwright** (browser) and **capturist** (capture runner). Install them once as devDependencies — you do **not** need to write or maintain a capturist config; Docsmith writes it during the docs build.
 
 ```bash
-npm install -D playwright capturist
+npm install -D playwright capturist@^0.1.3
 npx playwright install chromium
 ```
 
-If Open Graph generation is enabled and these tools (or the Chromium browser) are missing, the docs build fails with the same install instructions.
+Requires **capturist ≥ 0.1.3** for incremental capture (skip unchanged cards). If Open Graph generation is enabled and these tools (or the Chromium browser) are missing, the docs build fails with the same install instructions.
 
 In CI, install Node deps and Chromium before a docs build that runs capture (or use `runCapturist(false)` and capture in a later step).
 
@@ -227,6 +227,10 @@ og_description: A custom description for social shares.
 ### Capture step (advanced)
 
 By default, enabling a generated OG mode runs capture during `build()`.
+
+Capture is **incremental** via capturist’s built-in cache. Docsmith writes `cache` into `capturist.config.json` (manifest at `og/.capturist-cache.json`). Unchanged preview HTML skips Playwright; rebuilds print `Open Graph images up to date`.
+
+Force a full regenerate by deleting `og/*.png` and/or `og/.capturist-cache.json`, or run capturist with `--force`.
 
 Skip the capture step (e.g. CI that installs Playwright later):
 

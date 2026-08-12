@@ -100,6 +100,7 @@ it('writes a single generated preview and capturist config for the all scope', f
         ->toContain('"label": "cover"')
         ->toContain('"htmlFile": "og/preview/cover/index.html"')
         ->toContain('"output": "cover.png"')
+        ->toContain('"path": "og/.capturist-cache.json"')
         ->not->toContain('"route"');
 
     $preview = file_get_contents($outputPath . '/og/preview/cover/index.html');
@@ -213,4 +214,27 @@ it('uses a custom template for generated preview cards', function (): void {
         ->toContain('class="card-heading"')
         ->toContain('>Installation<')
         ->toContain('>Docsmith Docs</span>');
+});
+
+it('enables capturist incremental cache in the generated config', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-og-capturist-cache-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->ogGeneratedAll()
+        ->runCapturist(false)
+        ->build();
+
+    $configJson = (string) file_get_contents($outputPath . '/capturist.config.json');
+    $config = json_decode($configJson, true);
+
+    expect($config)->toBeArray()
+        ->and($config['cache']['path'] ?? null)->toBe('og/.capturist-cache.json')
+        ->and($config['cache']['adopt'] ?? null)->toBeTrue()
+        ->and($config['cache']['prune'] ?? null)->toBeTrue()
+        ->and($config['pages'][0]['htmlFile'] ?? null)->toBe('og/preview/cover/index.html');
 });

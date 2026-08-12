@@ -25,10 +25,10 @@ final readonly class OgImageGenerator
     }
 
     /**
-     * Writes HTML preview cards, a capturist config, and optionally captures PNGs.
+     * Writes HTML preview cards, a capturist config (with cache enabled), and optionally captures PNGs.
      *
-     * Consumers enable OG generation and install playwright + capturist as
-     * normal devDependencies. Docsmith writes capturist config; no user config needed.
+     * Incremental capture is handled by capturist ≥0.1.3 (`cache` in the generated config).
+     * Unchanged htmlFile previews are skipped by capturist without launching Playwright.
      *
      * @param list<Document>|null $documents
      */
@@ -50,12 +50,16 @@ final readonly class OgImageGenerator
         }
 
         foreach ($targets as $target) {
-            $this->writePreview($og, $config, $writeTarget, $target);
+            $this->writePreviewFile($og, $writeTarget, $target['slug'], $this->previewHtml($config, $og, $target));
         }
 
         $this->writeConfig($og, $writeTarget, $targets);
 
-        $this->runCapture($writeTarget, $runCapturist, $capturistBinary);
+        if (! $runCapturist) {
+            return;
+        }
+
+        $this->runCapture($writeTarget, $capturistBinary);
     }
 
     /**
@@ -97,19 +101,16 @@ final readonly class OgImageGenerator
         return $targets;
     }
 
-    /**
-     * @param array{slug: string, title: string, description: string} $target
-     */
-    private function writePreview(OgImageConfig $og, BuildConfig $config, string $writeTarget, array $target): void
+    private function writePreviewFile(OgImageConfig $og, string $writeTarget, string $slug, string $html): void
     {
-        $filePath = $writeTarget . '/' . $this->previewRelativePath($og, $target['slug']);
+        $filePath = $writeTarget . '/' . $this->previewRelativePath($og, $slug);
         $directory = dirname($filePath);
 
         if (! is_dir($directory)) {
             mkdir($directory, 0777, true);
         }
 
-        file_put_contents($filePath, $this->previewHtml($config, $og, $target));
+        file_put_contents($filePath, $html);
     }
 
     private function previewRelativePath(OgImageConfig $og, string $slug): string
@@ -122,7 +123,25 @@ final readonly class OgImageGenerator
      */
     private function writeConfig(OgImageConfig $og, string $writeTarget, array $targets): void
     {
+        file_put_contents(
+            $writeTarget . '/capturist.config.json',
+            json_encode($this->capturistConfigData($og, $targets), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}'
+        );
+    }
+
+    /**
+     * @param list<array{slug: string, title: string, description: string}> $targets
+     * @return array<string, mixed>
+     */
+    private function capturistConfigData(OgImageConfig $og, array $targets): array
+    {
         $configData = [
+            // capturist ≥0.1.3: fingerprint htmlFile + settings; skip unchanged PNGs.
+            'cache' => [
+                'path' => 'og/.capturist-cache.json',
+                'adopt' => true,
+                'prune' => true,
+            ],
             'outputDir' => 'og',
             'viewport' => [
                 'width' => $og->viewport['width'],
@@ -151,10 +170,7 @@ final readonly class OgImageGenerator
             $configData['pages'][] = $page;
         }
 
-        file_put_contents(
-            $writeTarget . '/capturist.config.json',
-            json_encode($configData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}'
-        );
+        return $configData;
     }
 
     /**
@@ -301,13 +317,8 @@ HTML;
         return '<div class="og-card">' . $contents . '</div>';
     }
 
-    private function runCapture(string $writeTarget, bool $runCapture, string $capturistBinary): void
+    private function runCapture(string $writeTarget, string $capturistBinary): void
     {
-        if (! $runCapture) {
-            return;
-        }
-
-        // Resolve Node tools from the project root (not the docs/ output folder).
         $projectRoot = $this->environment->resolveNodeProjectRoot($writeTarget);
         $this->environment->assertReadyForCapture($projectRoot);
 
@@ -317,7 +328,7 @@ HTML;
             throw new RuntimeException($this->environment->captureToolsInstallMessage());
         }
 
-        // Run from the project root so Playwright resolves; capturist --cwd points at output.
+        // Run from project root so Playwright resolves; capturist --cwd points at docs output.
         [$exitCode, $output, $errorOutput] = $this->environment->runShell($command, $projectRoot);
         $output = trim($output);
         $errorOutput = trim($errorOutput);
@@ -374,16 +385,33 @@ HTML;
 
         if (is_array($decoded) && isset($decoded['succeeded'], $decoded['total'])) {
             $failed = (int) ($decoded['failed'] ?? 0);
+            $cached = (int) ($decoded['cached'] ?? 0);
+            $captured = (int) ($decoded['captured'] ?? $decoded['total']);
             $seconds = isset($decoded['totalDurationMs'])
                 ? number_format(((int) $decoded['totalDurationMs']) / 1000, 2)
                 : '?';
 
+            if ($captured === 0 && $cached > 0) {
+                echo sprintf(
+                    "[Docsmith] Open Graph images up to date (%d cached)\n",
+                    $cached
+                );
+
+                return;
+            }
+
             echo sprintf(
-                "[Docsmith] Generated %s/%s Open Graph images in %ss\n",
+                "[Docsmith] Generated %s/%s Open Graph images in %ss",
                 (string) $decoded['succeeded'],
                 (string) $decoded['total'],
                 $seconds
             );
+
+            if ($cached > 0) {
+                echo sprintf(' (%d cached)', $cached);
+            }
+
+            echo "\n";
 
             if ($failed > 0) {
                 echo sprintf("[Docsmith] %s Open Graph image(s) failed\n", (string) $failed);
