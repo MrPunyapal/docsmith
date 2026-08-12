@@ -9,6 +9,7 @@
         "phiki/phiki": "^2.2"
     },
     "require-dev": {
+        "laravel/pao": "^1.1",
         "laravel/pint": "^1.18",
         "pestphp/pest": "^3.8 || ^4.0",
         "phpstan/phpstan": "^2.1",
