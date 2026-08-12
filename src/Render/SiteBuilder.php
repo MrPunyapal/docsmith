@@ -412,6 +412,14 @@ HTML;
             return $rawImage;
         }
 
+        $baseUrl = rtrim($config->baseUrl, '/');
+
+        // On subpath deployments a page-relative og:image breaks crawlers (they
+        // resolve against the host root). Emit a root-relative path instead.
+        if ($baseUrl !== '') {
+            return $baseUrl . '/' . $rawImage;
+        }
+
         return $this->relativeAssetHref($outputPath, $rawImage);
     }
 

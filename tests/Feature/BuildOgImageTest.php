@@ -155,6 +155,27 @@ it('writes one generated preview per page for the per-page scope', function (): 
         ->and(file_get_contents($outputPath . '/og/preview/installation/index.html'))->toContain('Installation');
 });
 
+it('emits a root-relative og:image on a subpath base url without a site url', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-og-baseurl-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->baseUrl('/docs')
+        ->ogGeneratedAll()
+        ->captureOg(false)
+        ->build();
+
+    $installationPage = file_get_contents($outputPath . '/installation/index.html');
+    $landingPage = file_get_contents($outputPath . '/index.html');
+
+    expect($installationPage)->toContain('property="og:image" content="/docs/og/cover.png"')
+        ->and($landingPage)->toContain('property="og:image" content="/docs/og/cover.png"');
+});
+
 it('lets frontmatter override the og image, title, and description', function (): void {
     $sourcePath = sys_get_temp_dir() . '/docsmith-og-frontmatter-' . uniqid();
     $outputPath = sys_get_temp_dir() . '/docsmith-og-frontmatter-dist-' . uniqid();
