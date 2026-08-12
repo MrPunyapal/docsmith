@@ -1,0 +1,394 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Docsmith\Support;
+
+use RuntimeException;
+
+/**
+ * Detects Node/Playwright readiness for Open Graph capture.
+ * Capturist is resolved automatically — consumers only need Playwright.
+ */
+final class OgCaptureEnvironment
+{
+    /** Pinned capturist version Docsmith installs automatically when missing. */
+    public const CAPTURIST_VERSION = '0.1.2';
+
+    public const CAPTURIST_PACKAGE = 'capturist@' . self::CAPTURIST_VERSION;
+
+    public function hasNode(): bool
+    {
+        return $this->commandSucceeds(
+            PHP_OS_FAMILY === 'Windows' ? 'where node 2>NUL' : 'command -v node >/dev/null 2>&1'
+        );
+    }
+
+    public function hasNpm(): bool
+    {
+        return $this->commandSucceeds(
+            PHP_OS_FAMILY === 'Windows' ? 'where npm 2>NUL' : 'command -v npm >/dev/null 2>&1'
+        );
+    }
+
+    public function hasNpx(): bool
+    {
+        return $this->commandSucceeds(
+            PHP_OS_FAMILY === 'Windows' ? 'where npx 2>NUL' : 'command -v npx >/dev/null 2>&1'
+        );
+    }
+
+    /**
+     * True when the Playwright npm package is resolvable from the project tree.
+     */
+    public function isPlaywrightPackageInstalled(string $cwd): bool
+    {
+        foreach ($this->candidateNodeModules($cwd) as $nodeModules) {
+            if (is_dir($nodeModules . '/playwright') || is_dir($nodeModules . '/playwright-core')) {
+                return true;
+            }
+        }
+
+        if (! $this->hasNode()) {
+            return false;
+        }
+
+        // Prefer filesystem discovery; node eval is a fallback for unusual layouts.
+        return $this->runNodeProjectScript(
+            <<<'JS'
+const { createRequire } = require("module");
+const path = require("path");
+const root = process.argv[2];
+const requireFrom = createRequire(path.join(root, "package.json"));
+try {
+  requireFrom("playwright");
+  process.exit(0);
+} catch (e) {
+  try {
+    requireFrom("playwright-core");
+    process.exit(0);
+  } catch (e2) {
+    process.exit(1);
+  }
+}
+JS,
+            $cwd
+        ) === 0;
+    }
+
+    /**
+     * True when a Chromium binary for Playwright is available on disk.
+     */
+    public function isPlaywrightBrowserInstalled(string $cwd): bool
+    {
+        if (! $this->hasNode() || ! $this->isPlaywrightPackageInstalled($cwd)) {
+            return false;
+        }
+
+        return $this->runNodeProjectScript(
+            <<<'JS'
+const { createRequire } = require("module");
+const fs = require("fs");
+const path = require("path");
+const root = process.argv[2];
+const requireFrom = createRequire(path.join(root, "package.json"));
+try {
+  const pw = requireFrom("playwright");
+  const exe = pw.chromium.executablePath();
+  process.exit(exe && fs.existsSync(exe) ? 0 : 1);
+} catch (e) {
+  process.exit(1);
+}
+JS,
+            $cwd
+        ) === 0;
+    }
+
+    /**
+     * Throws a consumer-friendly RuntimeException when capture cannot run.
+     */
+    public function assertReadyForCapture(string $cwd): void
+    {
+        if (! $this->hasNode() || ! $this->hasNpm()) {
+            throw new RuntimeException(
+                "Open Graph image generation requires Node.js and npm.\n\n" .
+                "Install Node.js 18+ from https://nodejs.org/ then re-run your docs build.\n"
+            );
+        }
+
+        if (! $this->isPlaywrightPackageInstalled($cwd)) {
+            throw new RuntimeException($this->playwrightPackageInstallMessage());
+        }
+
+        if (! $this->isPlaywrightBrowserInstalled($cwd)) {
+            throw new RuntimeException($this->playwrightBrowserInstallMessage());
+        }
+
+        if (! $this->hasNpx()) {
+            throw new RuntimeException(
+                "Open Graph image generation requires npx (comes with npm).\n\n" .
+                "Ensure Node.js/npm is installed correctly, then re-run your docs build.\n"
+            );
+        }
+    }
+
+    public function playwrightPackageInstallMessage(): string
+    {
+        return <<<'MSG'
+Open Graph image generation is enabled, but Playwright is not installed in this project.
+
+Install it once:
+
+  npm install -D playwright
+  npx playwright install chromium
+
+Then re-run your docs build.
+MSG;
+    }
+
+    public function playwrightBrowserInstallMessage(): string
+    {
+        return <<<'MSG'
+Playwright is installed, but the Chromium browser binary is missing.
+
+Install the browser once:
+
+  npx playwright install chromium
+
+Then re-run your docs build.
+MSG;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function candidateNodeModules(string $cwd): array
+    {
+        $cwd = rtrim(str_replace('\\', '/', $cwd), '/');
+        $paths = [
+            $cwd . '/node_modules',
+            getcwd() !== false ? str_replace('\\', '/', rtrim(getcwd(), '/\\')) . '/node_modules' : '',
+            dirname($cwd) . '/node_modules',
+        ];
+
+        return array_values(array_unique(array_filter($paths)));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function localCapturistBinaries(string $cwd): array
+    {
+        $bins = [];
+
+        foreach ($this->candidateNodeModules($cwd) as $nodeModules) {
+            $base = $nodeModules . '/.bin/capturist';
+            // Prefer .cmd on Windows (shell scripts are not executable there).
+            $suffixes = PHP_OS_FAMILY === 'Windows' ? ['.cmd', '.ps1', ''] : ['', '.cmd', '.ps1'];
+            foreach ($suffixes as $suffix) {
+                $path = $base . $suffix;
+                if (is_file($path)) {
+                    $bins[] = $path;
+                }
+            }
+        }
+
+        return $bins;
+    }
+
+    /**
+     * Install capturist into the project node_modules without touching package.json.
+     * Consumers never need to declare capturist themselves.
+     */
+    public function ensureCapturistInstalled(string $projectRoot): void
+    {
+        if ($this->localCapturistBinaries($projectRoot) !== []) {
+            return;
+        }
+
+        if (! $this->hasNpm()) {
+            throw new RuntimeException(
+                "Open Graph image generation requires npm to fetch the capture tool.\n\n" .
+                "Install Node.js/npm, then re-run your docs build.\n"
+            );
+        }
+
+        echo "[Docsmith] Installing capture tooling (one-time, not added to package.json)…\n";
+
+        $npm = $this->resolveExecutable('npm');
+        if ($npm === null) {
+            throw new RuntimeException(
+                "Open Graph image generation requires npm.\n\n" .
+                "Install Node.js/npm, then re-run your docs build.\n"
+            );
+        }
+
+        $command = sprintf(
+            '%s install %s --no-save --no-fund --no-audit --loglevel=error',
+            $this->escapeShell($npm),
+            $this->escapeShell(self::CAPTURIST_PACKAGE)
+        );
+
+        [$exitCode, $stdout, $stderr] = $this->runShell($command, $projectRoot);
+
+        if ($exitCode !== 0 || $this->localCapturistBinaries($projectRoot) === []) {
+            $detail = trim($stderr . "\n" . $stdout);
+
+            throw new RuntimeException(
+                "Failed to install Open Graph capture tooling.\n" .
+                "Try: npm install -D playwright && npx playwright install chromium\n" .
+                ($detail !== '' ? $detail . "\n" : '')
+            );
+        }
+    }
+
+    /**
+     * Absolute path to a PATH executable (node, npm, …), or null.
+     */
+    public function resolveExecutable(string $name): ?string
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $output = [];
+            $exitCode = 1;
+            @exec('where ' . escapeshellarg($name) . ' 2>NUL', $output, $exitCode);
+            if ($exitCode === 0 && isset($output[0]) && is_file($output[0])) {
+                return $output[0];
+            }
+
+            // where may return .cmd without is_file succeeding on some setups
+            if ($exitCode === 0 && isset($output[0]) && $output[0] !== '') {
+                return $output[0];
+            }
+
+            return null;
+        }
+
+        $output = [];
+        $exitCode = 1;
+        @exec('command -v ' . escapeshellarg($name) . ' 2>/dev/null', $output, $exitCode);
+
+        return ($exitCode === 0 && isset($output[0]) && $output[0] !== '') ? $output[0] : null;
+    }
+
+    public function escapeShell(string $value): string
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            // Prefer double-quoted Windows-safe escaping over escapeshellarg() quirks.
+            return '"' . str_replace('"', '""', $value) . '"';
+        }
+
+        return escapeshellarg($value);
+    }
+
+    /**
+     * @return array{0: int, 1: string, 2: string}
+     */
+    public function runShell(string $command, string $cwd): array
+    {
+        $descriptor = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $process = proc_open($command, $descriptor, $pipes, $cwd);
+
+        if (! is_resource($process)) {
+            return [1, '', 'Unable to start process.'];
+        }
+
+        fclose($pipes[0]);
+        $stdout = (string) stream_get_contents($pipes[1]);
+        $stderr = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        return [proc_close($process), $stdout, $stderr];
+    }
+
+    private function commandSucceeds(string $command): bool
+    {
+        $output = [];
+        $exitCode = 1;
+        @exec($command, $output, $exitCode);
+
+        return $exitCode === 0;
+    }
+
+    /**
+     * Run a Node script with the project root passed as argv[2].
+     * Uses createRequire(project/package.json) so modules resolve even if the
+     * temp script lives outside the project (Node resolves from the file path).
+     */
+    private function runNodeProjectScript(string $script, string $cwd): int
+    {
+        $workDir = $this->resolveNodeProjectRoot($cwd);
+        $tmp = tempnam(sys_get_temp_dir(), 'docsmith-node-');
+        if ($tmp === false) {
+            return 1;
+        }
+
+        $file = $tmp . '.js';
+        @unlink($tmp);
+
+        try {
+            file_put_contents($file, $script);
+
+            $descriptor = [
+                0 => ['pipe', 'r'],
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ];
+
+            if (PHP_OS_FAMILY === 'Windows') {
+                $cmd = ['cmd', '/c', 'node', $file, $workDir];
+            } else {
+                $cmd = ['node', $file, $workDir];
+            }
+
+            $process = proc_open($cmd, $descriptor, $pipes, $workDir);
+
+            if (! is_resource($process)) {
+                return 1;
+            }
+
+            fclose($pipes[0]);
+            stream_get_contents($pipes[1]);
+            stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+
+            return proc_close($process);
+        } finally {
+            @unlink($file);
+        }
+    }
+
+    /**
+     * Walk up from $cwd until a node_modules directory is found (or return $cwd).
+     */
+    public function resolveNodeProjectRoot(string $cwd): string
+    {
+        $current = rtrim(str_replace('\\', '/', $cwd), '/');
+
+        for ($i = 0; $i < 6; $i++) {
+            if (is_dir($current . '/node_modules') && is_file($current . '/package.json')) {
+                return str_replace('/', DIRECTORY_SEPARATOR, $current);
+            }
+
+            if (is_dir($current . '/node_modules')) {
+                return str_replace('/', DIRECTORY_SEPARATOR, $current);
+            }
+
+            $parent = dirname($current);
+            if ($parent === $current) {
+                break;
+            }
+            $current = $parent;
+        }
+
+        $fallback = getcwd();
+
+        return is_string($fallback) ? $fallback : $cwd;
+    }
+}

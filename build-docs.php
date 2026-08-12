@@ -15,4 +15,5 @@ Docsmith::make()
     ->siteUrl('https://mrpunyapal.github.io/docsmith')
     ->editBranch('main')
     ->rightSidebar()
+    ->ogImage(type: 'generated', scope: 'all')
     ->build();

@@ -8,7 +8,7 @@ use Docsmith\Exception\InvalidBuildConfiguration;
 
 final readonly class BuildConfig
 {
-    public static function fromInput(string $sourcePath, string $outputPath, SiteMetadata $metadata, string $baseUrl = '/', bool $rightSidebar = false): self
+    public static function fromInput(string $sourcePath, string $outputPath, SiteMetadata $metadata, string $baseUrl = '/', bool $rightSidebar = false, ?OgImageConfig $ogImage = null): self
     {
         $sourceRealPath = realpath($sourcePath);
 
@@ -22,6 +22,7 @@ final readonly class BuildConfig
             metadata: $metadata,
             baseUrl: self::normalizeBaseUrl($baseUrl),
             rightSidebar: $rightSidebar,
+            ogImage: $ogImage,
         );
     }
 
@@ -31,6 +32,7 @@ final readonly class BuildConfig
         public SiteMetadata $metadata,
         public string $baseUrl = '/',
         public bool $rightSidebar = false,
+        public ?OgImageConfig $ogImage = null,
     ) {
     }
 

@@ -116,6 +116,127 @@ Docsmith ships two search experiences out of the box:
 
 The global search index is generated during each build and is static-hosting friendly.
 
+## Favicon
+
+Docsmith generates and links a default favicon for every built page. You can override it with a URL, data URI, or a path to a local image file:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/docs')
+    ->favicon('https://example.com/favicon.png')
+    ->build();
+```
+
+Local favicons are copied into `assets/` and linked with the correct relative path for each page.
+
+## Open Graph Images
+
+Docsmith can emit `og:` and `twitter:` card tags and generate social preview images for you.
+
+You only need **Playwright** (Node). Docsmith pulls the capture tool automatically — you do not need to install or configure capturist.
+
+```bash
+npm install -D playwright
+npx playwright install chromium
+```
+
+If Open Graph generation is enabled and Playwright (or its Chromium browser) is missing, the docs build fails with install instructions.
+
+### Single default image for all pages
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->title('My Package Docs')
+    ->ogGeneratedAll()
+    ->build();
+```
+
+This renders one preview card, captures it to `docs/og/cover.png`, and points every page at it.
+
+### Default generated image per page
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->title('My Package Docs')
+    ->ogGeneratedPerPage()
+    ->build();
+```
+
+Each page gets its own preview at `og/<page>.png`.
+
+### Custom generated template
+
+Pass a file path or raw HTML snippet. The tokens `{site_title}`, `{title}`, and `{description}` are replaced per page:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->ogTemplate(__DIR__ . '/og-card.html', scope: 'per-page')
+    ->build();
+```
+
+The template is rendered inside a 1200×630 shell, so you only need the card markup.
+
+### Link to an existing image
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->ogLink('https://example.com/og/cover.png')
+    ->build();
+```
+
+The link can be an absolute URL or a root-relative path.
+
+### Advanced / low-level
+
+If you prefer, the structured `ogImage(...)` method exposes every option:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->ogImage(
+        type: 'generated',
+        scope: 'per-page',
+        template: __DIR__ . '/og-card.html',
+        scale: 2,
+        viewport: ['width' => 1200, 'height' => 630],
+    )
+    ->build();
+```
+
+### Per-page overrides via frontmatter
+
+Individual pages can override the image, title, or description used in their OG tags:
+
+```md
+---
+og_image: /assets/page-og.png
+og_title: Custom Social Title
+og_description: A custom description for social shares.
+---
+
+# Page Title
+```
+
+### Capture step (advanced)
+
+By default, enabling a generated OG mode runs capture during `build()`.
+
+Skip the capture step (e.g. CI that installs Playwright later):
+
+```php
+Docsmith::make()
+    ->ogGeneratedAll()
+    ->runCapturist(false)
+    ->build();
+```
+
+HTML card previews and `capturist.config.json` are still written under the output directory so a later capture step can use them.
+
 ## README Index Compatibility Mode
 
 For repositories that maintain docs links in README sections, you can import that structure directly.

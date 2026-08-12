@@ -6,6 +6,7 @@ namespace Docsmith\Render;
 
 use Docsmith\Assets\AssetPublisher;
 use Docsmith\Config\BuildConfig;
+use Docsmith\Config\OgImageConfig;
 use Docsmith\Content\Document;
 use Docsmith\Content\SourceScanner;
 use Docsmith\Markdown\CommonMarkRenderer;
@@ -171,7 +172,10 @@ final readonly class SiteBuilder
         $scriptPath = $this->scriptPath($document->outputPath);
         $rootPrefix = htmlspecialchars($this->relativePagePath($document->outputPath, 'index.html'), ENT_QUOTES, 'UTF-8');
         $shellClass = $showRightSidebar ? 'shell has-right-rail' : 'shell';
-        $title = htmlspecialchars($document->title . ' | ' . $config->metadata->title, ENT_QUOTES, 'UTF-8');
+        $pageTitle = $document->title !== $config->metadata->title
+            ? $document->title . ' | ' . $config->metadata->title
+            : $config->metadata->title;
+        $title = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
         $siteTitle = htmlspecialchars($config->metadata->title, ENT_QUOTES, 'UTF-8');
         $description = htmlspecialchars($config->metadata->description, ENT_QUOTES, 'UTF-8');
 
@@ -183,6 +187,7 @@ final readonly class SiteBuilder
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{$title}</title>
     <meta name="description" content="{$description}">
+    {$this->headExtras($config, $document)}
     <link rel="stylesheet" href="{$assetPath}">
     <script src="{$scriptPath}" defer></script>
 </head>
@@ -258,6 +263,7 @@ HTML;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{$title}</title>
     <meta name="description" content="{$description}">
+    {$this->landingHeadExtras($config)}
     <link rel="stylesheet" href="assets/app.css">
     <script src="assets/app.js" defer></script>
 </head>
@@ -295,6 +301,148 @@ HTML;
 </body>
 </html>
 HTML;
+    }
+
+    private function headExtras(BuildConfig $config, Document $document): string
+    {
+        $markup = $this->faviconLink($config, $document->outputPath);
+
+        if ($config->ogImage instanceof OgImageConfig || $document->ogImage !== '') {
+            $title = $document->ogTitle !== ''
+                ? $document->ogTitle
+                : ($document->title !== $config->metadata->title
+                    ? $document->title . ' | ' . $config->metadata->title
+                    : $config->metadata->title);
+            $description = $document->ogDescription !== '' ? $document->ogDescription : $document->description;
+            $image = $this->ogImageHref($config, $this->resolvedOgImage($config, $document), $document->outputPath);
+            $pageUrl = $config->metadata->siteUrl !== ''
+                ? rtrim($config->metadata->siteUrl, '/') . $document->url()
+                : '';
+
+            $markup .= "\n    " . $this->ogMetaTags($title, $description, $image, $pageUrl);
+        }
+
+        return $markup;
+    }
+
+    private function landingHeadExtras(BuildConfig $config): string
+    {
+        $markup = $this->faviconLink($config, 'index.html');
+
+        if ($config->ogImage instanceof OgImageConfig) {
+            $image = $this->ogImageHref($config, $this->resolvedRootOgImage($config), 'index.html');
+            $pageUrl = $config->metadata->siteUrl !== '' ? rtrim($config->metadata->siteUrl, '/') . '/' : '';
+
+            $markup .= "\n    " . $this->ogMetaTags($config->metadata->title, $config->metadata->description, $image, $pageUrl);
+        }
+
+        return $markup;
+    }
+
+    private function faviconLink(BuildConfig $config, string $outputPath): string
+    {
+        $favicon = trim($config->metadata->favicon);
+
+        if ($favicon !== '' && $this->isRemoteUrl($favicon)) {
+            return '<link rel="icon" href="' . htmlspecialchars($favicon, ENT_QUOTES, 'UTF-8') . '">';
+        }
+
+        $fileName = $this->assets->faviconFileName($config->metadata);
+        $href = $this->relativeAssetHref($outputPath, 'assets/' . $fileName);
+
+        return '<link rel="icon" type="' . $this->faviconType($fileName) . '" href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '">';
+    }
+
+    private function faviconType(string $fileName): string
+    {
+        return match (strtolower(pathinfo($fileName, PATHINFO_EXTENSION))) {
+            'ico' => 'image/x-icon',
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            default => 'image/svg+xml',
+        };
+    }
+
+    private function isRemoteUrl(string $value): bool
+    {
+        return str_starts_with($value, 'http://')
+            || str_starts_with($value, 'https://')
+            || str_starts_with($value, 'data:');
+    }
+
+    private function resolvedOgImage(BuildConfig $config, Document $document): string
+    {
+        if ($document->ogImage !== '') {
+            return $document->ogImage;
+        }
+
+        $og = $config->ogImage;
+
+        if (!$og instanceof OgImageConfig || ! $og->isGenerated()) {
+            return $og->url ?? '';
+        }
+
+        return $og->imagePathFor($document->ogSlug());
+    }
+
+    private function resolvedRootOgImage(BuildConfig $config): string
+    {
+        $og = $config->ogImage;
+
+        if (!$og instanceof OgImageConfig || ! $og->isGenerated()) {
+            return $og->url ?? '';
+        }
+
+        return $og->imagePathFor('index');
+    }
+
+    private function ogImageHref(BuildConfig $config, string $rawImage, string $outputPath): string
+    {
+        if ($rawImage === '' || $this->isRemoteUrl($rawImage)) {
+            return $rawImage;
+        }
+
+        $siteUrl = rtrim($config->metadata->siteUrl, '/');
+
+        if ($siteUrl !== '') {
+            return $siteUrl . '/' . ltrim($rawImage, '/');
+        }
+
+        if (str_starts_with($rawImage, '/')) {
+            return $rawImage;
+        }
+
+        return $this->relativeAssetHref($outputPath, $rawImage);
+    }
+
+    private function ogMetaTags(string $title, string $description, string $image, string $pageUrl): string
+    {
+        $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+        $description = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
+        $image = htmlspecialchars($image, ENT_QUOTES, 'UTF-8');
+        $pageUrl = htmlspecialchars($pageUrl, ENT_QUOTES, 'UTF-8');
+
+        $tags = '<meta property="og:type" content="website">';
+        $tags .= "\n    " . '<meta property="og:title" content="' . $title . '">';
+        $tags .= "\n    " . '<meta property="og:description" content="' . $description . '">';
+
+        if ($pageUrl !== '') {
+            $tags .= "\n    " . '<meta property="og:url" content="' . $pageUrl . '">';
+        }
+
+        if ($image !== '') {
+            $tags .= "\n    " . '<meta property="og:image" content="' . $image . '">';
+        }
+
+        $tags .= "\n    " . '<meta name="twitter:card" content="summary_large_image">';
+        $tags .= "\n    " . '<meta name="twitter:title" content="' . $title . '">';
+        $tags .= "\n    " . '<meta name="twitter:description" content="' . $description . '">';
+
+        if ($image !== '') {
+            $tags .= "\n    " . '<meta name="twitter:image" content="' . $image . '">';
+        }
+
+        return $tags;
     }
 
     /** @param list<Document> $documents */
@@ -400,16 +548,19 @@ HTML;
 
     private function assetPath(string $outputPath): string
     {
-        $depth = substr_count(trim($outputPath, '/'), '/');
-
-        return str_repeat('../', $depth) . 'assets/app.css';
+        return $this->relativeAssetHref($outputPath, 'assets/app.css');
     }
 
     private function scriptPath(string $outputPath): string
     {
-        $depth = substr_count(trim($outputPath, '/'), '/');
+        return $this->relativeAssetHref($outputPath, 'assets/app.js');
+    }
 
-        return str_repeat('../', $depth) . 'assets/app.js';
+    private function relativeAssetHref(string $fromOutputPath, string $assetPath): string
+    {
+        $depth = substr_count(rtrim(trim($fromOutputPath, '/'), '/'), '/');
+
+        return str_repeat('../', $depth) . ltrim($assetPath, '/');
     }
 
     private function relativePagePath(string $fromOutputPath, string $toOutputPath): string

@@ -1,0 +1,14 @@
+{
+    "outputDir": "og",
+    "viewport": {
+        "width": 1200,
+        "height": 630
+    },
+    "pages": [
+        {
+            "label": "cover",
+            "htmlFile": "og/preview/cover/index.html",
+            "output": "cover.png"
+        }
+    ]
+}

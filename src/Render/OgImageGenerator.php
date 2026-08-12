@@ -1,0 +1,425 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Docsmith\Render;
+
+use Docsmith\Config\BuildConfig;
+use Docsmith\Config\OgImageConfig;
+use Docsmith\Content\Document;
+use Docsmith\Content\SourceScanner;
+use Docsmith\Support\Color;
+use Docsmith\Support\OgCaptureEnvironment;
+use RuntimeException;
+
+final readonly class OgImageGenerator
+{
+    private SourceScanner $scanner;
+
+    private OgCaptureEnvironment $environment;
+
+    public function __construct(?SourceScanner $scanner = null, ?OgCaptureEnvironment $environment = null)
+    {
+        $this->scanner = $scanner ?? new SourceScanner();
+        $this->environment = $environment ?? new OgCaptureEnvironment();
+    }
+
+    /**
+     * Writes HTML preview cards, a capturist config, and optionally captures PNGs.
+     *
+     * Consumers enable OG generation and install Playwright only — capturist is
+     * resolved automatically (local install or npx).
+     *
+     * @param list<Document>|null $documents
+     */
+    public function generate(BuildConfig $config, ?array $documents = null, bool $runCapturist = true, string $capturistBinary = '', ?string $outputPath = null): void
+    {
+        $og = $config->ogImage;
+
+        if (! $og instanceof OgImageConfig || ! $og->isGenerated()) {
+            return;
+        }
+
+        $writeTarget = rtrim($outputPath ?? $config->outputPath, '/');
+        $documents ??= $this->scanner->scan($config->sourcePath);
+
+        $targets = $this->targets($og, $config, $documents);
+
+        if ($targets === []) {
+            return;
+        }
+
+        foreach ($targets as $target) {
+            $this->writePreview($og, $config, $writeTarget, $target);
+        }
+
+        $this->writeConfig($og, $writeTarget, $targets);
+
+        $this->runCapture($writeTarget, $runCapturist, $capturistBinary);
+    }
+
+    /**
+     * @param list<Document> $documents
+     * @return list<array{slug: string, title: string, description: string}>
+     */
+    private function targets(OgImageConfig $og, BuildConfig $config, array $documents): array
+    {
+        if (! $og->isPerPage()) {
+            return [[
+                'slug' => 'cover',
+                'title' => $config->metadata->title,
+                'description' => $config->metadata->description,
+            ]];
+        }
+
+        $targets = [];
+
+        foreach ($documents as $document) {
+            if ($document->hidden) {
+                continue;
+            }
+
+            $targets[] = [
+                'slug' => $document->ogSlug(),
+                'title' => $document->ogTitle !== '' ? $document->ogTitle : $document->title,
+                'description' => $document->ogDescription !== '' ? $document->ogDescription : $document->description,
+            ];
+        }
+
+        if (! $this->hasRootIndex($documents)) {
+            $targets[] = [
+                'slug' => 'index',
+                'title' => $config->metadata->title,
+                'description' => $config->metadata->description,
+            ];
+        }
+
+        return $targets;
+    }
+
+    /**
+     * @param array{slug: string, title: string, description: string} $target
+     */
+    private function writePreview(OgImageConfig $og, BuildConfig $config, string $writeTarget, array $target): void
+    {
+        $filePath = $writeTarget . '/' . $this->previewRelativePath($og, $target['slug']);
+        $directory = dirname($filePath);
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        file_put_contents($filePath, $this->previewHtml($config, $og, $target));
+    }
+
+    private function previewRelativePath(OgImageConfig $og, string $slug): string
+    {
+        return $og->routePrefix . '/' . $slug . '/index.html';
+    }
+
+    /**
+     * @param list<array{slug: string, title: string, description: string}> $targets
+     */
+    private function writeConfig(OgImageConfig $og, string $writeTarget, array $targets): void
+    {
+        $configData = [
+            'outputDir' => 'og',
+            'viewport' => [
+                'width' => $og->viewport['width'],
+                'height' => $og->viewport['height'],
+            ],
+            'pages' => [],
+        ];
+
+        if (($og->viewport['deviceScaleFactor'] ?? 1) > 1) {
+            $configData['viewport']['deviceScaleFactor'] = $og->viewport['deviceScaleFactor'];
+        } elseif ($og->scale > 1) {
+            $configData['scale'] = $og->scale;
+        }
+
+        foreach ($targets as $target) {
+            $page = [
+                'label' => $target['slug'],
+                'htmlFile' => $this->previewRelativePath($og, $target['slug']),
+                'output' => $target['slug'] . '.png',
+            ];
+
+            if ($og->selector !== '') {
+                $page['selector'] = $og->selector;
+            }
+
+            $configData['pages'][] = $page;
+        }
+
+        file_put_contents(
+            $writeTarget . '/capturist.config.json',
+            json_encode($configData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}'
+        );
+    }
+
+    /**
+     * @param list<Document> $documents
+     */
+    private function hasRootIndex(array $documents): bool
+    {
+        foreach ($documents as $document) {
+            if ($document->outputPath === 'index.html') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array{slug: string, title: string, description: string} $target
+     */
+    private function previewHtml(BuildConfig $config, OgImageConfig $og, array $target): string
+    {
+        $accent = Color::normalizeHex($config->metadata->accentColor, '#ff2d20');
+        $siteTitle = htmlspecialchars($config->metadata->title, ENT_QUOTES, 'UTF-8');
+        $title = htmlspecialchars($target['title'], ENT_QUOTES, 'UTF-8');
+        $description = htmlspecialchars($target['description'], ENT_QUOTES, 'UTF-8');
+
+        $card = $og->hasCustomTemplate()
+            ? $this->cardFromTemplate($og->template)
+            : $this->defaultCard();
+
+        $card = str_replace(
+            ['{site_title}', '{title}', '{description}', '{accent_color}'],
+            [$siteTitle, $title, $description, $accent],
+            $card
+        );
+
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<title>{$title} | {$siteTitle}</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0c141d; }
+</style>
+</head>
+<body data-docsmith-og-card>
+{$card}
+</body>
+</html>
+HTML;
+    }
+
+    private function defaultCard(): string
+    {
+        return <<<'HTML'
+<div class="og-card">
+    <div class="og-card-accent" aria-hidden="true"></div>
+    <header class="og-card-header">
+        <span class="og-card-brand">{site_title}</span>
+    </header>
+    <main class="og-card-body">
+        <h1 class="og-card-title">{title}</h1>
+        <p class="og-card-description">{description}</p>
+    </main>
+    <footer class="og-card-footer">
+        <span class="og-card-site">{site_title}</span>
+    </footer>
+</div>
+<style>
+    .og-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 1200px;
+        height: 630px;
+        padding: 72px 84px 64px;
+        color: #e9f1fb;
+        background: radial-gradient(circle at 0% 0%, #16293c 0%, #0c141d 62%, #08131f 100%);
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    }
+
+    .og-card-accent {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 10px;
+        height: 630px;
+        background: {accent_color};
+    }
+
+    .og-card-header {
+        display: flex;
+        align-items: center;
+    }
+
+    .og-card-brand {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #a6b8cc;
+    }
+
+    .og-card-title {
+        max-width: 940px;
+        font-size: 64px;
+        line-height: 1.08;
+        letter-spacing: -0.025em;
+        margin-bottom: 26px;
+    }
+
+    .og-card-description {
+        max-width: 900px;
+        font-size: 28px;
+        line-height: 1.4;
+        color: #a6b8cc;
+    }
+
+    .og-card-footer {
+        padding-top: 30px;
+        border-top: 1px solid #2a4157;
+    }
+
+    .og-card-site {
+        font-size: 22px;
+        font-weight: 600;
+        color: {accent_color};
+    }
+</style>
+HTML;
+    }
+
+    private function cardFromTemplate(string $template): string
+    {
+        $contents = is_file($template) ? (string) file_get_contents($template) : $template;
+
+        if (str_contains($contents, '<html') || str_contains($contents, '<!DOCTYPE')) {
+            return $contents;
+        }
+
+        return '<div class="og-card">' . $contents . '</div>';
+    }
+
+    private function runCapture(string $writeTarget, bool $runCapture, string $capturistBinary): void
+    {
+        if (! $runCapture) {
+            return;
+        }
+
+        // Consumers only manage Playwright; capturist is installed automatically.
+        // Resolve Playwright from the Node project root (not the docs/ output folder).
+        $projectRoot = $this->environment->resolveNodeProjectRoot($writeTarget);
+        $this->environment->assertReadyForCapture($projectRoot);
+
+        if ($capturistBinary === '') {
+            $this->environment->ensureCapturistInstalled($projectRoot);
+        }
+
+        $command = $this->resolveCommand($writeTarget, $projectRoot, $capturistBinary);
+
+        if ($command === null) {
+            throw new RuntimeException(
+                "Open Graph image generation could not start the capture tool.\n\n" .
+                "Ensure Node.js and npm are installed, then re-run your docs build.\n"
+            );
+        }
+
+        // Run from the project root so Playwright resolves; capturist --cwd points at output.
+        [$exitCode, $output, $errorOutput] = $this->environment->runShell($command, $projectRoot);
+        $output = trim($output);
+        $errorOutput = trim($errorOutput);
+
+        if ($exitCode !== 0) {
+            throw new RuntimeException($this->friendlyCaptureFailure($output, $errorOutput, $exitCode));
+        }
+
+        $this->reportCaptureSuccess($output);
+    }
+
+    private function friendlyCaptureFailure(string $stdout, string $stderr, int $exitCode): string
+    {
+        $detail = $stdout !== '' ? $stdout : $stderr;
+        $decoded = $stdout !== '' ? json_decode($stdout, true) : null;
+
+        if (is_array($decoded) && isset($decoded['error']) && is_string($decoded['error'])) {
+            $detail = $decoded['error'];
+        }
+
+        $combined = strtolower($detail . "\n" . $stderr);
+
+        if (
+            str_contains($combined, 'playwright is not installed')
+            || str_contains($combined, "cannot find module 'playwright'")
+            || str_contains($combined, 'cannot find package \'playwright\'')
+        ) {
+            return $this->environment->playwrightPackageInstallMessage();
+        }
+
+        if (
+            str_contains($combined, "executable doesn't exist")
+            || str_contains($combined, 'browser binaries are not installed')
+            || str_contains($combined, 'playwright install')
+        ) {
+            return $this->environment->playwrightBrowserInstallMessage();
+        }
+
+        return "Open Graph image generation failed (exit code {$exitCode})." .
+            ($detail !== '' ? "\n" . $detail : '');
+    }
+
+    private function reportCaptureSuccess(string $stdout): void
+    {
+        if ($stdout === '') {
+            echo "[Docsmith] Open Graph images generated.\n";
+
+            return;
+        }
+
+        $decoded = json_decode($stdout, true);
+
+        if (is_array($decoded) && isset($decoded['succeeded'], $decoded['total'])) {
+            $failed = (int) ($decoded['failed'] ?? 0);
+            $seconds = isset($decoded['totalDurationMs'])
+                ? number_format(((int) $decoded['totalDurationMs']) / 1000, 2)
+                : '?';
+
+            echo sprintf(
+                "[Docsmith] Generated %s/%s Open Graph images in %ss\n",
+                (string) $decoded['succeeded'],
+                (string) $decoded['total'],
+                $seconds
+            );
+
+            if ($failed > 0) {
+                echo sprintf("[Docsmith] %s Open Graph image(s) failed\n", (string) $failed);
+            }
+
+            return;
+        }
+
+        echo $stdout . "\n";
+    }
+
+    /**
+     * Build a shell command string for capturist.
+     * Always pass --cwd so capturist reads config/html from the docs output dir
+     * while the process runs from the Node project root (Playwright).
+     */
+    private function resolveCommand(string $writeTarget, string $projectRoot, string $capturistBinary): ?string
+    {
+        $binary = $capturistBinary !== ''
+            ? $capturistBinary
+            : ($this->environment->localCapturistBinaries($projectRoot)[0] ?? null);
+
+        if ($binary === null || $binary === '') {
+            return null;
+        }
+
+        return sprintf(
+            '%s --cwd %s --config capturist.config.json --quiet --json',
+            $this->environment->escapeShell($binary),
+            $this->environment->escapeShell($writeTarget)
+        );
+    }
+}

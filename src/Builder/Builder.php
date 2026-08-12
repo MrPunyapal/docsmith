@@ -6,9 +6,11 @@ namespace Docsmith\Builder;
 
 use Docsmith\Compatibility\ReadmeIndexImporter;
 use Docsmith\Config\BuildConfig;
+use Docsmith\Config\OgImageConfig;
 use Docsmith\Config\SiteMetadata;
 use Docsmith\Config\VersionConfig;
 use Docsmith\Markdown\CommonMarkRenderer;
+use Docsmith\Render\OgImageGenerator;
 use Docsmith\Render\SiteBuilder;
 use LogicException;
 use RecursiveDirectoryIterator;
@@ -48,6 +50,14 @@ final class Builder
     private bool $llmsExport = true;
 
     private ?string $readmeIndexPath = null;
+
+    private ?OgImageConfig $ogImage = null;
+
+    private string $favicon = '';
+
+    private bool $runCapturist = true;
+
+    private string $capturistBinary = '';
 
     /** @var list<string> */
     private array $readmeSkipSections = [];
@@ -204,6 +214,129 @@ final class Builder
         return $this;
     }
 
+    /**
+     * Configure Open Graph images using a structured config.
+     *
+     * In most cases the convenience methods `ogGeneratedAll()`,
+     * `ogGeneratedPerPage()`, `ogLink()`, and `ogTemplate()` are easier to read.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogImage(
+        string $type = 'generated',
+        string $scope = 'all',
+        string $url = '',
+        string $template = '',
+        string $output = '',
+        array $viewport = [],
+        int $scale = 1,
+        string $selector = '',
+        string $routePrefix = 'og/preview',
+    ): self {
+        $this->ogImage = OgImageConfig::fromInput(
+            type: $type,
+            scope: $scope,
+            url: $url,
+            template: $template,
+            output: $output,
+            viewport: $viewport,
+            scale: $scale,
+            selector: $selector,
+            routePrefix: $routePrefix,
+        );
+
+        return $this;
+    }
+
+    /**
+     * Generate a single Open Graph image and share it across every page.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogGeneratedAll(string $output = '', int $scale = 1, array $viewport = []): self
+    {
+        return $this->ogImage(
+            type: 'generated',
+            scope: 'all',
+            output: $output,
+            scale: $scale,
+            viewport: $viewport,
+        );
+    }
+
+    /**
+     * Generate one Open Graph image per documentation page.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogGeneratedPerPage(string $output = '', int $scale = 1, array $viewport = []): self
+    {
+        return $this->ogImage(
+            type: 'generated',
+            scope: 'per-page',
+            output: $output,
+            scale: $scale,
+            viewport: $viewport,
+        );
+    }
+
+    /**
+     * Use an existing image URL or path for Open Graph cards.
+     */
+    public function ogLink(string $url, string $scope = 'all'): self
+    {
+        return $this->ogImage(
+            type: 'link',
+            scope: $scope,
+            url: $url,
+        );
+    }
+
+    /**
+     * Generate Open Graph images from a custom HTML template.
+     *
+     * The template can contain `{site_title}`, `{title}`, and `{description}`
+     * tokens. Pass a file path or raw HTML markup.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogTemplate(string $template, string $scope = 'per-page', string $output = '', int $scale = 1, array $viewport = []): self
+    {
+        return $this->ogImage(
+            type: 'generated',
+            scope: $scope,
+            template: $template,
+            output: $output,
+            scale: $scale,
+            viewport: $viewport,
+        );
+    }
+
+    /**
+     * Accept a favicon URL, data URI, or a path to a local image file.
+     * Falls back to Docsmith's generated default favicon when empty.
+     */
+    public function favicon(string $favicon): self
+    {
+        $this->favicon = trim($favicon);
+
+        return $this;
+    }
+
+    public function runCapturist(bool $runCapturist = true): self
+    {
+        $this->runCapturist = $runCapturist;
+
+        return $this;
+    }
+
+    public function capturistBinary(string $capturistBinary): self
+    {
+        $this->capturistBinary = trim($capturistBinary);
+
+        return $this;
+    }
+
     public function build(): void
     {
         if ($this->versions !== []) {
@@ -235,12 +368,30 @@ final class Builder
                 generateSitemap: $this->generateSitemap,
                 generateNoJekyll: $this->generateNoJekyll,
                 llmsExport: $this->llmsExport,
+                favicon: $this->favicon,
             ),
             baseUrl: $this->baseUrl,
             rightSidebar: $this->rightSidebar,
+            ogImage: $this->ogImage,
         );
 
         (new SiteBuilder())->build($config, $documents);
+
+        $this->generateOgImages($config);
+    }
+
+    private function generateOgImages(BuildConfig $config): void
+    {
+        if (!$this->ogImage instanceof OgImageConfig || ! $this->ogImage->isGenerated()) {
+            return;
+        }
+
+        (new OgImageGenerator())->generate(
+            $config,
+            null,
+            $this->runCapturist,
+            $this->capturistBinary,
+        );
     }
 
     private function buildVersions(): void
@@ -270,10 +421,15 @@ final class Builder
                     editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',
                     generateSitemap: $this->generateSitemap,
                     generateNoJekyll: $this->generateNoJekyll,
+                    llmsExport: $this->llmsExport,
+                    favicon: $this->favicon,
                 ),
                 baseUrl: $this->baseUrl,
                 rightSidebar: $this->rightSidebar,
+                ogImage: $this->ogImage,
             );
+
+            $writeTarget = $isDefault ? $outputPath : $versionDocPath;
 
             (new SiteBuilder())->buildVersion(
                 config: $config,
@@ -282,6 +438,16 @@ final class Builder
                 isDefault: $isDefault,
                 rootOutput: $outputPath,
             );
+
+            if ($this->ogImage instanceof OgImageConfig && $this->ogImage->isGenerated()) {
+                (new OgImageGenerator())->generate(
+                    $config,
+                    null,
+                    $this->runCapturist,
+                    $this->capturistBinary,
+                    $writeTarget,
+                );
+            }
         }
 
         $this->writeAssetsToRoot($outputPath);

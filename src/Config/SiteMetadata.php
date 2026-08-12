@@ -18,6 +18,7 @@ final readonly class SiteMetadata
         public bool $generateSitemap = true,
         public bool $generateNoJekyll = true,
         public bool $llmsExport = true,
+        public string $favicon = '',
     ) {
     }
 }
