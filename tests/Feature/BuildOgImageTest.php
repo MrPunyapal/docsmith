@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
+use Docsmith\Config\BuildConfig;
+use Docsmith\Config\OgImageConfig;
+use Docsmith\Config\SiteMetadata;
 use Docsmith\Docsmith;
+use Docsmith\Render\OgImageGenerator;
+use Docsmith\Support\OgCaptureEnvironmentContract;
 
 it('publishes a default favicon and adds the favicon link to every page', function (): void {
     $sourcePath = __DIR__ . '/../Fixtures/Content';
@@ -16,7 +21,8 @@ it('publishes a default favicon and adds the favicon link to every page', functi
         ->captureOg(false)
         ->build();
 
-    expect($outputPath . '/assets/favicon.svg')->toBeFile();
+    expect($outputPath . '/assets/favicon.svg')->toBeFile()
+        ->and(file_get_contents($outputPath . '/assets/favicon.svg'))->toContain('>D</text>');
 
     $installationPage = file_get_contents($outputPath . '/installation/index.html');
     $landingPage = file_get_contents($outputPath . '/index.html');
@@ -285,4 +291,133 @@ it('keeps runCapturist as an alias of captureOg', function (): void {
 
     expect($outputPath . '/capturist.config.json')->toBeFile()
         ->and($outputPath . '/og/preview/cover/index.html')->toBeFile();
+});
+
+it('only generates og previews for readme-imported pages, ignoring stray markdown', function (): void {
+    $projectRoot = sys_get_temp_dir() . '/docsmith-og-readme-scan-' . uniqid();
+    $outputPath = $projectRoot . '/docs';
+
+    mkdir($projectRoot);
+    mkdir($projectRoot . '/vendor/package', 0777, true);
+    mkdir($projectRoot . '/node_modules/package', 0777, true);
+    mkdir($projectRoot . '/attributes', 0777, true);
+    mkdir($outputPath, 0777, true);
+
+    file_put_contents($projectRoot . '/vendor/package/README.md', "# Vendor readme\n\nShould not appear.\n");
+    file_put_contents($projectRoot . '/node_modules/package/README.md', "# Node readme\n\nShould not appear.\n");
+    file_put_contents($projectRoot . '/attributes/Distinct.md', "# Distinct\n\nA real attribute page.\n");
+
+    file_put_contents($projectRoot . '/README.md', <<<MD
+# Laravel PHP Attributes List
+
+## Eloquent
+
+- [Distinct](attributes/Distinct.md) — Enforce uniqueness on a column.
+MD);
+
+    Docsmith::make()
+        ->readmeIndex($projectRoot . '/README.md')
+        ->output($outputPath)
+        ->title('Laravel PHP Attributes List')
+        ->description('A curated list of PHP Attributes available in Laravel Framework.')
+        ->ogGeneratedPerPage()
+        ->captureOg(false)
+        ->build();
+
+    $configJson = (string) file_get_contents($outputPath . '/capturist.config.json');
+
+    expect($configJson)->toContain('"htmlFile": "og/preview/attributes-Distinct/index.html"')
+        ->and(str_contains($configJson, 'vendor-package-README'))->toBeFalse()
+        ->and(str_contains($configJson, 'node_modules-package-README'))->toBeFalse();
+});
+
+it('removes preview html and capturist config after a successful capture', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-og-cleanup-' . uniqid();
+
+    $environment = new class () implements OgCaptureEnvironmentContract {
+        public function assertReadyForCapture(string $cwd): void
+        {
+        }
+
+        public function captureToolsInstallMessage(): string
+        {
+            return '';
+        }
+
+        public function playwrightBrowserInstallMessage(): string
+        {
+            return '';
+        }
+
+        /** @return list<string> */
+        public function localCapturistBinaries(string $cwd): array
+        {
+            return ['/fake/capturist'];
+        }
+
+        public function resolveNodeProjectRoot(string $cwd): string
+        {
+            return $cwd;
+        }
+
+        public function escapeShell(string $value): string
+        {
+            return escapeshellarg($value);
+        }
+
+        /** @return array{0: int, 1: string, 2: string} */
+        public function runShell(string $command, string $cwd): array
+        {
+            return [0, '{"succeeded":1,"total":1,"captured":1,"failed":0}', ''];
+        }
+    };
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->capturistBinary('/fake/capturist')
+        ->ogGeneratedAll()
+        ->captureOg(false)
+        ->build();
+
+    $generator = new OgImageGenerator(environment: $environment);
+    $generator->generate(
+        BuildConfig::fromInput(
+            sourcePath: $sourcePath,
+            outputPath: $outputPath,
+            metadata: new SiteMetadata(
+                title: 'Docsmith Docs',
+                description: 'Generated documentation for testing.',
+            ),
+            ogImage: OgImageConfig::fromInput(type: 'generated', scope: 'all'),
+        ),
+        runCapturist: true,
+        capturistBinary: '/fake/capturist',
+        force: true,
+    );
+
+    expect($outputPath . '/og/preview/cover/index.html')->not->toBeFile()
+        ->and($outputPath . '/capturist.config.json')->not->toBeFile();
+
+    $generator = new OgImageGenerator(environment: $environment, keepPreviews: true);
+    $generator->generate(
+        BuildConfig::fromInput(
+            sourcePath: $sourcePath,
+            outputPath: $outputPath,
+            metadata: new SiteMetadata(
+                title: 'Docsmith Docs',
+                description: 'Generated documentation for testing.',
+            ),
+            ogImage: OgImageConfig::fromInput(type: 'generated', scope: 'all'),
+        ),
+        runCapturist: true,
+        capturistBinary: '/fake/capturist',
+        force: true,
+    );
+
+    expect($outputPath . '/og/preview/cover/index.html')->toBeFile()
+        ->and($outputPath . '/capturist.config.json')->toBeFile();
 });

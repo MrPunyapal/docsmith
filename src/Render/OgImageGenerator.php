@@ -10,15 +10,19 @@ use Docsmith\Content\Document;
 use Docsmith\Content\SourceScanner;
 use Docsmith\Support\Color;
 use Docsmith\Support\OgCaptureEnvironment;
+use Docsmith\Support\OgCaptureEnvironmentContract;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use RuntimeException;
+use SplFileInfo;
 
 final readonly class OgImageGenerator
 {
     private SourceScanner $scanner;
 
-    private OgCaptureEnvironment $environment;
+    private OgCaptureEnvironmentContract $environment;
 
-    public function __construct(?SourceScanner $scanner = null, ?OgCaptureEnvironment $environment = null)
+    public function __construct(?SourceScanner $scanner = null, ?OgCaptureEnvironmentContract $environment = null, private bool $keepPreviews = false)
     {
         $this->scanner = $scanner ?? new SourceScanner();
         $this->environment = $environment ?? new OgCaptureEnvironment();
@@ -342,7 +346,54 @@ HTML;
             throw new RuntimeException($this->friendlyCaptureFailure($output, $errorOutput, $exitCode));
         }
 
+        if (! $this->keepPreviews) {
+            $this->cleanupPreviewArtifacts($writeTarget);
+        }
+
         $this->reportCaptureSuccess($output);
+    }
+
+    /**
+     * Remove the preview HTML pages and capturist config after a successful capture.
+     *
+     * These are regenerated on every build and are not part of the published site.
+     * Disable with ->keepOgPreviews(). Preview PNGs and the capturist cache are kept.
+     */
+    private function cleanupPreviewArtifacts(string $writeTarget): void
+    {
+        $previewPath = rtrim($writeTarget, '/') . '/og/preview';
+
+        if (is_dir($previewPath)) {
+            $this->deleteDirectory($previewPath);
+        }
+
+        $configPath = rtrim($writeTarget, '/') . '/capturist.config.json';
+
+        if (is_file($configPath)) {
+            @unlink($configPath);
+        }
+    }
+
+    private function deleteDirectory(string $directory): void
+    {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($iterator as $item) {
+            if (! $item instanceof SplFileInfo) {
+                continue;
+            }
+
+            if ($item->isDir()) {
+                @rmdir($item->getPathname());
+            } else {
+                @unlink($item->getPathname());
+            }
+        }
+
+        @rmdir($directory);
     }
 
     private function friendlyCaptureFailure(string $stdout, string $stderr, int $exitCode): string

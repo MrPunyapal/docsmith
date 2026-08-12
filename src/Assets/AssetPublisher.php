@@ -40,7 +40,7 @@ final class AssetPublisher
         if ($favicon === '' || $this->isRemoteUrl($favicon)) {
             file_put_contents(
                 $assetsDirectory . '/' . $this->faviconFileName($metadata),
-                $this->defaultFaviconSvg($metadata->accentColor),
+                $this->defaultFaviconSvg($metadata),
             );
 
             return;
@@ -51,7 +51,7 @@ final class AssetPublisher
         if (! is_string($contents) || $contents === '') {
             file_put_contents(
                 $assetsDirectory . '/' . $this->faviconFileName($metadata),
-                $this->defaultFaviconSvg($metadata->accentColor),
+                $this->defaultFaviconSvg($metadata),
             );
 
             return;
@@ -60,14 +60,19 @@ final class AssetPublisher
         file_put_contents($assetsDirectory . '/' . $this->faviconFileName($metadata), $contents);
     }
 
-    private function defaultFaviconSvg(string $accentColor): string
+    private function defaultFaviconSvg(SiteMetadata $metadata): string
     {
-        $accent = Color::normalizeHex($accentColor, '#ff2d20');
+        $accent = Color::normalizeHex($metadata->accentColor, '#ff2d20');
+        $letter = mb_strtoupper(mb_substr(trim($metadata->title), 0, 1)) ?: '<>';
+
+        if ($letter === '<>') {
+            $letter = htmlspecialchars($letter, ENT_QUOTES, 'UTF-8');
+        }
 
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
     <rect width="64" height="64" rx="14" fill="{$accent}"/>
-    <path d="M18 47V17h8l12 17V17h8v30h-8L26 29v18z" fill="#ffffff"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="34" font-weight="700" fill="#ffffff">{$letter}</text>
 </svg>
 SVG;
     }

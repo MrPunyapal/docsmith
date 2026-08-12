@@ -9,6 +9,7 @@ use Docsmith\Config\BuildConfig;
 use Docsmith\Config\OgImageConfig;
 use Docsmith\Config\SiteMetadata;
 use Docsmith\Config\VersionConfig;
+use Docsmith\Content\Document;
 use Docsmith\Markdown\CommonMarkRenderer;
 use Docsmith\Render\OgImageGenerator;
 use Docsmith\Render\SiteBuilder;
@@ -58,6 +59,8 @@ final class Builder
     private bool $runCapturist = true;
 
     private bool $forceOg = false;
+
+    private bool $keepOgPreviews = false;
 
     private bool $siteUrlOgWarned = false;
 
@@ -354,6 +357,18 @@ final class Builder
         return $this;
     }
 
+    /**
+     * Keep preview HTML cards and capturist.config.json after a successful capture.
+     *
+     * By default these build artifacts are removed once the OG PNGs are captured.
+     */
+    public function keepOgPreviews(bool $keep = true): self
+    {
+        $this->keepOgPreviews = $keep;
+
+        return $this;
+    }
+
     public function capturistBinary(string $capturistBinary): self
     {
         $this->capturistBinary = trim($capturistBinary);
@@ -401,10 +416,11 @@ final class Builder
 
         (new SiteBuilder())->build($config, $documents);
 
-        $this->generateOgImages($config);
+        $this->generateOgImages($config, $documents);
     }
 
-    private function generateOgImages(BuildConfig $config, ?string $outputPath = null): void
+    /** @param list<Document>|null $documents */
+    private function generateOgImages(BuildConfig $config, ?array $documents = null, ?string $outputPath = null): void
     {
         if (!$this->ogImage instanceof OgImageConfig || ! $this->ogImage->isGenerated()) {
             return;
@@ -415,9 +431,9 @@ final class Builder
             echo "[Docsmith] Open Graph images work better with ->siteUrl(...); crawlers prefer absolute og:image URLs.\n";
         }
 
-        (new OgImageGenerator())->generate(
+        (new OgImageGenerator(keepPreviews: $this->keepOgPreviews))->generate(
             $config,
-            null,
+            $documents,
             $this->runCapturist,
             $this->capturistBinary,
             $outputPath,
@@ -470,7 +486,7 @@ final class Builder
                 rootOutput: $outputPath,
             );
 
-            $this->generateOgImages($config, $writeTarget);
+            $this->generateOgImages($config, null, $writeTarget);
         }
 
         $this->writeAssetsToRoot($outputPath);

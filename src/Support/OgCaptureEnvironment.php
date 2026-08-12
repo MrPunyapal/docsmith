@@ -12,7 +12,7 @@ use RuntimeException;
  * Consumers install playwright and capturist as normal devDependencies.
  * Docsmith does not auto-install packages mid-build.
  */
-final class OgCaptureEnvironment
+final class OgCaptureEnvironment implements OgCaptureEnvironmentContract
 {
     public function hasNode(): bool
     {
