@@ -67,7 +67,12 @@
 </span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <p>Writes <code>docs/og/cover.png</code> and points every page at it.</p>
-<p>Always set <code>siteUrl()</code> so crawlers get absolute <code>og:image</code> URLs.</p>
+<p>Always set <code>siteUrl()</code> so crawlers get absolute <code>og:image</code> URLs:</p>
+<ul>
+<li>With <code>siteUrl()</code>: <code>og:image</code> is an absolute URL, which every crawler resolves correctly.</li>
+<li>Without <code>siteUrl()</code> but with a subpath <code>baseUrl()</code> (e.g. <code>/docs</code>): Docsmith emits a root-relative path (<code>/docs/og/cover.png</code>) so crawlers resolve it against the host root instead of the broken page-relative default.</li>
+<li>Without either: <code>og:image</code> is page-relative and may break scrapers on subpath hosts (they resolve against the domain root and drop the subpath).</li>
+</ul>
 <h2 id="one-image-per-page">One image per page</h2>
 <pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">make</span><span class="token">(</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">source</span><span class="token">(</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/md</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">

@@ -29,7 +29,11 @@ Docsmith::make()
 
 Writes `docs/og/cover.png` and points every page at it.
 
-Always set `siteUrl()` so crawlers get absolute `og:image` URLs.
+Always set `siteUrl()` so crawlers get absolute `og:image` URLs:
+
+- With `siteUrl()`: `og:image` is an absolute URL, which every crawler resolves correctly.
+- Without `siteUrl()` but with a subpath `baseUrl()` (e.g. `/docs`): Docsmith emits a root-relative path (`/docs/og/cover.png`) so crawlers resolve it against the host root instead of the broken page-relative default.
+- Without either: `og:image` is page-relative and may break scrapers on subpath hosts (they resolve against the domain root and drop the subpath).
 
 ## One image per page
 
