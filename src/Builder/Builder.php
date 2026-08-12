@@ -263,8 +263,8 @@ final class Builder
             type: 'generated',
             scope: 'all',
             output: $output,
-            scale: $scale,
             viewport: $viewport,
+            scale: $scale,
         );
     }
 
@@ -279,8 +279,8 @@ final class Builder
             type: 'generated',
             scope: 'per-page',
             output: $output,
-            scale: $scale,
             viewport: $viewport,
+            scale: $scale,
         );
     }
 
@@ -311,8 +311,8 @@ final class Builder
             scope: $scope,
             template: $template,
             output: $output,
-            scale: $scale,
             viewport: $viewport,
+            scale: $scale,
         );
     }
 

@@ -359,9 +359,9 @@ HTML;
         if (
             str_contains($combined, 'playwright is not installed')
             || str_contains($combined, "cannot find module 'playwright'")
-            || str_contains($combined, 'cannot find package \'playwright\'')
+            || str_contains($combined, "cannot find package 'playwright'")
             || str_contains($combined, "cannot find module 'capturist'")
-            || str_contains($combined, 'cannot find package \'capturist\'')
+            || str_contains($combined, "cannot find package 'capturist'")
         ) {
             return $this->environment->captureToolsInstallMessage();
         }
@@ -374,7 +374,7 @@ HTML;
             return $this->environment->playwrightBrowserInstallMessage();
         }
 
-        return "Open Graph image generation failed (exit code {$exitCode})." .
+        return sprintf('Open Graph image generation failed (exit code %d).', $exitCode) .
             ($detail !== '' ? "\n" . $detail : '');
     }
 
@@ -389,12 +389,13 @@ HTML;
         $decoded = json_decode($stdout, true);
 
         if (is_array($decoded) && isset($decoded['succeeded'], $decoded['total'])) {
-            $failed = (int) ($decoded['failed'] ?? 0);
-            $cached = (int) ($decoded['cached'] ?? 0);
-            $captured = (int) ($decoded['captured'] ?? $decoded['total']);
-            $seconds = isset($decoded['totalDurationMs'])
-                ? number_format(((int) $decoded['totalDurationMs']) / 1000, 2)
-                : '?';
+            $failed = $this->jsonInt($decoded, 'failed', 0);
+            $cached = $this->jsonInt($decoded, 'cached', 0);
+            $captured = $this->jsonInt($decoded, 'captured', $this->jsonInt($decoded, 'total', 0));
+            $durationMs = $this->jsonInt($decoded, 'totalDurationMs', -1);
+            $seconds = $durationMs >= 0 ? number_format($durationMs / 1000, 2) : '?';
+            $succeeded = $this->jsonInt($decoded, 'succeeded', 0);
+            $total = $this->jsonInt($decoded, 'total', 0);
 
             if ($captured === 0 && $cached > 0) {
                 echo sprintf(
@@ -406,9 +407,9 @@ HTML;
             }
 
             echo sprintf(
-                "[Docsmith] Generated %s/%s Open Graph images in %ss",
-                (string) $decoded['succeeded'],
-                (string) $decoded['total'],
+                "[Docsmith] Generated %d/%d Open Graph images in %ss",
+                $succeeded,
+                $total,
                 $seconds
             );
 
@@ -419,7 +420,7 @@ HTML;
             echo "\n";
 
             if ($failed > 0) {
-                echo sprintf("[Docsmith] %s Open Graph image(s) failed\n", (string) $failed);
+                echo sprintf("[Docsmith] %d Open Graph image(s) failed\n", $failed);
             }
 
             return;
@@ -449,5 +450,23 @@ HTML;
             $this->environment->escapeShell($writeTarget),
             $force ? ' --force' : ''
         );
+    }
+
+    /**
+     * @param array<mixed> $payload
+     */
+    private function jsonInt(array $payload, string $key, int $default): int
+    {
+        $value = $payload[$key] ?? $default;
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_float($value) || (is_string($value) && is_numeric($value))) {
+            return (int) $value;
+        }
+
+        return $default;
     }
 }

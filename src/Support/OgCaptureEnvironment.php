@@ -176,9 +176,12 @@ MSG;
     public function candidateNodeModules(string $cwd): array
     {
         $cwd = rtrim(str_replace('\\', '/', $cwd), '/');
+        $workingDirectory = getcwd();
         $paths = [
             $cwd . '/node_modules',
-            getcwd() !== false ? str_replace('\\', '/', rtrim(getcwd(), '/\\')) . '/node_modules' : '',
+            is_string($workingDirectory)
+                ? str_replace('\\', '/', rtrim($workingDirectory, '/\\')) . '/node_modules'
+                : '',
             dirname($cwd) . '/node_modules',
         ];
 
@@ -305,11 +308,7 @@ MSG;
                 2 => ['pipe', 'w'],
             ];
 
-            if (PHP_OS_FAMILY === 'Windows') {
-                $cmd = ['cmd', '/c', 'node', $file, $workDir];
-            } else {
-                $cmd = ['node', $file, $workDir];
-            }
+            $cmd = PHP_OS_FAMILY === 'Windows' ? ['cmd', '/c', 'node', $file, $workDir] : ['node', $file, $workDir];
 
             $process = proc_open($cmd, $descriptor, $pipes, $workDir);
 
@@ -349,6 +348,7 @@ MSG;
             if ($parent === $current) {
                 break;
             }
+
             $current = $parent;
         }
 

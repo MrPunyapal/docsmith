@@ -92,20 +92,20 @@ it('writes a single generated preview and capturist config for the all scope', f
 
     $configJson = (string) file_get_contents($outputPath . '/capturist.config.json');
 
-    expect($configJson)
-        ->not->toContain('"server"')
-        ->toContain('"outputDir": "og"')
-        ->toContain('"width": 1200')
-        ->toContain('"height": 630')
-        ->toContain('"label": "cover"')
-        ->toContain('"htmlFile": "og/preview/cover/index.html"')
-        ->toContain('"output": "cover.png"')
-        ->toContain('"path": "og/.capturist-cache.json"')
-        ->not->toContain('"route"');
+    expect($configJson)->toContain('"outputDir": "og"');
+    expect($configJson)->toContain('"width": 1200');
+    expect($configJson)->toContain('"height": 630');
+    expect($configJson)->toContain('"label": "cover"');
+    expect($configJson)->toContain('"htmlFile": "og/preview/cover/index.html"');
+    expect($configJson)->toContain('"output": "cover.png"');
+    expect($configJson)->toContain('"path": "og/.capturist-cache.json"');
+    expect(str_contains($configJson, '"server"'))->toBeFalse();
+    expect(str_contains($configJson, '"route"'))->toBeFalse();
 
-    $preview = file_get_contents($outputPath . '/og/preview/cover/index.html');
+    $preview = (string) file_get_contents($outputPath . '/og/preview/cover/index.html');
 
-    expect($preview)->toContain('Docsmith Docs')->toContain('data-docsmith-og-card');
+    expect($preview)->toContain('Docsmith Docs');
+    expect($preview)->toContain('data-docsmith-og-card');
 
     $installationPage = file_get_contents($outputPath . '/installation/index.html');
     $landingPage = file_get_contents($outputPath . '/index.html');
@@ -133,14 +133,13 @@ it('writes one generated preview per page for the per-page scope', function (): 
 
     $configJson = (string) file_get_contents($outputPath . '/capturist.config.json');
 
-    expect($configJson)
-        ->toContain('"htmlFile": "og/preview/installation/index.html"')
-        ->toContain('"htmlFile": "og/preview/guides-configuration/index.html"')
-        ->toContain('"htmlFile": "og/preview/index/index.html"')
-        ->toContain('"output": "installation.png"')
-        ->toContain('"output": "guides-configuration.png"')
-        ->toContain('"output": "index.png"')
-        ->not->toContain('"server"');
+    expect($configJson)->toContain('"htmlFile": "og/preview/installation/index.html"');
+    expect($configJson)->toContain('"htmlFile": "og/preview/guides-configuration/index.html"');
+    expect($configJson)->toContain('"htmlFile": "og/preview/index/index.html"');
+    expect($configJson)->toContain('"output": "installation.png"');
+    expect($configJson)->toContain('"output": "guides-configuration.png"');
+    expect($configJson)->toContain('"output": "index.png"');
+    expect(str_contains($configJson, '"server"'))->toBeFalse();
 
     $installationPage = file_get_contents($outputPath . '/installation/index.html');
     $configurationPage = file_get_contents($outputPath . '/guides/configuration/index.html');
@@ -231,12 +230,26 @@ it('enables capturist incremental cache in the generated config', function (): v
 
     $configJson = (string) file_get_contents($outputPath . '/capturist.config.json');
     $config = json_decode($configJson, true);
+    expect(is_array($config))->toBeTrue();
 
-    expect($config)->toBeArray()
-        ->and($config['cache']['path'] ?? null)->toBe('og/.capturist-cache.json')
-        ->and($config['cache']['adopt'] ?? null)->toBeTrue()
-        ->and($config['cache']['prune'] ?? null)->toBeTrue()
-        ->and($config['pages'][0]['htmlFile'] ?? null)->toBe('og/preview/cover/index.html');
+    /** @var array<string, mixed> $config */
+    $cache = $config['cache'] ?? null;
+    expect(is_array($cache))->toBeTrue();
+
+    /** @var array<string, mixed> $cache */
+    expect($cache['path'] ?? null)->toBe('og/.capturist-cache.json');
+    expect($cache['adopt'] ?? null)->toBeTrue();
+    expect($cache['prune'] ?? null)->toBeTrue();
+
+    $pages = $config['pages'] ?? null;
+    expect(is_array($pages))->toBeTrue();
+
+    /** @var list<mixed> $pages */
+    $firstPage = $pages[0] ?? null;
+    expect(is_array($firstPage))->toBeTrue();
+
+    /** @var array<string, mixed> $firstPage */
+    expect($firstPage['htmlFile'] ?? null)->toBe('og/preview/cover/index.html');
 });
 
 it('warns when open graph is generated without a site url', function (): void {
