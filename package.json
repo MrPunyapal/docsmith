@@ -8,6 +8,7 @@
         "postinstall": "npx playwright install chromium"
     },
     "devDependencies": {
+        "capturist": "^0.1.2",
         "playwright": "^1.62.1"
     }
 }

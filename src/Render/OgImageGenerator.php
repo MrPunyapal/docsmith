@@ -27,8 +27,8 @@ final readonly class OgImageGenerator
     /**
      * Writes HTML preview cards, a capturist config, and optionally captures PNGs.
      *
-     * Consumers enable OG generation and install Playwright only — capturist is
-     * resolved automatically (local install or npx).
+     * Consumers enable OG generation and install playwright + capturist as
+     * normal devDependencies. Docsmith writes capturist config; no user config needed.
      *
      * @param list<Document>|null $documents
      */
@@ -307,22 +307,14 @@ HTML;
             return;
         }
 
-        // Consumers only manage Playwright; capturist is installed automatically.
-        // Resolve Playwright from the Node project root (not the docs/ output folder).
+        // Resolve Node tools from the project root (not the docs/ output folder).
         $projectRoot = $this->environment->resolveNodeProjectRoot($writeTarget);
         $this->environment->assertReadyForCapture($projectRoot);
-
-        if ($capturistBinary === '') {
-            $this->environment->ensureCapturistInstalled($projectRoot);
-        }
 
         $command = $this->resolveCommand($writeTarget, $projectRoot, $capturistBinary);
 
         if ($command === null) {
-            throw new RuntimeException(
-                "Open Graph image generation could not start the capture tool.\n\n" .
-                "Ensure Node.js and npm are installed, then re-run your docs build.\n"
-            );
+            throw new RuntimeException($this->environment->captureToolsInstallMessage());
         }
 
         // Run from the project root so Playwright resolves; capturist --cwd points at output.
@@ -352,8 +344,10 @@ HTML;
             str_contains($combined, 'playwright is not installed')
             || str_contains($combined, "cannot find module 'playwright'")
             || str_contains($combined, 'cannot find package \'playwright\'')
+            || str_contains($combined, "cannot find module 'capturist'")
+            || str_contains($combined, 'cannot find package \'capturist\'')
         ) {
-            return $this->environment->playwrightPackageInstallMessage();
+            return $this->environment->captureToolsInstallMessage();
         }
 
         if (

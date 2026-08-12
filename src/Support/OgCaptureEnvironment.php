@@ -7,16 +7,13 @@ namespace Docsmith\Support;
 use RuntimeException;
 
 /**
- * Detects Node/Playwright readiness for Open Graph capture.
- * Capturist is resolved automatically — consumers only need Playwright.
+ * Detects Node/Playwright/capturist readiness for Open Graph capture.
+ *
+ * Consumers install playwright and capturist as normal devDependencies.
+ * Docsmith does not auto-install packages mid-build.
  */
 final class OgCaptureEnvironment
 {
-    /** Pinned capturist version Docsmith installs automatically when missing. */
-    public const CAPTURIST_VERSION = '0.1.2';
-
-    public const CAPTURIST_PACKAGE = 'capturist@' . self::CAPTURIST_VERSION;
-
     public function hasNode(): bool
     {
         return $this->commandSucceeds(
@@ -77,6 +74,14 @@ JS,
     }
 
     /**
+     * True when a local capturist binary is available under node_modules/.bin.
+     */
+    public function isCapturistInstalled(string $cwd): bool
+    {
+        return $this->localCapturistBinaries($cwd) !== [];
+    }
+
+    /**
      * True when a Chromium binary for Playwright is available on disk.
      */
     public function isPlaywrightBrowserInstalled(string $cwd): bool
@@ -116,34 +121,40 @@ JS,
             );
         }
 
-        if (! $this->isPlaywrightPackageInstalled($cwd)) {
-            throw new RuntimeException($this->playwrightPackageInstallMessage());
+        if (! $this->isPlaywrightPackageInstalled($cwd) || ! $this->isCapturistInstalled($cwd)) {
+            throw new RuntimeException($this->captureToolsInstallMessage());
         }
 
         if (! $this->isPlaywrightBrowserInstalled($cwd)) {
             throw new RuntimeException($this->playwrightBrowserInstallMessage());
         }
-
-        if (! $this->hasNpx()) {
-            throw new RuntimeException(
-                "Open Graph image generation requires npx (comes with npm).\n\n" .
-                "Ensure Node.js/npm is installed correctly, then re-run your docs build.\n"
-            );
-        }
     }
 
-    public function playwrightPackageInstallMessage(): string
+    /**
+     * Combined install instructions when playwright and/or capturist are missing.
+     */
+    public function captureToolsInstallMessage(): string
     {
         return <<<'MSG'
-Open Graph image generation is enabled, but Playwright is not installed in this project.
+Open Graph image generation is enabled, but required tools are not installed in this project.
 
-Install it once:
+Install once:
 
-  npm install -D playwright
+  npm install -D playwright capturist
   npx playwright install chromium
+
+You do not need to configure capturist — Docsmith writes its config during the docs build.
 
 Then re-run your docs build.
 MSG;
+    }
+
+    /**
+     * @deprecated Use captureToolsInstallMessage() — kept for call-site clarity.
+     */
+    public function playwrightPackageInstallMessage(): string
+    {
+        return $this->captureToolsInstallMessage();
     }
 
     public function playwrightBrowserInstallMessage(): string
@@ -194,52 +205,6 @@ MSG;
         }
 
         return $bins;
-    }
-
-    /**
-     * Install capturist into the project node_modules without touching package.json.
-     * Consumers never need to declare capturist themselves.
-     */
-    public function ensureCapturistInstalled(string $projectRoot): void
-    {
-        if ($this->localCapturistBinaries($projectRoot) !== []) {
-            return;
-        }
-
-        if (! $this->hasNpm()) {
-            throw new RuntimeException(
-                "Open Graph image generation requires npm to fetch the capture tool.\n\n" .
-                "Install Node.js/npm, then re-run your docs build.\n"
-            );
-        }
-
-        echo "[Docsmith] Installing capture tooling (one-time, not added to package.json)…\n";
-
-        $npm = $this->resolveExecutable('npm');
-        if ($npm === null) {
-            throw new RuntimeException(
-                "Open Graph image generation requires npm.\n\n" .
-                "Install Node.js/npm, then re-run your docs build.\n"
-            );
-        }
-
-        $command = sprintf(
-            '%s install %s --no-save --no-fund --no-audit --loglevel=error',
-            $this->escapeShell($npm),
-            $this->escapeShell(self::CAPTURIST_PACKAGE)
-        );
-
-        [$exitCode, $stdout, $stderr] = $this->runShell($command, $projectRoot);
-
-        if ($exitCode !== 0 || $this->localCapturistBinaries($projectRoot) === []) {
-            $detail = trim($stderr . "\n" . $stdout);
-
-            throw new RuntimeException(
-                "Failed to install Open Graph capture tooling.\n" .
-                "Try: npm install -D playwright && npx playwright install chromium\n" .
-                ($detail !== '' ? $detail . "\n" : '')
-            );
-        }
     }
 
     /**

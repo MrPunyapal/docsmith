@@ -134,14 +134,16 @@ Local favicons are copied into `assets/` and linked with the correct relative pa
 
 Docsmith can emit `og:` and `twitter:` card tags and generate social preview images for you.
 
-You only need **Playwright** (Node). Docsmith pulls the capture tool automatically — you do not need to install or configure capturist.
+Generated images use **Node** with two packages: **Playwright** (browser) and **capturist** (capture runner). Install them once as devDependencies — you do **not** need to write or maintain a capturist config; Docsmith writes it during the docs build.
 
 ```bash
-npm install -D playwright
+npm install -D playwright capturist
 npx playwright install chromium
 ```
 
-If Open Graph generation is enabled and Playwright (or its Chromium browser) is missing, the docs build fails with install instructions.
+If Open Graph generation is enabled and these tools (or the Chromium browser) are missing, the docs build fails with the same install instructions.
+
+In CI, install Node deps and Chromium before a docs build that runs capture (or use `runCapturist(false)` and capture in a later step).
 
 ### Single default image for all pages
 
