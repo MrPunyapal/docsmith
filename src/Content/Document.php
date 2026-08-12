@@ -19,6 +19,9 @@ final readonly class Document
         public int $order = 999,
         public string $sidebarLabel = '',
         public bool $hidden = false,
+        public string $ogImage = '',
+        public string $ogTitle = '',
+        public string $ogDescription = '',
     ) {
     }
 
@@ -37,6 +40,9 @@ final readonly class Document
             order: $this->order,
             sidebarLabel: $this->sidebarLabel,
             hidden: $this->hidden,
+            ogImage: $this->ogImage,
+            ogTitle: $this->ogTitle,
+            ogDescription: $this->ogDescription,
         );
     }
 
@@ -55,7 +61,18 @@ final readonly class Document
             order: $this->order,
             sidebarLabel: $this->sidebarLabel,
             hidden: $hidden,
+            ogImage: $this->ogImage,
+            ogTitle: $this->ogTitle,
+            ogDescription: $this->ogDescription,
         );
+    }
+
+    /** @return string Slug used for Open Graph assets, mirrors the page URL without slashes. */
+    public function ogSlug(): string
+    {
+        return trim($this->url(), '/') === ''
+            ? 'index'
+            : str_replace('/', '-', trim($this->url(), '/'));
     }
 
     public function url(): string

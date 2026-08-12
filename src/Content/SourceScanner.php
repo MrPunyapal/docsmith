@@ -51,6 +51,9 @@ final class SourceScanner
             $sidebarLabel = $this->stringValue($frontMatter['sidebar_label'] ?? null);
             $order = $this->intValue($frontMatter['order'] ?? null, 999);
             $hidden = $this->boolValue($frontMatter['hidden'] ?? null);
+            $ogImage = $this->stringValue($frontMatter['og_image'] ?? null);
+            $ogTitle = $this->stringValue($frontMatter['og_title'] ?? null);
+            $ogDescription = $this->stringValue($frontMatter['og_description'] ?? null);
 
             $documents[] = new Document(
                 sourcePath: $absolutePath,
@@ -62,6 +65,9 @@ final class SourceScanner
                 order: $order,
                 sidebarLabel: $sidebarLabel,
                 hidden: $hidden,
+                ogImage: $ogImage,
+                ogTitle: $ogTitle,
+                ogDescription: $ogDescription,
             );
         }
 

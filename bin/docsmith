@@ -25,9 +25,17 @@ Options:
   --repository-url=URL  Repository URL for edit links
   --site-url=URL        Canonical site URL
   --edit-branch=BRANCH  Branch used for edit links (default: main)
+  --favicon=FILE        Custom favicon URL, data URI, or file path
+  --og-type=TYPE        Open Graph image type: generated or link
+  --og-scope=SCOPE      Open Graph image scope: all or per-page
+  --og-url=URL          Open Graph image URL/path (required for --og-type=link)
+  --og-template=FILE    Custom Open Graph card template path or raw HTML
+  --no-og-capture       Write OG previews/config only; skip screenshot capture
+  --force-og            Recapture every Open Graph image (ignore cache)
 
 Example:
   php bin/docsmith build --source=md --output=docs --title="My Docs" --site-url=https://example.com
+  php bin/docsmith build --source=md --favicon=favicon.svg --og-type=generated --og-scope=all
 TXT;
 
 $options = parseArgs($argv);
@@ -52,20 +60,46 @@ if (! is_dir($source)) {
     exit(1);
 }
 
-Docsmith::build(
-    source: $source,
-    output: stringOption($options, 'output', 'docs'),
-    title: stringOption($options, 'title', 'Documentation'),
-    description: stringOption($options, 'description', 'Project documentation.'),
-    accentColor: stringOption($options, 'accent-color', '#ff2d20'),
-    accentColorDark: stringOption($options, 'accent-color-dark', ''),
-    customCss: stringOption($options, 'custom-css', ''),
-    baseUrl: stringOption($options, 'base-url', '/'),
-    rightSidebar: boolOption($options, 'right-sidebar'),
-    repositoryUrl: stringOption($options, 'repository-url', ''),
-    siteUrl: stringOption($options, 'site-url', ''),
-    editBranch: stringOption($options, 'edit-branch', 'main'),
-);
+$builder = Docsmith::make()
+    ->source($source)
+    ->output(stringOption($options, 'output', 'docs'))
+    ->title(stringOption($options, 'title', 'Documentation'))
+    ->description(stringOption($options, 'description', 'Project documentation.'))
+    ->accentColor(stringOption($options, 'accent-color', '#ff2d20'))
+    ->accentColorDark(stringOption($options, 'accent-color-dark', ''))
+    ->customCss(stringOption($options, 'custom-css', ''))
+    ->baseUrl(stringOption($options, 'base-url', '/'))
+    ->rightSidebar(boolOption($options, 'right-sidebar'))
+    ->repositoryUrl(stringOption($options, 'repository-url', ''))
+    ->siteUrl(stringOption($options, 'site-url', ''))
+    ->editBranch(stringOption($options, 'edit-branch', 'main'));
+
+$favicon = stringOption($options, 'favicon', '');
+
+if ($favicon !== '') {
+    $builder->favicon($favicon);
+}
+
+$ogType = stringOption($options, 'og-type', '');
+
+if ($ogType !== '') {
+    $builder->ogImage(
+        type: $ogType,
+        scope: stringOption($options, 'og-scope', 'all'),
+        url: stringOption($options, 'og-url', ''),
+        template: stringOption($options, 'og-template', ''),
+    );
+}
+
+if (boolOption($options, 'no-og-capture')) {
+    $builder->captureOg(false);
+}
+
+if (boolOption($options, 'force-og')) {
+    $builder->forceOg();
+}
+
+$builder->build();
 
 echo "Built docs from {$source} to " . stringOption($options, 'output', 'docs') . "\n";
 

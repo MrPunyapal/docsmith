@@ -6,9 +6,11 @@ namespace Docsmith\Builder;
 
 use Docsmith\Compatibility\ReadmeIndexImporter;
 use Docsmith\Config\BuildConfig;
+use Docsmith\Config\OgImageConfig;
 use Docsmith\Config\SiteMetadata;
 use Docsmith\Config\VersionConfig;
 use Docsmith\Markdown\CommonMarkRenderer;
+use Docsmith\Render\OgImageGenerator;
 use Docsmith\Render\SiteBuilder;
 use LogicException;
 use RecursiveDirectoryIterator;
@@ -48,6 +50,18 @@ final class Builder
     private bool $llmsExport = true;
 
     private ?string $readmeIndexPath = null;
+
+    private ?OgImageConfig $ogImage = null;
+
+    private string $favicon = '';
+
+    private bool $runCapturist = true;
+
+    private bool $forceOg = false;
+
+    private bool $siteUrlOgWarned = false;
+
+    private string $capturistBinary = '';
 
     /** @var list<string> */
     private array $readmeSkipSections = [];
@@ -204,6 +218,149 @@ final class Builder
         return $this;
     }
 
+    /**
+     * Configure Open Graph images using a structured config.
+     *
+     * In most cases the convenience methods `ogGeneratedAll()`,
+     * `ogGeneratedPerPage()`, `ogLink()`, and `ogTemplate()` are easier to read.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogImage(
+        string $type = 'generated',
+        string $scope = 'all',
+        string $url = '',
+        string $template = '',
+        string $output = '',
+        array $viewport = [],
+        int $scale = 1,
+        string $selector = '',
+        string $routePrefix = 'og/preview',
+    ): self {
+        $this->ogImage = OgImageConfig::fromInput(
+            type: $type,
+            scope: $scope,
+            url: $url,
+            template: $template,
+            output: $output,
+            viewport: $viewport,
+            scale: $scale,
+            selector: $selector,
+            routePrefix: $routePrefix,
+        );
+
+        return $this;
+    }
+
+    /**
+     * Generate a single Open Graph image and share it across every page.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogGeneratedAll(string $output = '', int $scale = 1, array $viewport = []): self
+    {
+        return $this->ogImage(
+            type: 'generated',
+            scope: 'all',
+            output: $output,
+            viewport: $viewport,
+            scale: $scale,
+        );
+    }
+
+    /**
+     * Generate one Open Graph image per documentation page.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogGeneratedPerPage(string $output = '', int $scale = 1, array $viewport = []): self
+    {
+        return $this->ogImage(
+            type: 'generated',
+            scope: 'per-page',
+            output: $output,
+            viewport: $viewport,
+            scale: $scale,
+        );
+    }
+
+    /**
+     * Use an existing image URL or path for Open Graph cards.
+     */
+    public function ogLink(string $url, string $scope = 'all'): self
+    {
+        return $this->ogImage(
+            type: 'link',
+            scope: $scope,
+            url: $url,
+        );
+    }
+
+    /**
+     * Generate Open Graph images from a custom HTML template.
+     *
+     * The template can contain `{site_title}`, `{title}`, and `{description}`
+     * tokens. Pass a file path or raw HTML markup.
+     *
+     * @param array{width?: int, height?: int, deviceScaleFactor?: int} $viewport
+     */
+    public function ogTemplate(string $template, string $scope = 'per-page', string $output = '', int $scale = 1, array $viewport = []): self
+    {
+        return $this->ogImage(
+            type: 'generated',
+            scope: $scope,
+            template: $template,
+            output: $output,
+            viewport: $viewport,
+            scale: $scale,
+        );
+    }
+
+    /**
+     * Accept a favicon URL, data URI, or a path to a local image file.
+     * Falls back to Docsmith's generated default favicon when empty.
+     */
+    public function favicon(string $favicon): self
+    {
+        $this->favicon = trim($favicon);
+
+        return $this;
+    }
+
+    /**
+     * Whether to run Open Graph image capture during build (default true).
+     * When false, preview HTML and capturist.config.json are still written.
+     */
+    public function captureOg(bool $capture = true): self
+    {
+        $this->runCapturist = $capture;
+
+        return $this;
+    }
+
+    /** @deprecated Use captureOg() */
+    public function runCapturist(bool $runCapturist = true): self
+    {
+        return $this->captureOg($runCapturist);
+    }
+
+    /**
+     * Force recapture of every Open Graph image (ignores capturist cache).
+     */
+    public function forceOg(bool $force = true): self
+    {
+        $this->forceOg = $force;
+
+        return $this;
+    }
+
+    public function capturistBinary(string $capturistBinary): self
+    {
+        $this->capturistBinary = trim($capturistBinary);
+
+        return $this;
+    }
+
     public function build(): void
     {
         if ($this->versions !== []) {
@@ -235,12 +392,37 @@ final class Builder
                 generateSitemap: $this->generateSitemap,
                 generateNoJekyll: $this->generateNoJekyll,
                 llmsExport: $this->llmsExport,
+                favicon: $this->favicon,
             ),
             baseUrl: $this->baseUrl,
             rightSidebar: $this->rightSidebar,
+            ogImage: $this->ogImage,
         );
 
         (new SiteBuilder())->build($config, $documents);
+
+        $this->generateOgImages($config);
+    }
+
+    private function generateOgImages(BuildConfig $config, ?string $outputPath = null): void
+    {
+        if (!$this->ogImage instanceof OgImageConfig || ! $this->ogImage->isGenerated()) {
+            return;
+        }
+
+        if (! $this->siteUrlOgWarned && $config->metadata->siteUrl === '') {
+            $this->siteUrlOgWarned = true;
+            echo "[Docsmith] Open Graph images work better with ->siteUrl(...); crawlers prefer absolute og:image URLs.\n";
+        }
+
+        (new OgImageGenerator())->generate(
+            $config,
+            null,
+            $this->runCapturist,
+            $this->capturistBinary,
+            $outputPath,
+            $this->forceOg,
+        );
     }
 
     private function buildVersions(): void
@@ -270,10 +452,15 @@ final class Builder
                     editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',
                     generateSitemap: $this->generateSitemap,
                     generateNoJekyll: $this->generateNoJekyll,
+                    llmsExport: $this->llmsExport,
+                    favicon: $this->favicon,
                 ),
                 baseUrl: $this->baseUrl,
                 rightSidebar: $this->rightSidebar,
+                ogImage: $this->ogImage,
             );
+
+            $writeTarget = $isDefault ? $outputPath : $versionDocPath;
 
             (new SiteBuilder())->buildVersion(
                 config: $config,
@@ -282,6 +469,8 @@ final class Builder
                 isDefault: $isDefault,
                 rootOutput: $outputPath,
             );
+
+            $this->generateOgImages($config, $writeTarget);
         }
 
         $this->writeAssetsToRoot($outputPath);

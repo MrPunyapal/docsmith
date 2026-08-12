@@ -11,6 +11,7 @@
 
 /.github export-ignore
 /tests export-ignore
+/docs export-ignore
 /phpunit.xml.dist export-ignore
 /phpstan.neon export-ignore
 /pint.json export-ignore
@@ -18,3 +19,5 @@
 /.gitignore export-ignore
 /.gitattributes export-ignore
 /build-docs.php export-ignore
+/package.json export-ignore
+/package-lock.json export-ignore

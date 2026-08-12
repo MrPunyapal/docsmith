@@ -1,0 +1,14 @@
+{
+    "name": "docsmith",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Composer tooling for Docsmith documentation builds.",
+    "scripts": {
+        "docs:build": "php build-docs.php",
+        "postinstall": "npx playwright install chromium"
+    },
+    "devDependencies": {
+        "capturist": "^0.1.3",
+        "playwright": "^1.62.1"
+    }
+}

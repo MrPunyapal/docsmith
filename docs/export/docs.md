@@ -1,3 +1,121 @@
+# Open Graph Images
+
+# Open Graph Images
+
+Docsmith can emit `og:` / `twitter:` meta tags and generate social preview images during the docs build.
+
+## Install capture tools (once)
+
+Generated images need Node, Playwright, and capturist:
+
+```bash
+npm install -D playwright capturist@^0.1.3
+npx playwright install chromium
+```
+
+You do not write a capturist config — Docsmith generates it.
+
+## Single image for every page
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/docs')
+    ->title('My Package Docs')
+    ->siteUrl('https://example.com/docs')
+    ->ogGeneratedAll()
+    ->build();
+```
+
+Writes `docs/og/cover.png` and points every page at it.
+
+Always set `siteUrl()` so crawlers get absolute `og:image` URLs.
+
+## One image per page
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->siteUrl('https://example.com/docs')
+    ->ogGeneratedPerPage()
+    ->build();
+```
+
+## Link an existing image
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->ogLink('https://example.com/og/cover.png')
+    ->build();
+```
+
+## Custom card template
+
+Tokens: `{site_title}`, `{title}`, `{description}`, `{accent_color}`.
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->siteUrl('https://example.com/docs')
+    ->ogTemplate(__DIR__ . '/og-card.html', scope: 'per-page')
+    ->build();
+```
+
+## Frontmatter overrides
+
+```md
+---
+og_image: /assets/page-og.png
+og_title: Custom Social Title
+og_description: Custom social description.
+---
+```
+
+## Capture control
+
+| Method | Purpose |
+|--------|---------|
+| `captureOg(false)` | Write previews + config only; skip screenshots |
+| `forceOg()` | Recapture everything (ignore capturist cache) |
+| `runCapturist(false)` | Deprecated alias of `captureOg(false)` |
+
+Capture is incremental via capturist. Unchanged cards are skipped; force regen with `forceOg()` or by deleting `og/.capturist-cache.json`.
+
+## CI
+
+Install Node deps and Chromium before a docs build that runs capture:
+
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: '20'
+    cache: 'npm'
+
+- run: npm install
+- run: npx playwright install chromium --with-deps
+- run: php build-docs.php
+```
+
+Split builds: `->captureOg(false)` in the HTML job, capture later with `npx capturist --cwd docs --config capturist.config.json`.
+
+## Future scope
+
+Shipped today: generated cards, meta tags, frontmatter overrides, capturist incremental cache, install/CI guidance.
+
+Possible later work (not committed to a timeline):
+
+- CI smoke job that runs a real Playwright capture once
+- Stronger tests for versioned docs + OG paths
+- Optional hard-fail when `siteUrl` is missing for generated OG
+- Default-card logo / simple layout presets
+- Cleaner published output (e.g. ignore `og/preview/` HTML, keep PNGs)
+
+Non-goals for now: mid-build auto-install of Node tools, PHP-side cache, or requiring consumers to hand-write capturist config.
+
+
+---
+
 # Architecture
 
 # Architecture
@@ -73,7 +191,7 @@ That command uses Docsmith itself to read Markdown from `md/` and regenerate the
 
 The repository includes a workflow at `.github/workflows/docs.yml` that builds and commits `docs/` on every push that changes the source markdown or build script.
 
-For your own projects using Docsmith, here is a CI pattern you can adapt:
+If you enable generated Open Graph images, install Node, Playwright, and Chromium in CI as well:
 
 ```yaml
 name: Build docs
@@ -97,8 +215,20 @@ jobs:
           php-version: '8.3'
           tools: composer:v2
 
-      - name: Install dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
 
       - name: Generate docs
         run: php build-docs.php
@@ -116,7 +246,7 @@ jobs:
           fi
 ```
 
-Adjust the PHP version, source paths, and build command to match your project.
+Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node/Playwright steps.
 
 
 ---
@@ -143,6 +273,7 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Build multiple documentation versions with a version switcher.
 - Search overlay with `Cmd+K` / `Ctrl+K` keyboard shortcut.
 - AI-consumable export: `llms.txt`, `llms-full.txt`, `export/docs.md`.
+- Open Graph / Twitter card tags and generated social preview images.
 - Validate the package with Pest, PHPStan, Rector, and Pint.
 
 ## Current status
@@ -163,6 +294,7 @@ Search includes both:
 - Development
 - Versioned Docs
 - LLM Export
+- Open Graph
 
 
 ---

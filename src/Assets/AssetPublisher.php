@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Docsmith\Assets;
 
 use Docsmith\Config\SiteMetadata;
+use Docsmith\Support\Color;
 
 final class AssetPublisher
 {
@@ -18,14 +19,72 @@ final class AssetPublisher
 
         file_put_contents($assetsDirectory . '/app.css', $this->css($metadata));
         file_put_contents($assetsDirectory . '/app.js', $this->js());
+        $this->publishFavicon($assetsDirectory, $metadata);
+    }
+
+    public function faviconFileName(SiteMetadata $metadata): string
+    {
+        $favicon = trim($metadata->favicon);
+
+        if ($favicon === '' || $this->isRemoteUrl($favicon)) {
+            return 'favicon.svg';
+        }
+
+        return 'favicon.' . (pathinfo($favicon, PATHINFO_EXTENSION) ?: 'svg');
+    }
+
+    private function publishFavicon(string $assetsDirectory, SiteMetadata $metadata): void
+    {
+        $favicon = trim($metadata->favicon);
+
+        if ($favicon === '' || $this->isRemoteUrl($favicon)) {
+            file_put_contents(
+                $assetsDirectory . '/' . $this->faviconFileName($metadata),
+                $this->defaultFaviconSvg($metadata->accentColor),
+            );
+
+            return;
+        }
+
+        $contents = @file_get_contents($favicon);
+
+        if (! is_string($contents) || $contents === '') {
+            file_put_contents(
+                $assetsDirectory . '/' . $this->faviconFileName($metadata),
+                $this->defaultFaviconSvg($metadata->accentColor),
+            );
+
+            return;
+        }
+
+        file_put_contents($assetsDirectory . '/' . $this->faviconFileName($metadata), $contents);
+    }
+
+    private function defaultFaviconSvg(string $accentColor): string
+    {
+        $accent = Color::normalizeHex($accentColor, '#ff2d20');
+
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="14" fill="{$accent}"/>
+    <path d="M18 47V17h8l12 17V17h8v30h-8L26 29v18z" fill="#ffffff"/>
+</svg>
+SVG;
+    }
+
+    private function isRemoteUrl(string $value): bool
+    {
+        return str_starts_with($value, 'http://')
+            || str_starts_with($value, 'https://')
+            || str_starts_with($value, 'data:');
     }
 
     private function css(SiteMetadata $metadata): string
     {
-        $accentColor = $this->normalizeHexColor($metadata->accentColor, '#ff2d20');
+        $accentColor = Color::normalizeHex($metadata->accentColor, '#ff2d20');
         $accentColorDark = trim($metadata->accentColorDark) !== ''
-            ? $this->normalizeHexColor($metadata->accentColorDark, $this->mixHexColors($accentColor, '#ffffff', 0.34))
-            : $this->mixHexColors($accentColor, '#ffffff', 0.34);
+            ? Color::normalizeHex($metadata->accentColorDark, Color::mix($accentColor, '#ffffff', 0.34))
+            : Color::mix($accentColor, '#ffffff', 0.34);
 
         $css = <<<'CSS'
 :root {
@@ -1082,13 +1141,13 @@ CSS;
 
         $result = strtr($css, [
             '__ACCENT_LIGHT__' => $accentColor,
-            '__ACCENT_STRONG_LIGHT__' => $this->mixHexColors($accentColor, '#000000', 0.16),
-            '__ACCENT_SOFT_LIGHT__' => $this->rgbaFromHex($accentColor, 0.14),
-            '__RING_LIGHT__' => $this->rgbaFromHex($accentColor, 0.22),
+            '__ACCENT_STRONG_LIGHT__' => Color::mix($accentColor, '#000000', 0.16),
+            '__ACCENT_SOFT_LIGHT__' => Color::rgba($accentColor, 0.14),
+            '__RING_LIGHT__' => Color::rgba($accentColor, 0.22),
             '__ACCENT_DARK__' => $accentColorDark,
-            '__ACCENT_STRONG_DARK__' => $this->mixHexColors($accentColorDark, '#ffffff', 0.14),
-            '__ACCENT_SOFT_DARK__' => $this->rgbaFromHex($accentColorDark, 0.16),
-            '__RING_DARK__' => $this->rgbaFromHex($accentColorDark, 0.28),
+            '__ACCENT_STRONG_DARK__' => Color::mix($accentColorDark, '#ffffff', 0.14),
+            '__ACCENT_SOFT_DARK__' => Color::rgba($accentColorDark, 0.16),
+            '__RING_DARK__' => Color::rgba($accentColorDark, 0.28),
         ]);
 
         // Append user-provided CSS. The value in SiteMetadata may be raw CSS or a path to a file.
@@ -1107,54 +1166,6 @@ CSS;
         }
 
         return $result;
-    }
-
-    private function normalizeHexColor(string $color, string $fallback): string
-    {
-        $trimmed = ltrim(trim($color), '#');
-
-        if (strlen($trimmed) === 3) {
-            $trimmed = $trimmed[0] . $trimmed[0] . $trimmed[1] . $trimmed[1] . $trimmed[2] . $trimmed[2];
-        }
-
-        if (strlen($trimmed) !== 6 || ! ctype_xdigit($trimmed)) {
-            return $fallback;
-        }
-
-        return '#' . strtolower($trimmed);
-    }
-
-    /** @return array{0:int,1:int,2:int} */
-    private function hexToRgb(string $color): array
-    {
-        $hex = ltrim($this->normalizeHexColor($color, '#ff2d20'), '#');
-
-        return [
-            (int) hexdec(substr($hex, 0, 2)),
-            (int) hexdec(substr($hex, 2, 2)),
-            (int) hexdec(substr($hex, 4, 2)),
-        ];
-    }
-
-    private function rgbaFromHex(string $color, float $alpha): string
-    {
-        [$red, $green, $blue] = $this->hexToRgb($color);
-
-        return sprintf('rgba(%d, %d, %d, %s)', $red, $green, $blue, rtrim(rtrim(number_format($alpha, 2, '.', ''), '0'), '.'));
-    }
-
-    private function mixHexColors(string $color, string $mixColor, float $amount): string
-    {
-        [$red, $green, $blue] = $this->hexToRgb($color);
-        [$mixRed, $mixGreen, $mixBlue] = $this->hexToRgb($mixColor);
-
-        $amount = max(0.0, min(1.0, $amount));
-
-        $mixedRed = (int) round($red * (1 - $amount) + $mixRed * $amount);
-        $mixedGreen = (int) round($green * (1 - $amount) + $mixGreen * $amount);
-        $mixedBlue = (int) round($blue * (1 - $amount) + $mixBlue * $amount);
-
-        return sprintf('#%02x%02x%02x', $mixedRed, $mixedGreen, $mixedBlue);
     }
 
     private function js(): string

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "entries": {
+    "cover.png": {
+      "hash": "57c2133edeb009e75a96890574e1a67c112c0ecf9ff68f60f9dd46478af1ea77",
+      "output": "cover.png",
+      "label": "cover"
+    }
+  }
+}
