@@ -30,8 +30,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          # No npm cache: package-lock.json is gitignored in this repo.
+          node-version: '22'
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
