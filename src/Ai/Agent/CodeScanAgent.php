@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Docsmith\Ai\Agent;
 
 use Docsmith\Ai\Tools\ToolInterface;
+use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -39,6 +40,9 @@ use SplFileInfo;
  */
 final readonly class CodeScanAgent implements AgentInterface
 {
+    /** @var list<string> */
+    private const array SKIP_DIRECTORIES = ['.git', '.github', 'vendor', 'node_modules', 'dist', 'build', '.cache', 'backup'];
+
     public function __construct(private string $sourcePath)
     {
     }
@@ -82,9 +86,19 @@ final readonly class CodeScanAgent implements AgentInterface
             ];
         }
 
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
+        $directory = new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS);
+        $filter = new RecursiveCallbackFilterIterator(
+            $directory,
+            static function (SplFileInfo $current): bool {
+                if ($current->isDir()) {
+                    return ! in_array($current->getFilename(), self::SKIP_DIRECTORIES, true);
+                }
+
+                return true;
+            },
         );
+
+        $iterator = new RecursiveIteratorIterator($filter);
 
         foreach ($iterator as $file) {
             if (! $file instanceof SplFileInfo) {
