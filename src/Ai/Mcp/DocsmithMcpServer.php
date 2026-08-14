@@ -203,11 +203,7 @@ final class DocsmithMcpServer
 
             if ($request !== null) {
                 $response = $this->handleRequest($request);
-                $body = json_encode($response) ?: '';
-                fwrite($conn, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " . strlen($body) . ('
-Connection: close
-
-' . $body));
+                fwrite($conn, $this->httpResponse($response));
             }
 
             fclose($conn);
@@ -226,5 +222,19 @@ Connection: close
         $decoded = json_decode($m[0], true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $response
+     */
+    private function httpResponse(array $response): string
+    {
+        $body = json_encode($response) ?: '';
+
+        return "HTTP/1.1 200 OK\r\n"
+            . "Content-Type: application/json\r\n"
+            . 'Content-Length: ' . strlen($body) . "\r\n"
+            . "Connection: close\r\n\r\n"
+            . $body;
     }
 }

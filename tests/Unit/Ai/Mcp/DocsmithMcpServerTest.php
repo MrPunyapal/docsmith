@@ -138,3 +138,26 @@ it('returns error for unsupported method', function (): void {
     expect($error)->toHaveKey('message')
         ->and($error['message'] ?? null)->toContain('Method not found');
 });
+
+it('frames HTTP responses with CRLF line endings', function (): void {
+    $server = new DocsmithMcpServer(
+        transport: 'stdio',
+        port: 8090,
+        sourcePath: __DIR__ . '/../../../Fixtures/SampleProject',
+        docsSourcePath: sys_get_temp_dir() . '/docsmith-mcp-' . uniqid(),
+    );
+
+    $reflection = new ReflectionMethod(DocsmithMcpServer::class, 'httpResponse');
+
+    $payload = ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['ok' => true]];
+    $body = json_encode($payload, JSON_THROW_ON_ERROR);
+    $framed = $reflection->invoke($server, $payload);
+
+    expect($framed)->toBe(
+        "HTTP/1.1 200 OK\r\n"
+        . "Content-Type: application/json\r\n"
+        . 'Content-Length: ' . strlen($body) . "\r\n"
+        . "Connection: close\r\n\r\n"
+        . $body,
+    );
+});
