@@ -97,6 +97,10 @@ command itself.
 
 ## Using with Laravel Boost
 
+Docsmith has **no dependency on Laravel Boost** — the setup below is just one
+convenient way to register the same server; the standalone Claude Code / Codex /
+Cursor sections above work identically without Boost installed.
+
 Laravel Boost ships its own MCP server (`php artisan boost:mcp`) and wires it
 into your agents via `.mcp.json`. Docsmith sits next to it: add both servers to
 the same config, and your Boost-configured agent (Claude Code, Codex, Gemini
