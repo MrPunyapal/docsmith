@@ -59,11 +59,11 @@ final class DocsmithMcpServer
                 'serverInfo' => ['name' => 'docsmith', 'version' => '1.0.0'],
             ]],
             'tools/list' => ['jsonrpc' => '2.0', 'id' => $id, 'result' => [
-                'tools' => array_map(fn (ToolInterface $t): array => [
+                'tools' => array_values(array_map(fn (ToolInterface $t): array => [
                     'name' => $t->name(),
                     'description' => $t->description(),
                     'inputSchema' => $t->inputSchema(),
-                ], $this->tools),
+                ], $this->tools)),
             ]],
             'tools/call' => $this->handleToolCall($params, $id),
             default => ['jsonrpc' => '2.0', 'id' => $id, 'error' => [
@@ -198,6 +198,7 @@ final class DocsmithMcpServer
         }
 
         while ($conn = stream_socket_accept($server, -1)) {
+            stream_set_blocking($conn, true);
             $this->handleHttpRequest($conn);
         }
     }
@@ -212,7 +213,19 @@ final class DocsmithMcpServer
         $request = $this->parseHttpRequest($data);
 
         if ($request !== null) {
-            fwrite($conn, $this->httpResponse($this->handleRequest($request)));
+            $response = $this->httpResponse($this->handleRequest($request));
+            $written = 0;
+            $length = strlen($response);
+
+            while ($written < $length) {
+                $chunk = fwrite($conn, substr($response, $written));
+
+                if ($chunk === false || $chunk === 0) {
+                    break;
+                }
+
+                $written += $chunk;
+            }
         }
 
         fclose($conn);
