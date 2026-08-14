@@ -161,3 +161,33 @@ it('frames HTTP responses with CRLF line endings', function (): void {
         . $body,
     );
 });
+
+it('reads HTTP requests arriving in multiple chunks', function (): void {
+    $server = new DocsmithMcpServer(
+        transport: 'stdio',
+        port: 8090,
+        sourcePath: __DIR__ . '/../../../Fixtures/SampleProject',
+        docsSourcePath: sys_get_temp_dir() . '/docsmith-mcp-' . uniqid(),
+    );
+
+    $pair = stream_socket_pair(STREAM_PF_INET, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+
+    if ($pair === false) {
+        throw new RuntimeException('stream_socket_pair failed');
+    }
+
+    $payload = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => []], JSON_THROW_ON_ERROR);
+    $headers = "POST / HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: " . strlen($payload) . "\r\n\r\n";
+
+    fwrite($pair[0], $headers . substr($payload, 0, 10));
+    usleep(10000);
+    fwrite($pair[0], substr($payload, 10));
+
+    $reflection = new ReflectionMethod(DocsmithMcpServer::class, 'readHttpRequest');
+    $read = $reflection->invoke($server, $pair[1]);
+
+    expect($read)->toBe($headers . $payload);
+
+    fclose($pair[0]);
+    fclose($pair[1]);
+});

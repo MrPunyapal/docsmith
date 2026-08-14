@@ -198,16 +198,53 @@ final class DocsmithMcpServer
         }
 
         while ($conn = stream_socket_accept($server, -1)) {
-            $data = fread($conn, 65536);
-            $request = $this->parseHttpRequest($data === false ? '' : $data);
+            $this->handleHttpRequest($conn);
+        }
+    }
 
-            if ($request !== null) {
-                $response = $this->handleRequest($request);
-                fwrite($conn, $this->httpResponse($response));
+    /**
+     * @param  resource  $conn
+     */
+    private function handleHttpRequest($conn): void
+    {
+        $data = $this->readHttpRequest($conn);
+
+        $request = $this->parseHttpRequest($data);
+
+        if ($request !== null) {
+            fwrite($conn, $this->httpResponse($this->handleRequest($request)));
+        }
+
+        fclose($conn);
+    }
+
+    /**
+     * @param  resource  $conn
+     */
+    private function readHttpRequest($conn): string
+    {
+        $data = '';
+
+        while (($chunk = fread($conn, 8192)) !== false && $chunk !== '') {
+            $data .= $chunk;
+
+            $headerEnd = strpos($data, "\r\n\r\n");
+            if ($headerEnd === false) {
+                continue;
             }
 
-            fclose($conn);
+            if (preg_match('/Content-Length:\s*(\d+)/i', $data, $m)) {
+                if (strlen($data) - $headerEnd - 4 >= (int) $m[1]) {
+                    break;
+                }
+
+                continue;
+            }
+
+            break;
         }
+
+        return $data;
     }
 
     /**
