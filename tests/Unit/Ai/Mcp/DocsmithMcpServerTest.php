@@ -174,7 +174,11 @@ it('reads HTTP requests arriving in multiple chunks', function (): void {
         docsSourcePath: sys_get_temp_dir() . '/docsmith-mcp-' . uniqid(),
     );
 
-    $pair = stream_socket_pair(STREAM_PF_INET, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+    $pair = stream_socket_pair(
+        DIRECTORY_SEPARATOR === '\\' ? STREAM_PF_INET : STREAM_PF_UNIX,
+        STREAM_SOCK_STREAM,
+        DIRECTORY_SEPARATOR === '\\' ? STREAM_IPPROTO_IP : 0,
+    );
 
     if ($pair === false) {
         throw new RuntimeException('stream_socket_pair failed');
