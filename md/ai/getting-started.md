@@ -69,7 +69,17 @@ Docsmith::generate()
 
 ## What happened to the old AI pipeline?
 
-Earlier versions ran an internal AI pipeline (`--ai-provider`, SDK-based and
-SDK-free providers, review agent). That implementation now lives in
-`backup/ai-pipeline/`; AI entry points are MCP-only. Compliance with your
-provider's terms and keys is entirely up to your coding agent.
+Earlier versions ran an internal AI pipeline (`--ai-provider`, an SDK-based
+provider, a dependency-free OpenAI-compatible HTTP provider, a review agent,
+and an `agent:run` command). In the v1 refactor those entry points were removed
+and AI is **MCP-only** — Docsmith never calls an LLM itself, and compliance
+with your coding agent's provider terms and keys is entirely up to that agent.
+
+The removed work is preserved in the repository for anyone who wants it back:
+
+- `backup/ai-pipeline/` — the SDK-free provider, reviewer agent, `agent:run`,
+  and pre-strip copies of the pipeline, PHP API, CLI, tests, and docs
+- `backup/laravel-ai-provider/` — the original `laravel/ai` SDK-based provider
+
+See [Future Scope](future-scope.md) for how the pipeline could be restored on
+top of the current structural one.
