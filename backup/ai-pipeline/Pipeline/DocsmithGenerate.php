@@ -14,7 +14,17 @@ final class DocsmithGenerate
 
     private string $title = 'Documentation';
 
+    private ?string $provider = null;
+
+    private ?string $apiKey = null;
+
+    private ?string $model = null;
+
+    private ?string $baseUrl = null;
+
     private bool $mediaEnabled = false;
+
+    private bool $reviewEnabled = false;
 
     public function source(string $path): self
     {
@@ -44,9 +54,30 @@ final class DocsmithGenerate
         return $this;
     }
 
+    public function withAi(
+        string $provider,
+        string $apiKey,
+        string $model = 'gpt-4o-mini',
+        ?string $baseUrl = null,
+    ): self {
+        $this->provider = $provider;
+        $this->apiKey = $apiKey;
+        $this->model = $model;
+        $this->baseUrl = $baseUrl;
+
+        return $this;
+    }
+
     public function mediaEnabled(): self
     {
         $this->mediaEnabled = true;
+
+        return $this;
+    }
+
+    public function reviewEnabled(): self
+    {
+        $this->reviewEnabled = true;
 
         return $this;
     }
@@ -58,7 +89,12 @@ final class DocsmithGenerate
             docsSourcePath: $this->docsSourcePath,
             outputPath: $this->outputPath,
             title: $this->title,
+            provider: $this->provider,
+            apiKey: $this->apiKey,
+            model: $this->model,
+            baseUrl: $this->baseUrl,
             mediaEnabled: $this->mediaEnabled,
+            reviewEnabled: $this->reviewEnabled,
         );
 
         $pipeline = GenerationPipeline::create($config);

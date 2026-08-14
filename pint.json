@@ -1,7 +1,8 @@
 {
     "preset": "psr12",
     "exclude": [
-        "vendor"
+        "vendor",
+        "backup"
     ],
     "notPath": [
         "tests/Fixtures/Expected/**"

@@ -19,25 +19,65 @@ final class GenerateCommand extends Command
     {
         $this
             ->setName('generate')
-            ->setDescription('Generate structural documentation for a project from its source code')
+            ->setDescription('Generate AI-powered documentation for a project')
             ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Path to source code', getcwd() ?: '.')
             ->addOption('output', null, InputOption::VALUE_REQUIRED, 'Output directory for built docs', (getcwd() ?: '.') . '/docs')
             ->addOption('docs-source', null, InputOption::VALUE_REQUIRED, 'Docs source directory (markdown)', (getcwd() ?: '.') . '/docs-source')
             ->addOption('title', null, InputOption::VALUE_REQUIRED, 'Documentation title', 'Documentation')
-            ->addOption('media', null, InputOption::VALUE_NONE, 'Enable screenshot/video capture');
+            ->addOption('ai-provider', null, InputOption::VALUE_OPTIONAL, 'AI provider (openai or any OpenAI-compatible endpoint)')
+            ->addOption('ai-model', null, InputOption::VALUE_OPTIONAL, 'AI model name (defaults based on provider)')
+            ->addOption('ai-api-key', null, InputOption::VALUE_OPTIONAL, 'AI API key (defaults to provider env var; any string for local endpoints)')
+            ->addOption('ai-base-url', null, InputOption::VALUE_OPTIONAL, 'OpenAI-compatible base URL (e.g. http://localhost:11434/v1 for Ollama)')
+            ->addOption('media', null, InputOption::VALUE_NONE, 'Enable screenshot/video capture')
+            ->addOption('review', null, InputOption::VALUE_NONE, 'Enable review pass');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Docsmith — Documentation Generator');
+        $io->title('Docsmith — AI-Powered Documentation Generator');
+
+        $providerOption = $input->getOption('ai-provider');
+        $provider = is_string($providerOption) ? $providerOption : null;
+        $apiKey = null;
+        $model = null;
+
+        if ($provider !== null) {
+            $apiKeyOption = $input->getOption('ai-api-key');
+            $apiKey = is_string($apiKeyOption) && $apiKeyOption !== ''
+                ? $apiKeyOption
+                : match ($provider) {
+                    'openai' => $this->envKey('OPENAI_API_KEY'),
+                    default => $this->envKey(strtoupper($provider) . '_API_KEY'),
+                };
+
+            if ($apiKey === '') {
+                $io->error(sprintf(
+                    'Missing API key for provider: %s. Set %s environment variable.',
+                    $provider,
+                    strtoupper($provider) . '_API_KEY',
+                ));
+
+                return Command::FAILURE;
+            }
+
+            $modelOption = $input->getOption('ai-model');
+            $model = is_string($modelOption) && $modelOption !== ''
+                ? $modelOption
+                : 'gpt-4o-mini';
+        }
 
         $config = new PipelineConfig(
             sourcePath: $this->stringOption($input, 'source', getcwd() ?: '.'),
             docsSourcePath: $this->stringOption($input, 'docs-source', (getcwd() ?: '.') . '/docs-source'),
             outputPath: $this->stringOption($input, 'output', (getcwd() ?: '.') . '/docs'),
             title: $this->stringOption($input, 'title', 'Documentation'),
+            provider: $provider,
+            apiKey: $apiKey,
+            model: $model,
+            baseUrl: $this->stringOption($input, 'ai-base-url', '') ?: null,
             mediaEnabled: (bool) $input->getOption('media'),
+            reviewEnabled: (bool) $input->getOption('review'),
         );
 
         $io->section('Configuration');
@@ -45,7 +85,9 @@ final class GenerateCommand extends Command
             ['Source' => $config->sourcePath],
             ['Docs Source' => $config->docsSourcePath],
             ['Output' => $config->outputPath],
+            ['AI Provider' => $config->provider ?? 'disabled'],
             ['Media Capture' => $config->mediaEnabled ? 'enabled' : 'disabled'],
+            ['Review' => $config->reviewEnabled ? 'enabled' : 'disabled'],
         );
 
         try {
@@ -59,6 +101,7 @@ final class GenerateCommand extends Command
             $io->definitionList(
                 ['Generated Docs' => count($result->generatedDocs())],
                 ['Media Captured' => count($result->media())],
+                ['Review Score' => $result->review()['score'] ?? 'N/A'],
             );
 
             foreach ($result->phases() as $phase => $data) {
@@ -79,5 +122,10 @@ final class GenerateCommand extends Command
         $value = $input->getOption($name);
 
         return is_string($value) && $value !== '' ? $value : $default;
+    }
+
+    private function envKey(string $name): string
+    {
+        return is_string($_SERVER[$name] ?? null) ? $_SERVER[$name] : '';
     }
 }

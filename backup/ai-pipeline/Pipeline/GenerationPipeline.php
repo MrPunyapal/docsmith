@@ -7,6 +7,9 @@ namespace Docsmith\Ai\Pipeline;
 use Docsmith\Ai\Agent\CodeScanAgent;
 use Docsmith\Ai\Agent\DocWriterAgent;
 use Docsmith\Ai\Agent\MediaAgent;
+use Docsmith\Ai\Agent\ReviewerAgent;
+use Docsmith\Ai\Provider\OpenAiHttpProvider;
+use Docsmith\Ai\Provider\ProviderConfig;
 use Docsmith\Docsmith;
 
 final readonly class GenerationPipeline
@@ -15,15 +18,28 @@ final readonly class GenerationPipeline
         private CodeScanAgent $codeScanAgent,
         private DocWriterAgent $docWriterAgent,
         private MediaAgent $mediaAgent,
+        private ReviewerAgent $reviewerAgent,
     ) {
     }
 
     public static function create(PipelineConfig $config): self
     {
+        $aiProvider = null;
+
+        if ($config->provider !== null && $config->apiKey !== null) {
+            $aiProvider = new OpenAiHttpProvider(new ProviderConfig(
+                provider: $config->provider,
+                apiKey: $config->apiKey,
+                model: $config->model ?? 'gpt-4o-mini',
+                baseUrl: $config->baseUrl,
+            ));
+        }
+
         return new self(
             codeScanAgent: new CodeScanAgent($config->sourcePath),
-            docWriterAgent: new DocWriterAgent($config->docsSourcePath),
+            docWriterAgent: new DocWriterAgent($aiProvider, $config->docsSourcePath),
             mediaAgent: new MediaAgent($config->mediaOutputPath ?? $config->docsSourcePath . '/media'),
+            reviewerAgent: new ReviewerAgent($aiProvider),
         );
     }
 
@@ -41,8 +57,12 @@ final readonly class GenerationPipeline
 
         $docResults = [];
 
-        foreach ($features as $feature) {
-            $docResults[] = $this->docWriterAgent->run($feature);
+        if ($this->docWriterAgent->hasAi()) {
+            $docResults = $this->docWriterAgent->runProject($scanResult);
+        } else {
+            foreach ($features as $feature) {
+                $docResults[] = $this->docWriterAgent->run($feature);
+            }
         }
 
         foreach ($docResults as $docResult) {
@@ -58,6 +78,12 @@ final readonly class GenerationPipeline
                 'outputPath' => $config->mediaOutputPath ?? $config->docsSourcePath . '/media',
             ]);
             $result->complete('media', media: $mediaResult);
+        }
+
+        if ($config->reviewEnabled) {
+            $result->start();
+            $reviewResult = $this->reviewerAgent->run(['path' => $config->docsSourcePath]);
+            $result->complete('review', review: $reviewResult);
         }
 
         $result->start();
