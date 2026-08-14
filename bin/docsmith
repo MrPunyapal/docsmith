@@ -4,6 +4,7 @@
 declare(strict_types=1);
 
 use Docsmith\Command\GenerateCommand;
+use Docsmith\Command\McpServeCommand;
 use Symfony\Component\Console\Application;
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -12,9 +13,9 @@ use Docsmith\Docsmith;
 use Docsmith\RemoteSources\RemoteSources;
 use Docsmith\RemoteSources\InvalidSourcesConfiguration;
 
-if (($argv[1] ?? null) === 'generate' && class_exists(GenerateCommand::class)) {
+if (class_exists(GenerateCommand::class) && in_array($argv[1] ?? null, ['generate', 'mcp:serve'], true)) {
     $application = new Application('Docsmith');
-    $application->addCommands([new GenerateCommand()]);
+    $application->addCommands([new GenerateCommand(), new McpServeCommand()]);
 
     exit($application->run());
 }
@@ -23,7 +24,8 @@ const USAGE = <<<TXT
 Usage:
   php bin/docsmith build [options]
   php bin/docsmith sync [options]
-  php bin/docsmith generate [options]   (AI-assisted documentation generation)
+  php bin/docsmith generate [options]   (structural documentation generation)
+  php bin/docsmith mcp:serve [options]  (MCP server for coding agents)
   php bin/docsmith --help
 
 Build options:
