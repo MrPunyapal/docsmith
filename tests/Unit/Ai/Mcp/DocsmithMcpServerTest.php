@@ -54,6 +54,10 @@ it('returns tool list', function (): void {
     $tools = $result['tools'] ?? [];
     $tools = is_array($tools) ? $tools : [];
 
+    expect($tools)->toBeArray()
+        ->and(array_is_list($tools))->toBeTrue()
+        ->and($tools)->toHaveCount(3);
+
     $names = array_column($tools, 'name');
     expect($names)->toContain('read_source')
         ->toContain('build_site');
