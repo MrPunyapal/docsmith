@@ -2,7 +2,8 @@
     "preset": "psr12",
     "exclude": [
         "vendor",
-        "test-hub"
+        "test-hub",
+        "backup"
     ],
     "notPath": [
         "tests/Fixtures/Expected/**"

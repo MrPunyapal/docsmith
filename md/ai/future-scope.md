@@ -21,10 +21,10 @@ Feed existing documentation as context for consistency. Newly generated pages wo
 
 ## CI Integration
 
-Run `docsmith generate` as a GitHub Action step to auto-update documentation on every push:
+Run `docsmith generate` as a GitHub Action step to auto-update structural documentation on every push:
 
 ```yaml
-- run: docsmith generate --source=./src --output=./docs --ai-provider=anthropic
+- run: docsmith generate --source=./src --output=./docs
 ```
 
 ## Web Dashboard

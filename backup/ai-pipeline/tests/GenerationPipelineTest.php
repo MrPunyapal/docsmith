@@ -55,6 +55,21 @@ it('includes media capture phase when enabled', function (): void {
     expect($result->phases())->toHaveKey('media');
 });
 
+it('includes review phase when enabled', function (): void {
+    $config = new PipelineConfig(
+        sourcePath: __DIR__ . '/../../Fixtures/SampleProject',
+        docsSourcePath: sys_get_temp_dir() . '/docsmith-pipeline-docs-' . uniqid(),
+        outputPath: sys_get_temp_dir() . '/docsmith-pipeline-out-' . uniqid(),
+        title: 'Pipeline Review Test',
+        reviewEnabled: true,
+    );
+
+    $pipeline = GenerationPipeline::create($config);
+    $result = $pipeline->run($config);
+
+    expect($result->phases())->toHaveKey('review');
+});
+
 it('builds a functional docs site', function (): void {
     $outputPath = sys_get_temp_dir() . '/docsmith-pipeline-out-' . uniqid();
 

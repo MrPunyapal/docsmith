@@ -9,7 +9,7 @@ final readonly class ProviderConfig
     public function __construct(
         public string $provider,
         public string $apiKey,
-        public string $model = 'claude-sonnet-4-6',
+        public string $model = 'gpt-4o-mini',
         public ?string $baseUrl = null,
     ) {
     }

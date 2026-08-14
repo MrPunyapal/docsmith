@@ -1,60 +1,75 @@
-# Getting Started with AI-Powered Documentation
+# AI Documentation with Docsmith
 
-Docsmith can automatically generate documentation for your project. There are two distinct workflows depending on whether you want an AI assistant to drive the process or run a fully automated pipeline.
+Docsmith's AI story is **coding-agent driven**: your AI assistant (Claude Code,
+Codex, Cursor, or any MCP-capable agent) does the writing; Docsmith provides the
+tools. There is no API-pipeline to configure, no SDK, and Docsmith never calls
+an LLM itself.
 
 ## Two Workflows
 
 | Approach | When to use | Needs API key? |
 |----------|-------------|----------------|
-| **MCP Server** | Let Claude Code / Cursor drive doc generation interactively | Your AI assistant's key |
-| **Auto Pipeline** | One-command generation from CLI or CI | Only if you want AI-written docs |
-| **Structural Only** | Basic docs from code analysis (no LLM) | No |
+| **Coding Agent via MCP** | Let Claude Code / Codex / Cursor read source and write docs interactively | The agent's own |
+| **Structural CLI** | One-command static docs from code analysis (no LLM) | No |
 
-## Workflow 1: AI Assistant via MCP
+## Workflow 1: Coding Agent via MCP (recommended for AI docs)
 
-Start the MCP server, then your AI assistant controls the tools:
+Start the MCP server, then ask your agent to generate documentation:
 
 ```bash
-docsmith mcp:serve --transport=stdio --source=./my-app
+docsmith mcp:serve --transport=stdio --source=./my-app --docs-source=./docs-source
 ```
 
-Claude Code can then call `read_source`, `write_markdown`, and `build_site` tools directly. No Docsmith API key needed — your assistant uses its own.
+Point your agent at the server. Claude Code example (`~/.claude.json` or your
+project `.mcp.json`):
 
-## Workflow 2: Auto Pipeline
+```json
+{
+  "mcpServers": {
+    "docsmith": {
+      "command": "docsmith",
+      "args": ["mcp:serve", "--transport=stdio", "--source=./my-app"]
+    }
+  }
+}
+```
 
-Generate everything in one command:
+Then prompt it, e.g.:
+
+> "Use the docsmith tools to write installation, configuration, and usage
+> documentation for this project."
+
+The agent calls `read_source`, `write_markdown`, and `build_site` directly.
+Docsmith needs no API key of its own — the agent uses its own credentials.
+See [MCP Server](mcp-server.md) for the full tool reference and Codex/Cursor
+setup.
+
+## Workflow 2: Structural CLI
+
+Generate static, structural documentation from code analysis — no LLM, no keys:
 
 ```bash
-# Basic docs from code structure (no API key needed)
 docsmith generate --source=./my-app --output=./docs
-
-# AI-enriched docs with optional media capture and review
-docsmith generate \
-    --source=./my-app \
-    --output=./docs \
-    --title="My App Documentation" \
-    --ai-provider=anthropic \
-    --media \
-    --review
 ```
-
-## Workflow 3: PHP API
 
 ```php
 Docsmith::generate()
     ->source(__DIR__ . '/app')
     ->output(__DIR__ . '/docs')
     ->title('My App')
-    ->withAi(provider: 'anthropic', apiKey: $apiKey, model: 'claude-sonnet-4-6')
-    ->mediaEnabled()
-    ->reviewEnabled()
     ->build();
 ```
 
 ## Pipeline Stages
 
 1. **Code Scan** — Recursively scans source files and builds a feature map (classes, functions, namespaces)
-2. **Doc Writing** — Generates markdown documentation for each feature. Uses AI if configured, otherwise produces structural docs
-3. **Media Capture** (optional with `--media`) — Scores features for UI relevance, captures screenshots/video via Playwright
-4. **Review** (optional with `--review`) — Validates headings, links, code blocks, media references; calculates quality score
-5. **Build** — Renders the static HTML site
+2. **Doc Writing** — Generates a markdown page per feature from the feature map
+3. **Media Capture** (optional with `--media`) — Captures screenshots/video of runnable features via Playwright
+4. **Build** — Renders the static HTML site
+
+## What happened to the old AI pipeline?
+
+Earlier versions ran an internal AI pipeline (`--ai-provider`, SDK-based and
+SDK-free providers, review agent). That implementation now lives in
+`backup/ai-pipeline/`; AI entry points are MCP-only. Compliance with your
+provider's terms and keys is entirely up to your coding agent.

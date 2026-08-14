@@ -8,7 +8,7 @@ use Docsmith\Ai\Agent\CodeScanAgent;
 use Docsmith\Ai\Agent\DocWriterAgent;
 use Docsmith\Ai\Agent\MediaAgent;
 use Docsmith\Ai\Agent\ReviewerAgent;
-use Docsmith\Ai\Provider\LaravelAiProvider;
+use Docsmith\Ai\Provider\OpenAiHttpProvider;
 use Docsmith\Ai\Provider\ProviderConfig;
 use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
@@ -30,7 +30,8 @@ final class AgentRunCommand extends Command
             ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Source path', getcwd() ?: '.')
             ->addOption('output', null, InputOption::VALUE_OPTIONAL, 'Output path for docs/media')
             ->addOption('ai-provider', null, InputOption::VALUE_OPTIONAL, 'AI provider')
-            ->addOption('ai-model', null, InputOption::VALUE_OPTIONAL, 'AI model (defaults based on provider)');
+            ->addOption('ai-model', null, InputOption::VALUE_OPTIONAL, 'AI model (defaults based on provider)')
+            ->addOption('ai-base-url', null, InputOption::VALUE_OPTIONAL, 'OpenAI-compatible base URL (e.g. http://localhost:11434/v1 for Ollama)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -48,20 +49,15 @@ final class AgentRunCommand extends Command
         $providerOption = $input->getOption('ai-provider');
         if (is_string($providerOption)) {
             $apiKey = match ($providerOption) {
-                'anthropic' => $this->envKey('ANTHROPIC_API_KEY'),
                 'openai' => $this->envKey('OPENAI_API_KEY'),
-                default => '',
+                default => $this->envKey(strtoupper($providerOption) . '_API_KEY'),
             };
 
             if ($apiKey === '') {
                 $io->error(sprintf(
                     'Missing API key for provider: %s. Set %s environment variable.',
                     $providerOption,
-                    match ($providerOption) {
-                        'anthropic' => 'ANTHROPIC_API_KEY',
-                        'openai' => 'OPENAI_API_KEY',
-                        default => strtoupper($providerOption) . '_API_KEY',
-                    }
+                    strtoupper($providerOption) . '_API_KEY',
                 ));
 
                 return Command::FAILURE;
@@ -71,15 +67,15 @@ final class AgentRunCommand extends Command
             $model = is_string($modelOption) && $modelOption !== ''
                 ? $modelOption
                 : match ($providerOption) {
-                    'anthropic' => 'claude-sonnet-4-6',
-                    'openai' => 'gpt-4o',
-                    default => 'claude-sonnet-4-6',
+                    'openai' => 'gpt-4o-mini',
+                    default => 'gpt-4o-mini',
                 };
 
-            $aiProvider = new LaravelAiProvider(new ProviderConfig(
+            $aiProvider = new OpenAiHttpProvider(new ProviderConfig(
                 provider: $providerOption,
                 apiKey: $apiKey,
                 model: $model,
+                baseUrl: $this->stringOption($input, 'ai-base-url', '') ?: null,
             ));
         }
 
@@ -134,6 +130,13 @@ final class AgentRunCommand extends Command
 
             return Command::FAILURE;
         }
+    }
+
+    private function stringOption(InputInterface $input, string $name, string $default): string
+    {
+        $value = $input->getOption($name);
+
+        return is_string($value) && $value !== '' ? $value : $default;
     }
 
     private function envKey(string $name): string

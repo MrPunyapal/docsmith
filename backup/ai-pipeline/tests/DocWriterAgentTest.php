@@ -3,10 +3,54 @@
 declare(strict_types=1);
 
 use Docsmith\Ai\Agent\DocWriterAgent;
+use Docsmith\Ai\Provider\AiProviderInterface;
 
 it('returns the agent name', function (): void {
     $agent = new DocWriterAgent();
     expect($agent->name())->toBe('doc_writer');
+});
+
+it('generates documentation with ai provider', function (): void {
+    $docsPath = sys_get_temp_dir() . '/docsmith-dwa-' . uniqid();
+    mkdir($docsPath, 0777, true);
+
+    try {
+        $mockProvider = new class () implements AiProviderInterface {
+            public function chat(array $messages, array $tools = []): array
+            {
+                return [
+                    'text' => "# TestFeature\n\nGenerated AI docs for TestFeature.\n\n## Overview\n\nTest overview.\n",
+                    'tool_calls' => [],
+                    'finish_reason' => 'stop',
+                ];
+            }
+
+            public function structured(array $messages, string $schema): mixed
+            {
+                return null;
+            }
+        };
+
+        $agent = new DocWriterAgent($mockProvider, $docsPath);
+
+        $result = $agent->run([
+            'name' => 'TestFeature',
+            'description' => 'A test feature',
+            'files' => ['src/TestFeature.php'],
+            'classes' => ['TestFeature'],
+            'functions' => ['doSomething'],
+            'namespace' => 'App',
+        ]);
+
+        expect($result)->toHaveKey('feature')
+            ->toHaveKey('path')
+            ->toHaveKey('content_length')
+            ->toHaveKey('generated_by')
+            ->and($result['generated_by'])->toBe('ai')
+            ->and($docsPath . '/' . $result['path'])->toBeFile();
+    } finally {
+        removeDirectory($docsPath);
+    }
 });
 
 it('generates basic docs without ai provider', function (): void {
@@ -14,7 +58,7 @@ it('generates basic docs without ai provider', function (): void {
     mkdir($docsPath, 0777, true);
 
     try {
-        $basicAgent = new DocWriterAgent($docsPath);
+        $basicAgent = new DocWriterAgent(null, $docsPath);
 
         $result = $basicAgent->run([
             'name' => 'BasicFeature',
@@ -41,7 +85,7 @@ it('handles empty feature data gracefully', function (): void {
     mkdir($docsPath, 0777, true);
 
     try {
-        $agent = new DocWriterAgent($docsPath);
+        $agent = new DocWriterAgent(null, $docsPath);
 
         $result = $agent->run([]);
 
@@ -57,7 +101,7 @@ it('handles feature without ai provider gracefully', function (): void {
     mkdir($docsPath, 0777, true);
 
     try {
-        $basicAgent = new DocWriterAgent($docsPath);
+        $basicAgent = new DocWriterAgent(null, $docsPath);
 
         $result = $basicAgent->run([
             'name' => 'Minimal',
