@@ -60,3 +60,27 @@ it('extracts functions from files without classes', function (): void {
 
     expect($helperFiles)->not->toBeEmpty();
 });
+
+it('skips vendor, node_modules, and other dependency directories', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-scan-' . uniqid();
+    mkdir($project . '/src', 0777, true);
+    mkdir($project . '/vendor/acme/pkg', 0777, true);
+    mkdir($project . '/node_modules/pkg', 0777, true);
+
+    file_put_contents($project . '/src/App.php', "<?php\nclass App {}\n");
+    file_put_contents($project . '/vendor/acme/pkg/Package.php', "<?php\nclass Package {}\n");
+    file_put_contents($project . '/node_modules/pkg/index.js', 'export function util() {}');
+
+    try {
+        $agent = new CodeScanAgent($project);
+        $result = $agent->run(['path' => $project]);
+
+        $paths = array_column($result['files'], 'path');
+        expect($paths)->toContain('src/App.php');
+        expect($paths)->not->toContain('vendor/acme/pkg/Package.php');
+        expect($paths)->not->toContain('node_modules/pkg/index.js');
+        expect($result['total_files'])->toBe(1);
+    } finally {
+        removeDirectory($project);
+    }
+});
