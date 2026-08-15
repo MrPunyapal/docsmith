@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith\Ai\Tools;
 
+use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -15,6 +16,9 @@ use SplFileInfo;
  */
 final readonly class ReadSourceTool implements ToolInterface
 {
+    /** @var list<string> */
+    private const array SKIP_DIRECTORIES = ['.git', '.github', 'vendor', 'node_modules', 'dist', 'build', '.cache', 'backup'];
+
     private string $sourcePath;
 
     public function __construct(string $sourcePath)
@@ -68,25 +72,52 @@ final readonly class ReadSourceTool implements ToolInterface
      */
     private function listFiles(string $pattern): array
     {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($this->sourcePath, RecursiveDirectoryIterator::SKIP_DOTS),
-        );
-
         $files = [];
-        foreach ($iterator as $file) {
-            if ($file instanceof SplFileInfo && $file->isFile()) {
-                $relative = $this->normalizeRelativePath($file);
-                if (fnmatch($pattern, $relative)) {
-                    $files[] = [
-                        'path' => $relative,
-                        'size' => $file->getSize(),
-                        'extension' => $file->getExtension(),
-                    ];
-                }
+        foreach ($this->sourceFiles() as $file) {
+            if (! $file->isFile()) {
+                continue;
+            }
+
+            $relative = $this->normalizeRelativePath($file);
+            if (fnmatch($pattern, $relative)) {
+                $files[] = [
+                    'path' => $relative,
+                    'size' => $file->getSize(),
+                    'extension' => $file->getExtension(),
+                ];
             }
         }
 
         return ['files' => $files, 'count' => count($files)];
+    }
+
+    /**
+     * @return list<SplFileInfo>
+     */
+    private function sourceFiles(string $basePath = ''): array
+    {
+        $files = [];
+
+        $root = $basePath === '' ? $this->sourcePath : $basePath;
+        $directory = new RecursiveDirectoryIterator($root, RecursiveDirectoryIterator::SKIP_DOTS);
+        $filter = new RecursiveCallbackFilterIterator(
+            $directory,
+            static function (SplFileInfo $current): bool {
+                if ($current->isDir()) {
+                    return ! in_array($current->getFilename(), self::SKIP_DIRECTORIES, true);
+                }
+
+                return true;
+            },
+        );
+
+        foreach (new RecursiveIteratorIterator($filter) as $file) {
+            if ($file instanceof SplFileInfo) {
+                $files[] = $file;
+            }
+        }
+
+        return $files;
     }
 
     private function normalizeRelativePath(SplFileInfo $file): string
@@ -159,13 +190,9 @@ final readonly class ReadSourceTool implements ToolInterface
             return ['error' => 'Access denied: path outside source root'];
         }
 
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($targetPath, RecursiveDirectoryIterator::SKIP_DOTS),
-        );
-
         $structure = [];
-        foreach ($iterator as $file) {
-            if ($file instanceof SplFileInfo && $file->isFile() && $file->getExtension() === 'php') {
+        foreach ($this->sourceFiles($targetPath) as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
                 $content = file_get_contents($file->getPathname());
 
                 if ($content === false) {

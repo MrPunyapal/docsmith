@@ -6,14 +6,14 @@ Codex, and Cursor read your source code, write documentation pages, and build
 the site — using **their own API key**, not Docsmith's. Docsmith itself never
 calls an LLM.
 
-## When to use MCP vs Structural CLI
+## When to use MCP vs the Builder
 
-| MCP Server | Structural CLI (`docsmith generate`) |
-|------------|--------------------------------------|
-| AI assistant drives the process interactively | Fully automated, one command |
+| MCP Server | Builder CLI (`docsmith build`) |
+|------------|--------------------------------|
+| AI assistant drives the process interactively | Renders markdown to a static site |
 | Assistant uses its own API key | No API key at all |
-| Good for iterative, guided doc creation | Good for CI/CD and bulk generation |
-| Tools exposed: read, write, build | Pipeline: scan → write → build |
+| Good for iterative, guided doc creation | Good for CI/CD publishing |
+| Tools exposed: read, write, build | One command: markdown → HTML |
 
 ## Starting the Server
 
