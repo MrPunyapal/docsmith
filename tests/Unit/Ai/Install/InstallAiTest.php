@@ -77,28 +77,28 @@ it('merges into an existing .mcp.json without clobbering other servers', functio
 
 it('skips existing files unless forced', function (): void {
     $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
-    mkdir($project, 0777, true);
+    mkdir($project . '/.claude/skills/docsmith-docs', 0777, true);
 
     try {
-        file_put_contents($project . '/CLAUDE.md', 'existing');
+        file_put_contents($project . '/.claude/skills/docsmith-docs/SKILL.md', 'existing');
 
         $install = new InstallAi($project, '.', 'docs-source', ['claude']);
 
         $results = $install->install();
 
-        expect($results['CLAUDE.md'] ?? null)->toBe('skipped (exists)')
-            ->and(file_get_contents($project . '/CLAUDE.md'))->toBe('existing');
+        expect($results['.claude/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('skipped (exists)')
+            ->and(file_get_contents($project . '/.claude/skills/docsmith-docs/SKILL.md'))->toBe('existing');
 
         $results = $install->install(true);
 
-        expect($results['CLAUDE.md'] ?? null)->toBe('written')
-            ->and(file_get_contents($project . '/CLAUDE.md'))->toContain('Docsmith');
+        expect($results['.claude/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and(file_get_contents($project . '/.claude/skills/docsmith-docs/SKILL.md'))->toContain('Docsmith');
     } finally {
         removeDirectory($project);
     }
 });
 
-it('writes CLAUDE.md and the claude skill', function (): void {
+it('writes the claude skill', function (): void {
     $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
     mkdir($project, 0777, true);
 
@@ -107,9 +107,9 @@ it('writes CLAUDE.md and the claude skill', function (): void {
 
         $results = $install->install();
 
-        expect($results['CLAUDE.md'] ?? null)->toBe('written')
+        expect($results['.ai/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
             ->and($results['.claude/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
-            ->and($project . '/CLAUDE.md')->toBeFile()
+            ->and($project . '/.ai/skills/docsmith-docs/SKILL.md')->toBeFile()
             ->and($project . '/.claude/skills/docsmith-docs/SKILL.md')->toBeFile()
             ->and(file_get_contents($project . '/.claude/skills/docsmith-docs/SKILL.md'))->toContain('name: docsmith-docs');
     } finally {
@@ -117,7 +117,7 @@ it('writes CLAUDE.md and the claude skill', function (): void {
     }
 });
 
-it('writes codex config and AGENTS.md', function (): void {
+it('writes codex config and the shared skill', function (): void {
     $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
     mkdir($project, 0777, true);
 
@@ -127,7 +127,8 @@ it('writes codex config and AGENTS.md', function (): void {
         $results = $install->install();
 
         expect($results['.codex/config.toml'] ?? null)->toBe('written')
-            ->and($results['AGENTS.md'] ?? null)->toBe('written');
+            ->and($results['.agents/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['.ai/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written');
 
         $toml = (string) file_get_contents($project . '/.codex/config.toml');
 
@@ -207,7 +208,7 @@ it('throws for an unknown agent', function (): void {
     }
 })->throws(RuntimeException::class);
 
-it('writes AGENTS.md for non-claude non-codex agents', function (): void {
+it('writes .mcp.json and the cursor skill for cursor', function (): void {
     $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
     mkdir($project, 0777, true);
 
@@ -217,7 +218,8 @@ it('writes AGENTS.md for non-claude non-codex agents', function (): void {
         $results = $install->install();
 
         expect($results['.mcp.json'] ?? null)->toBe('written')
-            ->and($results['AGENTS.md'] ?? null)->toBe('written')
+            ->and($results['.cursor/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['AGENTS.md'] ?? null)->toBeNull()
             ->and($results['CLAUDE.md'] ?? null)->toBeNull();
     } finally {
         removeDirectory($project);
@@ -235,7 +237,8 @@ it('writes opencode.json and the opencode skill', function (): void {
 
         expect($results['opencode.json'] ?? null)->toBe('written')
             ->and($results['.opencode/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
-            ->and($results['AGENTS.md'] ?? null)->toBe('written');
+            ->and($results['.ai/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['AGENTS.md'] ?? null)->toBeNull();
 
         $decoded = json_decode((string) file_get_contents($project . '/opencode.json'), true);
         $mcp = is_array($decoded) && is_array($decoded['mcp'] ?? null) ? $decoded['mcp'] : [];
@@ -274,6 +277,57 @@ it('merges into an existing opencode.json without clobbering settings', function
     }
 });
 
+it('writes only skills when mcp is disabled', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        $install = new InstallAi($project, '.', 'docs-source', ['claude']);
+
+        $results = $install->install(false, false, true);
+
+        expect($results['.ai/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['.claude/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['.mcp.json'] ?? null)->toBeNull();
+    } finally {
+        removeDirectory($project);
+    }
+});
+
+it('writes only mcp when skills are disabled', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        $install = new InstallAi($project, '.', 'docs-source', ['claude']);
+
+        $results = $install->install(false, true, false);
+
+        expect($results['.mcp.json'] ?? null)->toBe('written')
+            ->and($results['.ai/skills/docsmith-docs/SKILL.md'] ?? null)->toBeNull()
+            ->and($results['.claude/skills/docsmith-docs/SKILL.md'] ?? null)->toBeNull();
+    } finally {
+        removeDirectory($project);
+    }
+});
+
+it('shares one skill target across codex and antigravity', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        $install = new InstallAi($project, '.', 'docs-source', ['codex', 'antigravity']);
+
+        $results = $install->install();
+
+        expect($results['.agents/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['.codex/config.toml'] ?? null)->toBe('written')
+            ->and($results['.agents/mcp_config.json'] ?? null)->toBe('written');
+    } finally {
+        removeDirectory($project);
+    }
+});
+
 it('writes antigravity config and skill', function (): void {
     $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
     mkdir($project, 0777, true);
@@ -285,7 +339,8 @@ it('writes antigravity config and skill', function (): void {
 
         expect($results['.agents/mcp_config.json'] ?? null)->toBe('written')
             ->and($results['.agents/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
-            ->and($results['AGENTS.md'] ?? null)->toBe('written');
+            ->and($results['.ai/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['AGENTS.md'] ?? null)->toBeNull();
 
         $decoded = json_decode((string) file_get_contents($project . '/.agents/mcp_config.json'), true);
         $servers = is_array($decoded) && is_array($decoded['mcpServers'] ?? null) ? $decoded['mcpServers'] : [];

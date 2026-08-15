@@ -15,20 +15,31 @@ docsmith install:ai
 
 This detects your installed agents and writes everything they need:
 
+- `.ai/skills/docsmith-docs/SKILL.md` — the canonical doc-writing skill
+  (single source of truth, also deployed to each agent's own skill directory)
 - `.mcp.json` — the docsmith MCP server entry (Claude Code, Cursor, Gemini CLI,
   Junie, and Boost all read this; an existing Boost-generated file is merged,
   not clobbered)
-- `CLAUDE.md` — documentation workflow guidelines (Claude Code)
-- `AGENTS.md` — condensed guidelines (Codex, OpenCode, and other agents)
-- `.claude/skills/docsmith-docs/SKILL.md` — a doc-writing skill (Claude Code)
+- `.claude/skills/`, `.cursor/skills/`, `.agents/skills/`, `.opencode/skills/`
+  — the skill for each installed agent (Codex and Antigravity share `.agents/skills`)
 - `.codex/config.toml` — MCP server entry (only when Codex is installed)
-- `opencode.json` — MCP server entry plus `.opencode/skills/` (only when OpenCode is installed)
-- `.agents/mcp_config.json` plus `.agents/skills/` — Antigravity workspace setup
+- `opencode.json` — MCP server entry (only when OpenCode is installed)
+- `.agents/mcp_config.json` — Antigravity MCP server entry
+
+Skills load on demand (progressive disclosure), so docsmith guidance costs zero
+tokens until the agent actually writes docs — no always-on rules files needed.
 
 Pin agents or paths explicitly:
 
 ```bash
 docsmith install:ai --agents=claude,codex --source=./app --docs-source=./docs-source --force
+```
+
+Or install only part of the setup:
+
+```bash
+docsmith install:ai --no-mcp        # skills only
+docsmith install:ai --no-skills     # MCP configuration only
 ```
 
 Then open your coding agent in the project and ask it to write documentation.

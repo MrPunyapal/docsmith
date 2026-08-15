@@ -41,7 +41,25 @@ final readonly class InstallAi
     /**
      * @return array<string, string> target path => status
      */
-    public function install(bool $force = false): array
+    public function install(bool $force = false, bool $mcp = true, bool $skills = true): array
+    {
+        $results = [];
+
+        if ($mcp) {
+            $results = array_merge($results, $this->installMcpConfigs($force));
+        }
+
+        if ($skills) {
+            return array_merge($results, $this->installSkills($force));
+        }
+
+        return $results;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function installMcpConfigs(bool $force): array
     {
         $results = [];
 
@@ -51,29 +69,60 @@ final readonly class InstallAi
 
         if (in_array('antigravity', $this->agents, true)) {
             $results['.agents/mcp_config.json'] = $this->installJsonConfig('.agents/mcp_config.json', $force);
-            $results['.agents/skills/docsmith-docs/SKILL.md'] = $this->writeResourceIfNeeded('.agents/skills/docsmith-docs/SKILL.md', 'skills/docsmith-docs/SKILL.md', $force);
         }
 
         if (in_array('opencode', $this->agents, true)) {
             $results['opencode.json'] = $this->installOpenCodeConfig($force);
-            $results['.opencode/skills/docsmith-docs/SKILL.md'] = $this->writeResourceIfNeeded('.opencode/skills/docsmith-docs/SKILL.md', 'skills/docsmith-docs/SKILL.md', $force);
-        }
-
-        if (in_array('claude', $this->agents, true)) {
-            $results['CLAUDE.md'] = $this->writeResourceIfNeeded('CLAUDE.md', 'guidelines/CLAUDE.md', $force);
-            $results['.claude/skills/docsmith-docs/SKILL.md'] = $this->writeResourceIfNeeded('.claude/skills/docsmith-docs/SKILL.md', 'skills/docsmith-docs/SKILL.md', $force);
         }
 
         if (in_array('codex', $this->agents, true)) {
             $results['.codex/config.toml'] = $this->installCodexConfig($force);
-            $results['AGENTS.md'] = $this->writeResourceIfNeeded('AGENTS.md', 'guidelines/AGENTS.md', $force);
-        }
-
-        if ($this->writesAgentsMarkdown()) {
-            $results['AGENTS.md'] ??= $this->writeResourceIfNeeded('AGENTS.md', 'guidelines/AGENTS.md', $force);
         }
 
         return $results;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function installSkills(bool $force): array
+    {
+        $results = [];
+
+        $results['.ai/skills/docsmith-docs/SKILL.md'] = $this->writeResourceIfNeeded('.ai/skills/docsmith-docs/SKILL.md', 'skills/docsmith-docs/SKILL.md', $force);
+
+        foreach ($this->skillTargets() as $target) {
+            $relative = $target . '/docsmith-docs/SKILL.md';
+            $results[$relative] = $this->writeResourceIfNeeded($relative, 'skills/docsmith-docs/SKILL.md', $force);
+        }
+
+        return $results;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function skillTargets(): array
+    {
+        $targets = [];
+
+        if (in_array('claude', $this->agents, true)) {
+            $targets['.claude/skills'] = true;
+        }
+
+        if (in_array('cursor', $this->agents, true)) {
+            $targets['.cursor/skills'] = true;
+        }
+
+        if (in_array('codex', $this->agents, true) || in_array('antigravity', $this->agents, true)) {
+            $targets['.agents/skills'] = true;
+        }
+
+        if (in_array('opencode', $this->agents, true)) {
+            $targets['.opencode/skills'] = true;
+        }
+
+        return array_keys($targets);
     }
 
     private function installJsonConfig(string $relative, bool $force): string
@@ -195,13 +244,6 @@ final readonly class InstallAi
         return is_file($this->projectRoot . '/vendor/bin/docsmith')
             ? ['php', 'vendor/bin/docsmith', ...$args]
             : ['docsmith', ...$args];
-    }
-
-    private function writesAgentsMarkdown(): bool
-    {
-        $agents = array_diff($this->agents, ['claude']);
-
-        return $agents !== [];
     }
 
     private function writeResourceIfNeeded(string $relative, string $resource, bool $force): string
