@@ -7,6 +7,9 @@ SDK-based provider, then a dependency-free `OpenAiHttpProvider` (OpenAI-compatib
 chat completions over cURL), a project-level planner that let the model design
 whole doc sets, a `ReviewerAgent` quality pass, an `agent:run` command, and
 `--ai-provider` / `--ai-model` / `--ai-api-key` / `--ai-base-url` CLI options.
+Later it also shipped a structural `generate` pipeline that produced shallow
+LLM-free pages (no parameter detail, unreliable attribution) and a Playwright
+media-capture stage.
 
 That work is **preserved in the repository**:
 
@@ -14,12 +17,15 @@ That work is **preserved in the repository**:
 |----------|----------|
 | `backup/ai-pipeline/` | SDK-free provider, reviewer agent, `agent:run`, pre-strip pipeline/PHP API/CLI copies, tests, docs |
 | `backup/laravel-ai-provider/` | The original `laravel/ai` SDK-based provider |
+| `backup/structural-pipeline/` | `GenerateCommand`, scan/write/media agents, pipeline classes, tests, media-capture docs |
 
 v1 deliberately ships **AI only through the MCP server** (coding agents carry
-their own keys; Docsmith never calls an LLM). If an unattended/CI AI pipeline
-becomes desirable again, it can be restored from `backup/ai-pipeline/` (see its
-README for the exact `git checkout` commands) — ideally rebuilt on top of the
-current structural pipeline.
+their own keys; Docsmith never calls an LLM). Structure analysis is available
+to agents via the `read_source` tool (`list_files` / `read_file` /
+`analyze_structure`); writers use `write_markdown`; the site renders with
+`build_site`. If an unattended/CI AI pipeline becomes desirable again, it can
+be restored from `backup/ai-pipeline/` (see its README for the exact restore
+commands) or rebuilt on top of the MCP tools.
 
 ## Multi-Agent Parallel Generation
 
@@ -38,14 +44,13 @@ and Laravel Boost setups.
 ## Custom Prompt Templates
 
 Allow users to define documentation style and structure conventions the coding
-agent should follow (for MCP-driven generation today; for a restored pipeline
-later):
+agent should follow (for MCP-driven generation):
 
 ```php
-Docsmith::generate()
-    ->source('./app')
-    ->withPromptTemplate('./docs/templates/laravel-style.md')
-    ->build();
+Docsmith::serveMcp(
+    sourcePath: './app',
+    docsSourcePath: './docs-source',
+);
 ```
 
 ## RAG from Existing Docs
@@ -56,11 +61,11 @@ the project.
 
 ## CI Integration
 
-Run `docsmith generate` as a GitHub Action step to auto-update structural
-documentation on every push:
+Run `docsmith build` as a GitHub Action step to publish the markdown docs as a
+static site on every push:
 
 ```yaml
-- run: docsmith generate --source=./src --output=./docs
+- run: docsmith build --source=./docs-source --output=./docs
 ```
 
 ## Web Dashboard

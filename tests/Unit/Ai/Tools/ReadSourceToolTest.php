@@ -119,3 +119,28 @@ it('returns error for unknown action', function (): void {
 
     expect($result)->toHaveKey('error');
 });
+
+it('skips dependency and build directories in list_files', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-readsource-' . uniqid();
+    mkdir($project . '/src', 0777, true);
+    mkdir($project . '/vendor/acme/pkg', 0777, true);
+    mkdir($project . '/node_modules/pkg', 0777, true);
+
+    file_put_contents($project . '/src/App.php', "<?php\nclass App {}\n");
+    file_put_contents($project . '/vendor/acme/pkg/Package.php', "<?php\nclass Package {}\n");
+    file_put_contents($project . '/node_modules/pkg/index.js', 'export function util() {}');
+
+    try {
+        $tool = new ReadSourceTool($project);
+
+        $result = $tool->handle(['action' => 'list_files', 'pattern' => '**/*']);
+        $paths = array_column(is_array($result['files'] ?? null) ? $result['files'] : [], 'path');
+
+        expect($paths)->toContain('src/App.php');
+        expect($paths)->not->toContain('vendor/acme/pkg/Package.php');
+        expect($paths)->not->toContain('node_modules/pkg/index.js');
+        expect($result['count'])->toBe(1);
+    } finally {
+        removeDirectory($project);
+    }
+});
