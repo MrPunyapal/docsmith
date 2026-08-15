@@ -8,13 +8,19 @@ function removeDirectory(string $directory): void
         return;
     }
 
-    foreach (glob($directory . '/*') ?: [] as $item) {
-        if (is_dir($item)) {
-            removeDirectory($item);
+    $items = new FilesystemIterator($directory);
+
+    foreach ($items as $item) {
+        if (! $item instanceof SplFileInfo) {
+            continue;
+        }
+
+        if ($item->isDir() && ! $item->isLink()) {
+            removeDirectory($item->getPathname());
         } else {
-            unlink($item);
+            @unlink($item->getPathname());
         }
     }
 
-    rmdir($directory);
+    @rmdir($directory);
 }

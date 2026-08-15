@@ -5,6 +5,32 @@ Codex, Cursor, or any MCP-capable agent) does the writing; Docsmith provides the
 tools. There is no API pipeline to configure, no SDK, and Docsmith never calls
 an LLM itself.
 
+## One-Command Setup
+
+From the project root:
+
+```bash
+docsmith install:ai
+```
+
+This detects your installed agents and writes everything they need:
+
+- `.mcp.json` — the docsmith MCP server entry (Claude Code, Cursor, Gemini CLI,
+  Junie, and Boost all read this; an existing Boost-generated file is merged,
+  not clobbered)
+- `CLAUDE.md` — documentation workflow guidelines (Claude Code)
+- `AGENTS.md` — condensed guidelines (Codex and other agents)
+- `.claude/skills/docsmith-docs/SKILL.md` — a doc-writing skill (Claude Code)
+- `.codex/config.toml` — MCP server entry (only when Codex is installed)
+
+Pin agents or paths explicitly:
+
+```bash
+docsmith install:ai --agents=claude,codex --source=./app --docs-source=./docs-source --force
+```
+
+Then open your coding agent in the project and ask it to write documentation.
+
 ## The Workflow
 
 Start the MCP server, then ask your agent to generate documentation:

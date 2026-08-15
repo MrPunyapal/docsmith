@@ -33,14 +33,6 @@ For large codebases, doc generation could be parallelized — each module or
 namespace processed simultaneously. This would dramatically reduce generation
 time for projects with hundreds of files.
 
-## Coding-Agent Skill / Guidelines Package
-
-Ship a `skills/` or `CLAUDE.md`-style guidelines file that teaches coding agents
-exactly how to use the MCP tools well: when to call `read_source` vs
-`write_markdown`, page structure conventions, and how to keep `docs-source`
-consistent with `docs/`. First-class guidance for Claude Code, Codex, Cursor,
-and Laravel Boost setups.
-
 ## Custom Prompt Templates
 
 Allow users to define documentation style and structure conventions the coding
