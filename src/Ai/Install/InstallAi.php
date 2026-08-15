@@ -12,7 +12,7 @@ final readonly class InstallAi
     private const array MCP_AGENTS = ['claude', 'cursor', 'gemini', 'junie', 'boost'];
 
     /** @var list<string> */
-    private const array KNOWN_AGENTS = ['claude', 'cursor', 'gemini', 'junie', 'boost', 'codex'];
+    private const array KNOWN_AGENTS = ['claude', 'cursor', 'gemini', 'junie', 'boost', 'codex', 'opencode', 'antigravity'];
 
     /**
      * @param  list<string>  $agents
@@ -46,7 +46,17 @@ final readonly class InstallAi
         $results = [];
 
         if (array_intersect($this->agents, self::MCP_AGENTS) !== []) {
-            $results['.mcp.json'] = $this->installMcpJson($force);
+            $results['.mcp.json'] = $this->installJsonConfig('.mcp.json', $force);
+        }
+
+        if (in_array('antigravity', $this->agents, true)) {
+            $results['.agents/mcp_config.json'] = $this->installJsonConfig('.agents/mcp_config.json', $force);
+            $results['.agents/skills/docsmith-docs/SKILL.md'] = $this->writeResourceIfNeeded('.agents/skills/docsmith-docs/SKILL.md', 'skills/docsmith-docs/SKILL.md', $force);
+        }
+
+        if (in_array('opencode', $this->agents, true)) {
+            $results['opencode.json'] = $this->installOpenCodeConfig($force);
+            $results['.opencode/skills/docsmith-docs/SKILL.md'] = $this->writeResourceIfNeeded('.opencode/skills/docsmith-docs/SKILL.md', 'skills/docsmith-docs/SKILL.md', $force);
         }
 
         if (in_array('claude', $this->agents, true)) {
@@ -59,22 +69,22 @@ final readonly class InstallAi
             $results['AGENTS.md'] = $this->writeResourceIfNeeded('AGENTS.md', 'guidelines/AGENTS.md', $force);
         }
 
-        if (array_diff($this->agents, ['claude', 'codex']) !== []) {
+        if ($this->writesAgentsMarkdown()) {
             $results['AGENTS.md'] ??= $this->writeResourceIfNeeded('AGENTS.md', 'guidelines/AGENTS.md', $force);
         }
 
         return $results;
     }
 
-    private function installMcpJson(bool $force): string
+    private function installJsonConfig(string $relative, bool $force): string
     {
-        $path = $this->projectRoot . '/.mcp.json';
+        $path = $this->projectRoot . '/' . $relative;
         $entry = $this->mcpServerEntry();
 
         if (is_file($path)) {
             $decoded = json_decode((string) file_get_contents($path), true);
             if (! is_array($decoded)) {
-                return 'skipped (existing .mcp.json is not valid JSON)';
+                return 'skipped (existing ' . $relative . ' is not valid JSON)';
             }
 
             $servers = is_array($decoded['mcpServers'] ?? null) ? $decoded['mcpServers'] : [];
@@ -88,6 +98,42 @@ final readonly class InstallAi
             $json = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         } else {
             $json = json_encode(['mcpServers' => ['docsmith' => $entry]], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        }
+
+        if ($json === false) {
+            return 'failed (JSON encoding)';
+        }
+
+        return $this->writeFile($path, $json . PHP_EOL);
+    }
+
+    private function installOpenCodeConfig(bool $force): string
+    {
+        $path = $this->projectRoot . '/opencode.json';
+        $entry = ['type' => 'local', 'command' => $this->serverCommand()];
+
+        if (is_file($path)) {
+            $decoded = json_decode((string) file_get_contents($path), true);
+            if (! is_array($decoded)) {
+                return 'skipped (existing opencode.json is not valid JSON)';
+            }
+
+            $mcp = is_array($decoded['mcp'] ?? null) ? $decoded['mcp'] : [];
+            $servers = is_array($mcp['servers'] ?? null) ? $mcp['servers'] : [];
+
+            if (array_key_exists('docsmith', $servers) && ! $force) {
+                return 'skipped (docsmith already configured)';
+            }
+
+            $servers['docsmith'] = $entry;
+            $mcp['servers'] = $servers;
+            $decoded['mcp'] = $mcp;
+            $json = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        } else {
+            $json = json_encode([
+                '$schema' => 'https://opencode.ai/config.json',
+                'mcp' => ['servers' => ['docsmith' => $entry]],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         }
 
         if ($json === false) {
@@ -118,43 +164,44 @@ final readonly class InstallAi
      */
     private function mcpServerEntry(): array
     {
-        $binary = $this->projectRoot . '/vendor/bin/docsmith';
+        $command = $this->serverCommand();
 
-        if (is_file($binary)) {
-            return [
-                'command' => 'php',
-                'args' => [
-                    'vendor/bin/docsmith',
-                    'mcp:serve',
-                    '--transport=stdio',
-                    '--source=' . $this->sourcePath,
-                    '--docs-source=' . $this->docsSourcePath,
-                ],
-            ];
-        }
-
-        return [
-            'command' => 'docsmith',
-            'args' => [
-                'mcp:serve',
-                '--transport=stdio',
-                '--source=' . $this->sourcePath,
-                '--docs-source=' . $this->docsSourcePath,
-            ],
-        ];
+        return ['command' => $command[0], 'args' => array_slice($command, 1)];
     }
 
     private function codexSection(): string
     {
-        $binary = $this->projectRoot . '/vendor/bin/docsmith';
-        $command = is_file($binary) ? 'php' : 'docsmith';
-        $args = is_file($binary)
-            ? ['vendor/bin/docsmith', 'mcp:serve', '--transport=stdio', '--source=' . $this->sourcePath, '--docs-source=' . $this->docsSourcePath]
-            : ['mcp:serve', '--transport=stdio', '--source=' . $this->sourcePath, '--docs-source=' . $this->docsSourcePath];
+        $command = $this->serverCommand();
+        $argsToml = implode(', ', array_map(
+            static fn (string $arg): string => '"' . $arg . '"',
+            array_slice($command, 1),
+        ));
 
-        $argsToml = implode(', ', array_map(static fn (string $arg): string => '"' . $arg . '"', $args));
+        return "[mcp_servers.docsmith]\ncommand = \"{$command[0]}\"\nargs = [{$argsToml}]\n";
+    }
 
-        return "[mcp_servers.docsmith]\ncommand = \"{$command}\"\nargs = [{$argsToml}]\n";
+    /**
+     * @return list<string>
+     */
+    private function serverCommand(): array
+    {
+        $args = [
+            'mcp:serve',
+            '--transport=stdio',
+            '--source=' . $this->sourcePath,
+            '--docs-source=' . $this->docsSourcePath,
+        ];
+
+        return is_file($this->projectRoot . '/vendor/bin/docsmith')
+            ? ['php', 'vendor/bin/docsmith', ...$args]
+            : ['docsmith', ...$args];
+    }
+
+    private function writesAgentsMarkdown(): bool
+    {
+        $agents = array_diff($this->agents, ['claude']);
+
+        return $agents !== [];
     }
 
     private function writeResourceIfNeeded(string $relative, string $resource, bool $force): string

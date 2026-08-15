@@ -21,7 +21,7 @@ final class InstallAiCommand extends Command
             ->setDescription('Install MCP config, guidelines, and skills for AI coding agents')
             ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Source path for the read_source tool', '.')
             ->addOption('docs-source', null, InputOption::VALUE_REQUIRED, 'Docs source path for the write_markdown tool', 'docs-source')
-            ->addOption('agents', null, InputOption::VALUE_REQUIRED, 'Comma-separated agents: claude, cursor, gemini, junie, boost, codex (default: detect installed agents)')
+            ->addOption('agents', null, InputOption::VALUE_REQUIRED, 'Comma-separated agents: claude, cursor, gemini, junie, boost, codex, opencode, antigravity (default: detect installed agents)')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing files');
     }
 
@@ -59,6 +59,14 @@ final class InstallAiCommand extends Command
 
         if (in_array('codex', $agents, true)) {
             $io->note('Codex CLI reads .codex/config.toml and AGENTS.md automatically.');
+        }
+
+        if (in_array('opencode', $agents, true)) {
+            $io->note('OpenCode reads opencode.json (mcp.servers) and AGENTS.md from the project root.');
+        }
+
+        if (in_array('antigravity', $agents, true)) {
+            $io->note('Antigravity reads .agents/mcp_config.json and .agents/skills from the workspace root.');
         }
 
         $io->success('Done. Open your coding agent in this project and ask it to write documentation.');
@@ -104,6 +112,14 @@ final class InstallAiCommand extends Command
 
         if ($home !== '' && is_dir($home . '/.codex')) {
             $agents[] = 'codex';
+        }
+
+        if ($home !== '' && is_dir($home . '/.gemini')) {
+            $agents[] = 'antigravity';
+        }
+
+        if ($home !== '' && is_dir($home . '/.config/opencode')) {
+            $agents[] = 'opencode';
         }
 
         if ($agents === []) {

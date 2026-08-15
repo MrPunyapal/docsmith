@@ -223,3 +223,77 @@ it('writes AGENTS.md for non-claude non-codex agents', function (): void {
         removeDirectory($project);
     }
 });
+
+it('writes opencode.json and the opencode skill', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        $install = new InstallAi($project, '.', 'docs-source', ['opencode']);
+
+        $results = $install->install();
+
+        expect($results['opencode.json'] ?? null)->toBe('written')
+            ->and($results['.opencode/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['AGENTS.md'] ?? null)->toBe('written');
+
+        $decoded = json_decode((string) file_get_contents($project . '/opencode.json'), true);
+        $mcp = is_array($decoded) && is_array($decoded['mcp'] ?? null) ? $decoded['mcp'] : [];
+        $servers = is_array($mcp['servers'] ?? null) ? $mcp['servers'] : [];
+        $entry = is_array($servers['docsmith'] ?? null) ? $servers['docsmith'] : [];
+
+        expect($entry['type'] ?? null)->toBe('local')
+            ->and($entry['command'] ?? null)->toContain('mcp:serve')
+            ->and($entry['command'] ?? null)->toContain('--source=.');
+    } finally {
+        removeDirectory($project);
+    }
+});
+
+it('merges into an existing opencode.json without clobbering settings', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        file_put_contents($project . '/opencode.json', json_encode([
+            'model' => 'openai/gpt-5.2-custom',
+        ], JSON_PRETTY_PRINT));
+
+        $install = new InstallAi($project, '.', 'docs-source', ['opencode']);
+
+        $install->install();
+
+        $decoded = json_decode((string) file_get_contents($project . '/opencode.json'), true);
+        $mcp = is_array($decoded) && is_array($decoded['mcp'] ?? null) ? $decoded['mcp'] : [];
+        $servers = is_array($mcp['servers'] ?? null) ? $mcp['servers'] : [];
+
+        expect(is_array($decoded) ? ($decoded['model'] ?? null) : null)->toBe('openai/gpt-5.2-custom')
+            ->and($servers)->toHaveKeys(['docsmith']);
+    } finally {
+        removeDirectory($project);
+    }
+});
+
+it('writes antigravity config and skill', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        $install = new InstallAi($project, '.', 'docs-source', ['antigravity']);
+
+        $results = $install->install();
+
+        expect($results['.agents/mcp_config.json'] ?? null)->toBe('written')
+            ->and($results['.agents/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['AGENTS.md'] ?? null)->toBe('written');
+
+        $decoded = json_decode((string) file_get_contents($project . '/.agents/mcp_config.json'), true);
+        $servers = is_array($decoded) && is_array($decoded['mcpServers'] ?? null) ? $decoded['mcpServers'] : [];
+        $entry = is_array($servers['docsmith'] ?? null) ? $servers['docsmith'] : [];
+
+        expect($entry['command'] ?? null)->toBe('docsmith')
+            ->and($entry['args'] ?? null)->toContain('--docs-source=docs-source');
+    } finally {
+        removeDirectory($project);
+    }
+});

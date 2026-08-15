@@ -19,9 +19,11 @@ This detects your installed agents and writes everything they need:
   Junie, and Boost all read this; an existing Boost-generated file is merged,
   not clobbered)
 - `CLAUDE.md` — documentation workflow guidelines (Claude Code)
-- `AGENTS.md` — condensed guidelines (Codex and other agents)
+- `AGENTS.md` — condensed guidelines (Codex, OpenCode, and other agents)
 - `.claude/skills/docsmith-docs/SKILL.md` — a doc-writing skill (Claude Code)
 - `.codex/config.toml` — MCP server entry (only when Codex is installed)
+- `opencode.json` — MCP server entry plus `.opencode/skills/` (only when OpenCode is installed)
+- `.agents/mcp_config.json` plus `.agents/skills/` — Antigravity workspace setup
 
 Pin agents or paths explicitly:
 
