@@ -18,10 +18,12 @@ final class InstallAiCommand extends Command
     {
         $this
             ->setName('install:ai')
-            ->setDescription('Install MCP config, guidelines, and skills for AI coding agents')
+            ->setDescription('Install MCP config and agent skills for AI coding agents')
             ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Source path for the read_source tool', '.')
             ->addOption('docs-source', null, InputOption::VALUE_REQUIRED, 'Docs source path for the write_markdown tool', 'docs-source')
             ->addOption('agents', null, InputOption::VALUE_REQUIRED, 'Comma-separated agents: claude, cursor, gemini, junie, boost, codex, opencode, antigravity (default: detect installed agents)')
+            ->addOption('no-mcp', null, InputOption::VALUE_NONE, 'Skip MCP server configuration (skills only)')
+            ->addOption('no-skills', null, InputOption::VALUE_NONE, 'Skip agent skills (MCP configuration only)')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing files');
     }
 
@@ -44,7 +46,11 @@ final class InstallAiCommand extends Command
         $docsSourcePath = is_string($docsOption) && $docsOption !== '' ? $docsOption : 'docs-source';
 
         $install = new InstallAi(getcwd() ?: '.', $sourcePath, $docsSourcePath, $agents);
-        $results = $install->install((bool) $input->getOption('force'));
+        $results = $install->install(
+            (bool) $input->getOption('force'),
+            ! (bool) $input->getOption('no-mcp'),
+            ! (bool) $input->getOption('no-skills'),
+        );
 
         $io->title('Docsmith AI installation');
         $io->listing(array_map(
@@ -58,15 +64,15 @@ final class InstallAiCommand extends Command
         }
 
         if (in_array('codex', $agents, true)) {
-            $io->note('Codex CLI reads .codex/config.toml and AGENTS.md automatically.');
+            $io->note('Codex CLI reads .codex/config.toml and the skill from .agents/skills automatically.');
         }
 
         if (in_array('opencode', $agents, true)) {
-            $io->note('OpenCode reads opencode.json (mcp.servers) and AGENTS.md from the project root.');
+            $io->note('OpenCode reads opencode.json (mcp.servers) and the skill from .opencode/skills automatically.');
         }
 
         if (in_array('antigravity', $agents, true)) {
-            $io->note('Antigravity reads .agents/mcp_config.json and .agents/skills from the workspace root.');
+            $io->note('Antigravity reads .agents/mcp_config.json and the skill from .agents/skills automatically.');
         }
 
         $io->success('Done. Open your coding agent in this project and ask it to write documentation.');
