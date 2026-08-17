@@ -25,6 +25,7 @@ Options:
   --repository-url=URL  Repository URL for edit links
   --site-url=URL        Canonical site URL
   --edit-branch=BRANCH  Branch used for edit links (default: main)
+  --edit-prefix=PREFIX  Path prefix prepended to file path in edit links (e.g. md/)
   --favicon=FILE        Custom favicon URL, data URI, or file path
   --og-type=TYPE        Open Graph image type: generated or link
   --og-scope=SCOPE      Open Graph image scope: all or per-page
@@ -72,7 +73,8 @@ $builder = Docsmith::make()
     ->rightSidebar(boolOption($options, 'right-sidebar'))
     ->repositoryUrl(stringOption($options, 'repository-url', ''))
     ->siteUrl(stringOption($options, 'site-url', ''))
-    ->editBranch(stringOption($options, 'edit-branch', 'main'));
+    ->editBranch(stringOption($options, 'edit-branch', 'main'))
+    ->editPrefix(stringOption($options, 'edit-prefix', ''));
 
 $favicon = stringOption($options, 'favicon', '');
 

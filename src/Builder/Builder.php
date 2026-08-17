@@ -44,6 +44,8 @@ final class Builder
 
     private string $editBranch = 'main';
 
+    private string $editPrefix = '';
+
     private bool $generateSitemap = true;
 
     private bool $generateNoJekyll = true;
@@ -181,6 +183,13 @@ final class Builder
     public function editBranch(string $editBranch): self
     {
         $this->editBranch = $editBranch;
+
+        return $this;
+    }
+
+    public function editPrefix(string $editPrefix): self
+    {
+        $this->editPrefix = $editPrefix;
 
         return $this;
     }
@@ -404,6 +413,7 @@ final class Builder
                 repositoryUrl: $this->normalizedRepositoryUrl(),
                 siteUrl: $this->normalizedSiteUrl(),
                 editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',
+                editPrefix: trim($this->editPrefix),
                 generateSitemap: $this->generateSitemap,
                 generateNoJekyll: $this->generateNoJekyll,
                 llmsExport: $this->llmsExport,
@@ -466,6 +476,7 @@ final class Builder
                     repositoryUrl: $this->normalizedRepositoryUrl(),
                     siteUrl: $this->normalizedSiteUrl(),
                     editBranch: trim($this->editBranch) !== '' ? trim($this->editBranch) : 'main',
+                    editPrefix: trim($this->editPrefix),
                     generateSitemap: $this->generateSitemap,
                     generateNoJekyll: $this->generateNoJekyll,
                     llmsExport: $this->llmsExport,

@@ -15,6 +15,7 @@ final readonly class SiteMetadata
         public string $repositoryUrl = '',
         public string $siteUrl = '',
         public string $editBranch = 'main',
+        public string $editPrefix = '',
         public bool $generateSitemap = true,
         public bool $generateNoJekyll = true,
         public bool $llmsExport = true,

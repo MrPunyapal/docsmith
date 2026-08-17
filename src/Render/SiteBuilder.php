@@ -675,8 +675,10 @@ HTML;
         }
 
         $relativePath = ltrim($document->relativePath, '/');
+        $prefix = ltrim($config->metadata->editPrefix, '/');
+        $fullPath = $prefix !== '' ? $prefix . '/' . $relativePath : $relativePath;
         $branch = rawurlencode($config->metadata->editBranch !== '' ? $config->metadata->editBranch : 'main');
-        $encodedPath = str_replace('%2F', '/', rawurlencode($relativePath));
+        $encodedPath = str_replace('%2F', '/', rawurlencode($fullPath));
 
         return $config->metadata->repositoryUrl . '/edit/' . $branch . '/' . $encodedPath;
     }

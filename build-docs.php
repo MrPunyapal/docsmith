@@ -14,6 +14,7 @@ Docsmith::make()
     ->repositoryUrl('https://github.com/MrPunyapal/docsmith')
     ->siteUrl('https://mrpunyapal.github.io/docsmith')
     ->editBranch('main')
+    ->editPrefix('md')
     ->rightSidebar()
     ->ogImage(type: 'generated', scope: 'all')
     ->build();

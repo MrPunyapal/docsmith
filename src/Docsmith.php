@@ -21,6 +21,7 @@ final class Docsmith
         string $repositoryUrl = '',
         string $siteUrl = '',
         string $editBranch = 'main',
+        string $editPrefix = '',
     ): void {
         self::make()
             ->source($source)
@@ -35,6 +36,7 @@ final class Docsmith
             ->repositoryUrl($repositoryUrl)
             ->siteUrl($siteUrl)
             ->editBranch($editBranch)
+            ->editPrefix($editPrefix)
             ->build();
     }
 
