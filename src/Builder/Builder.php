@@ -66,6 +66,9 @@ final class Builder
 
     private bool $showDocsmithBadge = true;
 
+    /** @var list<string> */
+    private array $navigationOrder = [];
+
     private bool $siteUrlOgWarned = false;
 
     private string $capturistBinary = '';
@@ -164,6 +167,17 @@ final class Builder
     public function rightSidebar(bool $rightSidebar = true): self
     {
         $this->rightSidebar = $rightSidebar;
+
+        return $this;
+    }
+
+    /** @param list<string> $order */
+    public function navigationOrder(array $order): self
+    {
+        $this->navigationOrder = array_values(array_filter(
+            array_map(static fn (mixed $item): string => trim((string) $item), $order),
+            static fn (string $item): bool => $item !== '',
+        ));
 
         return $this;
     }
@@ -428,6 +442,7 @@ final class Builder
                 llmsExport: $this->llmsExport,
                 favicon: $this->favicon,
                 showDocsmithBadge: $this->showDocsmithBadge,
+                navigationOrder: $this->navigationOrder,
             ),
             baseUrl: $this->baseUrl,
             rightSidebar: $this->rightSidebar,
@@ -492,6 +507,7 @@ final class Builder
                     llmsExport: $this->llmsExport,
                     favicon: $this->favicon,
                     showDocsmithBadge: $this->showDocsmithBadge,
+                    navigationOrder: $this->navigationOrder,
                 ),
                 baseUrl: $this->baseUrl,
                 rightSidebar: $this->rightSidebar,

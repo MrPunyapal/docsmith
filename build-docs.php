@@ -15,6 +15,7 @@ Docsmith::make()
     ->siteUrl('https://mrpunyapal.github.io/docsmith')
     ->editBranch('main')
     ->editPrefix('md')
+    ->navigationOrder(['Docsmith', 'Installation', 'Usage', 'Architecture', 'Development', 'Open Graph', 'LLM Export', 'Versioned Docs'])
     ->rightSidebar()
     ->ogImage(type: 'generated', scope: 'all')
     ->build();

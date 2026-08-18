@@ -44,6 +44,7 @@ final readonly class SiteBuilder
             $documents,
             fn (Document $document): bool => ! $document->hidden,
         ));
+        $visibleDocuments = $this->sortNavigationDocuments($visibleDocuments, $config->metadata->navigationOrder);
 
         if ($documents === []) {
             throw new RuntimeException('The source directory does not contain any markdown files.');
@@ -199,7 +200,7 @@ final readonly class SiteBuilder
                     <h1 class="brand">{$siteTitle}</h1>
                     <p class="tagline">{$description}</p>
                 </div>
-                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
                 {$versionSwitcher}
@@ -276,7 +277,7 @@ HTML;
                     <h1 class="brand">{$title}</h1>
                     <p class="tagline">{$description}</p>
                 </div>
-                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
                 {$versionSwitcher}
@@ -513,6 +514,49 @@ HTML;
         return $markup;
     }
 
+    /**
+     * @param list<Document> $documents
+     * @param list<string> $order
+     *
+     * @return list<Document>
+     */
+    private function sortNavigationDocuments(array $documents, array $order): array
+    {
+        if ($order === []) {
+            return $documents;
+        }
+
+        $positions = [];
+        foreach ($order as $position => $value) {
+            $positions[strtolower(trim($value))] = $position;
+        }
+
+        $ranked = [];
+        foreach ($documents as $index => $document) {
+            $rank = count($order) + $index;
+            $keys = [
+                $document->title,
+                $document->sidebarLabel,
+                $document->relativePath,
+                $document->outputPath,
+            ];
+
+            foreach ($keys as $key) {
+                $normalized = strtolower(trim((string) $key, '/'));
+                if (array_key_exists($normalized, $positions)) {
+                    $rank = $positions[$normalized];
+                    break;
+                }
+            }
+
+            $ranked[] = ['rank' => $rank, 'index' => $index, 'document' => $document];
+        }
+
+        usort($ranked, static fn (array $left, array $right): int => ($left['rank'] <=> $right['rank']) ?: ($left['index'] <=> $right['index']));
+
+        return array_map(static fn (array $item): Document => $item['document'], $ranked);
+    }
+
     /** @param list<Document> $items */
     private function navigationItems(array $items, ?Document $activeDocument, string $currentOutputPath): string
     {
@@ -711,7 +755,7 @@ HTML;
             return '';
         }
 
-        return '<a class="docsmith-badge" href="https://github.com/MrPunyapal/docsmith" target="_blank" rel="noopener noreferrer" data-docsmith-badge>'
+        return '<a class="docsmith-badge" href="https://github.com/MrPunyapal/docsmith" target="_blank" rel="noopener noreferrer" data-docsmith-badge aria-label="Built with DocSmith">'
             . '<svg class="docsmith-badge-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-6.716-4.35-9.428-7.052C.4 11.692-.21 8.9 1.38 6.87 2.736 5.14 5.09 4.583 6.86 5.686 8 6.41 8.86 7.55 9.6 8.7c.74-1.15 1.6-2.29 2.74-3.014 1.77-1.103 4.124-.546 5.48 1.184 1.59 2.03.98 4.822-1.192 7.078C18.716 16.65 12 21 12 21z"/></svg>'
             . '<span class="docsmith-badge-text">Built with</span>'
             . '<span class="docsmith-badge-brand">DocSmith</span>'

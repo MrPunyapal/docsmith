@@ -125,6 +125,17 @@ Docsmith generates `search-index.json` and uses it for global result search in t
 
 The existing sidebar filter search still works for quick navigation filtering.
 
+### Choosing navigation order
+
+Use `navigationOrder()` to place pages in a custom sidebar sequence. Entries can match a page title, `sidebar_label`, relative Markdown path, or output path. Pages not listed keep their existing order:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->navigationOrder(['Installation', 'Usage', 'Open Graph'])
+    ->build();
+```
+
 ## Search Overlay (Cmd+K)
 
 Docsmith includes a modal search overlay accessible via keyboard shortcut or click.

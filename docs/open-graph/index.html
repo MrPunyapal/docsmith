@@ -26,7 +26,7 @@
                     <h1 class="brand">Docsmith</h1>
                     <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
                 </div>
-                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><span class="mobile-menu-icon" aria-hidden="true"></span><span class="sr-only">Toggle menu</span></button>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
                 
@@ -36,8 +36,8 @@
                     <div class="search-results" data-docsmith-search-results hidden></div>
                     <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
                 </div>
-                <nav class="nav" data-docsmith-nav><a class="active" href="./" data-nav-item data-title="Open Graph" data-search="Open Graph Images Open Graph">Open Graph</a><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../llm-export/" data-nav-item data-title="LLM Export" data-search="LLM Export LLM Export">LLM Export</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a><a class="" href="../versioned-docs/" data-nav-item data-title="Versioned Docs" data-search="Versioned Docs Versioned Docs">Versioned Docs</a></nav>
-                <a class="docsmith-badge" href="https://github.com/MrPunyapal/docsmith" target="_blank" rel="noopener noreferrer" data-docsmith-badge><svg class="docsmith-badge-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-6.716-4.35-9.428-7.052C.4 11.692-.21 8.9 1.38 6.87 2.736 5.14 5.09 4.583 6.86 5.686 8 6.41 8.86 7.55 9.6 8.7c.74-1.15 1.6-2.29 2.74-3.014 1.77-1.103 4.124-.546 5.48 1.184 1.59 2.03.98 4.822-1.192 7.078C18.716 16.65 12 21 12 21z"/></svg><span class="docsmith-badge-text">Built with</span><span class="docsmith-badge-brand">DocSmith</span></a>
+                <nav class="nav" data-docsmith-nav><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="active" href="./" data-nav-item data-title="Open Graph" data-search="Open Graph Images Open Graph">Open Graph</a><a class="" href="../llm-export/" data-nav-item data-title="LLM Export" data-search="LLM Export LLM Export">LLM Export</a><a class="" href="../versioned-docs/" data-nav-item data-title="Versioned Docs" data-search="Versioned Docs Versioned Docs">Versioned Docs</a></nav>
+                <a class="docsmith-badge" href="https://github.com/MrPunyapal/docsmith" target="_blank" rel="noopener noreferrer" data-docsmith-badge aria-label="Built with DocSmith"><svg class="docsmith-badge-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-6.716-4.35-9.428-7.052C.4 11.692-.21 8.9 1.38 6.87 2.736 5.14 5.09 4.583 6.86 5.686 8 6.41 8.86 7.55 9.6 8.7c.74-1.15 1.6-2.29 2.74-3.014 1.77-1.103 4.124-.546 5.48 1.184 1.59 2.03.98 4.822-1.192 7.078C18.716 16.65 12 21 12 21z"/></svg><span class="docsmith-badge-text">Built with</span><span class="docsmith-badge-brand">DocSmith</span></a>
             </div>
         </aside>
         <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
@@ -54,7 +54,6 @@
 <p>Generated images need Node, Playwright, and capturist:</p>
 <pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">npm</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">install</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">D</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">playwright</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">capturist@^0.1.3</span><span class="token">
 </span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">npx</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">playwright</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">install</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">chromium</span><span class="token">
-</span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <p>You do not write a capturist config — Docsmith generates it.</p>
 <h2 id="single-image-for-every-page">Single image for every page</h2>
@@ -65,7 +64,6 @@
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">siteUrl</span><span class="token">(</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">https://example.com/docs</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">ogGeneratedAll</span><span class="token">(</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
-</span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <p>Writes <code>docs/og/cover.png</code> and points every page at it.</p>
 <p>Always set <code>siteUrl()</code> so crawlers get absolute <code>og:image</code> URLs:</p>
@@ -80,14 +78,12 @@
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">siteUrl</span><span class="token">(</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">https://example.com/docs</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">ogGeneratedPerPage</span><span class="token">(</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
-</span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <h2 id="link-an-existing-image">Link an existing image</h2>
 <pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">make</span><span class="token">(</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">source</span><span class="token">(</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/md</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">ogLink</span><span class="token">(</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">https://example.com/og/cover.png</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
-</span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <h2 id="custom-card-template">Custom card template</h2>
 <p>Tokens: <code>{site_title}</code>, <code>{title}</code>, <code>{description}</code>, <code>{accent_color}</code>.</p>
@@ -96,7 +92,6 @@
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">siteUrl</span><span class="token">(</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">https://example.com/docs</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">ogTemplate</span><span class="token">(</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/og-card.html</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">scope</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">per-page</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">build</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">
-</span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <h2 id="frontmatter-overrides">Frontmatter overrides</h2>
 <pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">---
@@ -104,10 +99,9 @@
 </span></span><span class="line"><span class="token">og_title: Custom Social Title
 </span></span><span class="line"><span class="token">og_description: Custom social description.
 </span></span><span class="line"><span class="token">---
-</span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <h2 id="capture-control">Capture control</h2>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -128,7 +122,7 @@
 <td>Deprecated alias of <code>captureOg(false)</code></td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Capture is incremental via capturist. Unchanged cards are skipped; force regen with <code>forceOg()</code> or by deleting <code>og/.capturist-cache.json</code>.</p>
 <h2 id="ci">CI</h2>
 <p>Install Node deps and Chromium before a docs build that runs capture:</p>
@@ -140,7 +134,6 @@
 </span></span><span class="line"><span class="token">-</span><span class="token"> </span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">r</span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">un</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">n</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">pm install</span><span class="token">
 </span></span><span class="line"><span class="token">-</span><span class="token"> </span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">r</span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">un</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">n</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">px playwright install chromium --with-deps</span><span class="token">
 </span></span><span class="line"><span class="token">-</span><span class="token"> </span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">r</span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">un</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">p</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">hp build-docs.php</span><span class="token">
-</span></span><span class="line"><span class="token">
 </span></span></code></pre>
 <p>Split builds: <code>-&gt;captureOg(false)</code> in the HTML job, capture later with <code>npx capturist --cwd docs --config capturist.config.json</code>.</p>
 <h2 id="future-scope">Future scope</h2>
@@ -160,7 +153,7 @@
                     <a class="edit-link" href="https://github.com/MrPunyapal/docsmith/edit/main/md/open-graph.md">Edit this page</a>
                 </footer>
             </article>
-            <nav class="pager" aria-label="Page navigation"><a class="pager-link pager-link-next" href="../architecture/"><span>Next</span><strong>Architecture</strong></a></nav>
+            <nav class="pager" aria-label="Page navigation"><a class="pager-link" href="../development/"><span>Previous</span><strong>Development</strong></a><a class="pager-link pager-link-next" href="../llm-export/"><span>Next</span><strong>LLM Export</strong></a></nav>
         </main>
         <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#install-capture-tools-once" data-docsmith-toc-link="install-capture-tools-once">Install capture tools (once)</a><a class="toc-link toc-link-level-2" href="#single-image-for-every-page" data-docsmith-toc-link="single-image-for-every-page">Single image for every page</a><a class="toc-link toc-link-level-2" href="#one-image-per-page" data-docsmith-toc-link="one-image-per-page">One image per page</a><a class="toc-link toc-link-level-2" href="#link-an-existing-image" data-docsmith-toc-link="link-an-existing-image">Link an existing image</a><a class="toc-link toc-link-level-2" href="#custom-card-template" data-docsmith-toc-link="custom-card-template">Custom card template</a><a class="toc-link toc-link-level-2" href="#frontmatter-overrides" data-docsmith-toc-link="frontmatter-overrides">Frontmatter overrides</a><a class="toc-link toc-link-level-2" href="#capture-control" data-docsmith-toc-link="capture-control">Capture control</a><a class="toc-link toc-link-level-2" href="#ci" data-docsmith-toc-link="ci">CI</a><a class="toc-link toc-link-level-2" href="#future-scope" data-docsmith-toc-link="future-scope">Future scope</a></nav></aside>
     </div>

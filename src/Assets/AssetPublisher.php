@@ -89,43 +89,43 @@ SVG;
         $accentColor = Color::normalizeHex($metadata->accentColor, '#ff2d20');
         $accentColorDark = trim($metadata->accentColorDark) !== ''
             ? Color::normalizeHex($metadata->accentColorDark, Color::mix($accentColor, '#ffffff', 0.34))
-            : Color::mix($accentColor, '#ffffff', 0.34);
+            : Color::mix($accentColor, '#ffffff', 0.24);
 
         $css = <<<'CSS'
 :root {
     color-scheme: light;
     --bg: #ffffff;
-    --bg-shade: #f8fafc;
+    --bg-shade: #f1f5f9;
     --panel: #ffffff;
     --panel-soft: #ffffff;
-    --border: #c9d8ea;
-    --text: #132235;
-    --muted: #4d6178;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
     --accent: __ACCENT_LIGHT__;
     --accent-strong: __ACCENT_STRONG_LIGHT__;
     --accent-soft: __ACCENT_SOFT_LIGHT__;
-    --code-bg: #0f2136;
-    --code-text: #e9f1fb;
-    --code-frame-border: #d7e1ed;
+    --code-bg: #ffffff;
+    --code-text: #1f2937;
+    --code-frame-border: #d1d5db;
     --ring: __RING_LIGHT__;
     --shadow: 0 16px 40px rgba(17, 37, 63, 0.08);
 }
 
 :root[data-docsmith-theme='dark'] {
     color-scheme: dark;
-    --bg: #0c141d;
-    --bg-shade: #111c29;
-    --panel: #132231;
-    --panel-soft: #16293c;
-    --border: #2a4157;
-    --text: #e9f1fb;
-    --muted: #a6b8cc;
+    --bg: #111111;
+    --bg-shade: #151515;
+    --panel: #111111;
+    --panel-soft: #1b1b1b;
+    --border: #303030;
+    --text: #ededed;
+    --muted: #a3a3a3;
     --accent: __ACCENT_DARK__;
     --accent-strong: __ACCENT_STRONG_DARK__;
     --accent-soft: __ACCENT_SOFT_DARK__;
-    --code-bg: #08131f;
-    --code-text: #dce7f7;
-    --code-frame-border: #304b62;
+    --code-bg: #24282d;
+    --code-text: #d1d5db;
+    --code-frame-border: #3a3a3a;
     --ring: __RING_DARK__;
     --shadow: 0 16px 42px rgba(0, 0, 0, 0.32);
 }
@@ -139,7 +139,7 @@ body {
     font-family: "DM Sans", "Segoe UI", sans-serif;
     font-size: 16px;
     color: var(--text);
-    background: radial-gradient(circle at 0% 0%, var(--panel-soft) 0%, var(--bg) 42%, var(--bg-shade) 100%);
+    background: var(--bg);
 }
 
 a {
@@ -148,22 +148,33 @@ a {
 
 .shell {
     min-height: 100vh;
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
     display: grid;
-    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-columns: 280px minmax(0, 1fr);
 }
 
 .shell.has-right-rail {
-    grid-template-columns: 320px minmax(0, 1fr) 260px;
+    grid-template-columns: 280px minmax(0, 1fr) 240px;
 }
 
 .sidebar {
     border-right: 1px solid var(--border);
-    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+    background: var(--panel);
     padding: 1.2rem 1rem;
     position: sticky;
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .sidebar-header {
@@ -366,7 +377,6 @@ a {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 1rem;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     max-height: min(480px, calc(100vh - 20vh));
     display: flex;
@@ -434,7 +444,7 @@ a {
 
 .nav {
     display: grid;
-    gap: 0.45rem;
+    gap: 0.15rem;
 }
 
 .docsmith-badge {
@@ -442,8 +452,8 @@ a {
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    margin-top: 1.25rem;
-    padding: 0.15rem 0;
+    margin-top: auto;
+    padding: 1.25rem 0 0;
     color: var(--muted);
     font-size: 0.74rem;
     line-height: 1.2;
@@ -474,11 +484,11 @@ a {
 }
 
 .nav-group {
-    border: 1px solid var(--border);
-    border-radius: 0.85rem;
-    background: var(--panel);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     overflow: hidden;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s ease;
 }
 
 .nav-group.has-active {
@@ -489,8 +499,8 @@ a {
 .nav-group-toggle {
     width: 100%;
     border: 0;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+    border-bottom: 0;
+    background: transparent;
     color: var(--text);
     display: flex;
     align-items: center;
@@ -539,7 +549,7 @@ a {
 .nav-group-items {
     display: grid;
     gap: 0.2rem;
-    padding: 0.3rem;
+    padding: 0.25rem 0;
 }
 
 .nav-group:not(.is-open) .nav-group-items {
@@ -549,10 +559,11 @@ a {
 .nav a {
     display: block;
     text-decoration: none;
-    padding: 0.42rem 0.64rem;
+    padding: 0.34rem 0.55rem;
     border-radius: 0.55rem;
     color: var(--text);
     font-size: 0.93rem;
+    line-height: 1.35;
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -564,12 +575,12 @@ a {
 
 .content {
     min-width: 0;
-    padding: 1rem;
+    padding: 0 1rem 1rem;
 }
 
 .toc-sidebar {
     border-left: 1px solid var(--border);
-    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+    background: transparent;
     padding: 1.15rem 0.85rem;
     position: sticky;
     top: 0;
@@ -622,15 +633,21 @@ a {
     width: 100%;
     max-width: none;
     margin: 0;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    padding: 1.1rem 1.3rem 1.35rem;
-    box-shadow: var(--shadow);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0 1.3rem 1.35rem;
+}
+
+.doc-body,
+.doc-head,
+.hero {
+    overflow-wrap: anywhere;
 }
 
 .doc-head {
     margin-bottom: 0.95rem;
+    padding-top: 0.85rem;
     padding-bottom: 0.72rem;
     border-bottom: 1px solid var(--border);
 }
@@ -687,6 +704,8 @@ a {
 }
 
 .pager {
+    width: 100%;
+    max-width: none;
     margin-top: 0.8rem;
     display: flex;
     justify-content: space-between;
@@ -699,10 +718,10 @@ a {
     flex-direction: column;
     gap: 0.2rem;
     text-decoration: none;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    border-radius: 0.75rem;
-    padding: 0.5rem 0.65rem;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+    padding: 0.35rem 0;
     color: var(--text);
 }
 
@@ -724,7 +743,6 @@ a {
 }
 
 .pager-link:hover {
-    border-color: var(--accent);
     color: var(--accent);
 }
 
@@ -768,18 +786,50 @@ li + li {
     margin-top: 0.35rem;
 }
 
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1.25rem 0 1.5rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.doc-body th,
+.doc-body td {
+    border: 1px solid var(--border);
+    padding: 0.55rem 0.85rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.doc-body th {
+    background: var(--panel-soft);
+    color: var(--text);
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
 pre {
     position: relative;
     max-width: 100%;
     background: var(--code-bg);
     color: var(--code-text);
     border: 1px solid var(--code-frame-border);
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     margin: 1rem 0 1.2rem;
-    padding: 2.6rem 1rem 1rem;
+    padding: 1rem 0.25rem;
     overflow-x: auto;
     font-size: 0.92rem;
-    box-shadow: 0 8px 20px rgba(10, 18, 30, 0.12);
+    scrollbar-color: #6b6b6b transparent;
 }
 
 code {
@@ -793,6 +843,28 @@ pre code.hljs {
     color: var(--code-text);
 }
 
+pre.phiki {
+    counter-reset: code-line;
+}
+
+pre.phiki .line {
+    display: block;
+    position: relative;
+    min-width: max-content;
+    padding-left: 2.7rem;
+    counter-increment: code-line;
+}
+
+pre.phiki .line::before {
+    content: counter(code-line);
+    position: absolute;
+    left: 0;
+    width: 2rem;
+    color: #6b7280;
+    text-align: right;
+    user-select: none;
+}
+
 :root[data-docsmith-theme='dark'] .phiki,
 :root[data-docsmith-theme='dark'] .phiki .line,
 :root[data-docsmith-theme='dark'] .phiki .token {
@@ -803,30 +875,30 @@ pre code.hljs {
     text-decoration: var(--phiki-dark-text-decoration) !important;
 }
 
-.code-copy-btn {
+.code-copy-float {
     position: absolute;
-    top: 0.6rem;
-    right: 0.6rem;
-    border: 1px solid rgba(157, 200, 255, 0.35);
-    background: rgba(7, 20, 34, 0.72);
-    color: #d9e8ff;
-    font-family: "Space Grotesk", "Segoe UI", sans-serif;
-    font-size: 0.74rem;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    border-radius: 0.45rem;
-    padding: 0.24rem 0.52rem;
+    top: 0.4rem;
+    right: 0.4rem;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid transparent;
+    background: var(--code-bg);
+    color: var(--muted);
+    font-family: "Segoe UI Symbol", "Segoe UI", sans-serif;
+    font-size: 1.2rem;
+    line-height: 1;
+    border-radius: 0.25rem;
+    padding: 0;
     cursor: pointer;
-    transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease;
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.code-copy-btn:hover {
-    border-color: rgba(120, 214, 192, 0.65);
-    color: #eafff9;
-}
-
-.code-copy-btn.copied {
-    background: rgba(10, 101, 84, 0.82);
+.code-copy-float.copied {
+    background: rgba(10, 101, 84, 0.92);
     border-color: rgba(120, 214, 192, 0.75);
     color: #ebfff9;
 }
@@ -883,11 +955,10 @@ pre code.hljs {
     width: 100%;
     max-width: none;
     margin: 0;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    padding: 1.1rem 1.3rem 1.35rem;
-    box-shadow: var(--shadow);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0 1.3rem 1.35rem;
 }
 
 .hero h1 {
@@ -946,11 +1017,11 @@ pre code.hljs {
     }
 
     .shell {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .shell.has-right-rail {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .sidebar {
@@ -997,70 +1068,60 @@ pre code.hljs {
         align-items: center;
         justify-content: center;
         position: relative;
-        min-width: 2.35rem;
-        min-height: 2.35rem;
-        border: 1px solid var(--border);
-        background: var(--panel);
-        color: var(--text);
-        border-radius: 0.55rem;
-        padding: 0;
+        flex-shrink: 0;
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 0.5rem;
+        padding: 0.45rem;
         font: inherit;
-        font-size: 0.86rem;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        transition: color 0.14s ease, background-color 0.14s ease, transform 0.14s ease;
     }
 
     .mobile-menu-icon {
-        position: relative;
-        width: 1rem;
-        height: 2px;
-        border-radius: 2px;
-        background: currentColor;
-        transition: background-color 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        width: 1.25rem;
+        height: 1.25rem;
     }
 
-    .mobile-menu-icon::before,
-    .mobile-menu-icon::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        width: 1rem;
-        height: 2px;
-        border-radius: 2px;
-        background: currentColor;
-        transition: transform 0.2s ease, top 0.2s ease;
+    .mobile-menu-icon .mobile-menu-close {
+        display: none;
     }
 
-    .mobile-menu-icon::before {
-        top: -0.34rem;
+    .mobile-menu-toggle.is-open .mobile-menu-icon .mobile-menu-bars {
+        display: none;
     }
 
-    .mobile-menu-icon::after {
-        top: 0.34rem;
+    .mobile-menu-toggle.is-open .mobile-menu-icon .mobile-menu-close {
+        display: flex;
+        flex-direction: column;
     }
 
-    .mobile-menu-toggle.is-open .mobile-menu-icon {
-        background: transparent;
+    .mobile-menu-toggle:hover {
+        color: var(--text);
+        background: var(--panel-soft);
     }
 
-    .mobile-menu-toggle.is-open .mobile-menu-icon::before {
-        top: 0;
-        transform: rotate(45deg);
+    .mobile-menu-toggle:active {
+        transform: scale(0.95);
     }
 
-    .mobile-menu-toggle.is-open .mobile-menu-icon::after {
-        top: 0;
-        transform: rotate(-45deg);
-    }
-
-    .mobile-menu-toggle:hover,
-    .mobile-menu-toggle:focus {
-        border-color: var(--accent);
-        color: var(--accent);
-    }
-
-    .mobile-menu-toggle:focus {
+    .mobile-menu-toggle:focus-visible {
         outline: 2px solid var(--ring);
         outline-offset: 2px;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-menu-toggle {
+            min-width: 2.6rem;
+            min-height: 2.6rem;
+        }
     }
 
     .docsmith-js .sidebar-panel {
@@ -1069,13 +1130,13 @@ pre code.hljs {
         bottom: 0;
         left: 0;
         z-index: 50;
-        display: block;
+        display: flex;
+        flex-direction: column;
         width: min(20rem, calc(100vw - 3.25rem));
         margin-top: 0;
         padding: 1rem 0.85rem;
         border-right: 1px solid var(--border);
-        background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
-        box-shadow: 18px 0 42px rgba(17, 37, 63, 0.18);
+        background: var(--panel);
         transform: translateX(-105%);
         transition: transform 0.22s ease;
         overflow-y: auto;
@@ -1105,13 +1166,12 @@ pre code.hljs {
     }
 
     .content {
-        padding: 0.72rem;
+        padding: 0 0.72rem 0.72rem;
     }
 
     .content article,
     .hero {
-        border-radius: 0.8rem;
-        padding: 0.9rem;
+        padding: 0 0.9rem 0.9rem;
     }
 
     .sidebar-actions {
@@ -1139,15 +1199,12 @@ pre code.hljs {
 
 @media (max-width: 560px) {
     .content {
-        padding: 0.55rem;
+        padding: 0 0.55rem 0.55rem;
     }
 
     .content article,
     .hero {
-        border-left: 0;
-        border-right: 0;
-        border-radius: 0;
-        padding: 0.9rem 0.78rem 1rem;
+        padding: 0 0.78rem 1rem;
     }
 
     h1,
@@ -1165,9 +1222,12 @@ pre code.hljs {
         margin-right: 0;
         margin-top: 0.9rem;
         margin-bottom: 1rem;
-        padding: 2.45rem 0.82rem 0.9rem;
+        padding: 1rem 0.25rem 0.9rem;
         font-size: 0.84rem;
-        box-shadow: 0 6px 14px rgba(10, 18, 30, 0.1);
+    }
+
+    .code-copy-float {
+        display: none;
     }
 
     .pager-link {
@@ -1176,6 +1236,12 @@ pre code.hljs {
 
     .pager-link-next {
         margin-left: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .code-copy-float {
+        display: none;
     }
 }
 CSS;
@@ -1214,6 +1280,14 @@ CSS;
         return <<<'JS'
 document.addEventListener('DOMContentLoaded', function () {
     document.documentElement.classList.add('docsmith-js');
+
+    if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+    }
+
+    if (window.location.hash === '') {
+        window.scrollTo(0, 0);
+    }
 
     var applyTheme = function (theme) {
         if (theme !== 'dark' && theme !== 'light') {
@@ -1292,41 +1366,46 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
-    Array.prototype.slice.call(document.querySelectorAll('pre > code')).forEach(function (codeBlock) {
-        var pre = codeBlock.parentElement;
+    (function () {
+        var blocks = Array.prototype.slice.call(document.querySelectorAll('pre > code'));
 
-        if (!pre || pre.querySelector('.code-copy-btn')) {
+        if (blocks.length === 0) {
             return;
         }
 
-        var button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'code-copy-btn';
-        button.textContent = 'Copy';
-        button.setAttribute('aria-label', 'Copy code block');
+        blocks.forEach(function (block) {
+            var button = document.createElement('button');
+            var copyIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1"></rect><path d="M16 8V5H5v11h3"></path></svg>';
+            var copiedIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>';
+            button.type = 'button';
+            button.className = 'code-copy-float';
+            button.innerHTML = copyIcon;
+            button.setAttribute('aria-label', 'Copy code block');
+            block.parentElement.appendChild(button);
 
-        button.addEventListener('click', function () {
-            var text = codeBlock.textContent || '';
+            button.addEventListener('click', function () {
+                copyCode(block.textContent || '').then(function () {
+                    button.classList.add('copied');
+                    button.innerHTML = copiedIcon;
+                    button.setAttribute('aria-label', 'Code copied');
 
-            copyCode(text).then(function () {
-                button.classList.add('copied');
-                button.textContent = 'Copied';
+                    window.setTimeout(function () {
+                        button.classList.remove('copied');
+                        button.innerHTML = copyIcon;
+                        button.setAttribute('aria-label', 'Copy code block');
+                    }, 1400);
+                }).catch(function () {
+                    button.textContent = '!';
+                    button.setAttribute('aria-label', 'Copy failed');
 
-                window.setTimeout(function () {
-                    button.classList.remove('copied');
-                    button.textContent = 'Copy';
-                }, 1400);
-            }).catch(function () {
-                button.textContent = 'Failed';
-
-                window.setTimeout(function () {
-                    button.textContent = 'Copy';
-                }, 1400);
+                    window.setTimeout(function () {
+                        button.innerHTML = copyIcon;
+                        button.setAttribute('aria-label', 'Copy code block');
+                    }, 1400);
+                });
             });
         });
-
-        pre.appendChild(button);
-    });
+    })();
 
     var search = document.querySelector('[data-docsmith-search]');
     var nav = document.querySelector('[data-docsmith-nav]');
@@ -1346,12 +1425,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (sidebar && menuToggle) {
         var setMenuOpen = function (open) {
+            if (open) {
+                syncPanelTop();
+            }
+
             sidebar.classList.toggle('is-open', open);
             document.body.classList.toggle('has-open-sidebar', open);
             menuToggle.classList.toggle('is-open', open);
             menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
             menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
         };
+
+        var sidebarPanel = document.querySelector('[data-docsmith-sidebar-panel]');
+
+        var syncPanelTop = function () {
+            if (!sidebarPanel) {
+                return;
+            }
+
+            if (window.matchMedia('(max-width: 900px)').matches) {
+                sidebarPanel.style.top = '0px';
+            } else {
+                sidebarPanel.style.top = '';
+            }
+        };
+
+        syncPanelTop();
+        window.addEventListener('resize', syncPanelTop);
+        window.addEventListener('load', function () {
+            window.setTimeout(syncPanelTop, 60);
+        });
+
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(syncPanelTop);
+        }
 
         menuToggle.addEventListener('click', function () {
             setMenuOpen(!sidebar.classList.contains('is-open'));

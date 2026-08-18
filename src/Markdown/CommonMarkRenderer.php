@@ -37,8 +37,20 @@ final readonly class CommonMarkRenderer
     {
         $html = (string) $this->converter->convert($markdown);
         $html = $this->highlightCodeBlocks($html);
+        $html = $this->wrapTables($html);
 
         return (string) preg_replace('/<h1[^>]*>.*?<\/h1>\s*/si', '', $html, 1);
+    }
+
+    private function wrapTables(string $html): string
+    {
+        $wrapped = preg_replace_callback(
+            '/<table\b[^>]*>.*?<\/table>/si',
+            static fn (array $matches): string => '<div class="table-scroll">' . $matches[0] . '</div>',
+            $html,
+        );
+
+        return $wrapped ?? $html;
     }
 
     private function highlightCodeBlocks(string $html): string
@@ -47,7 +59,10 @@ final readonly class CommonMarkRenderer
             '/<pre><code(?: class="([^"]*)")?>(.*?)<\/code><\/pre>/si',
             function (array $matches): string {
                 $classList = $matches[1];
-                $rawCode = html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $rawCode = rtrim(
+                    html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                    "\r\n"
+                );
                 $grammar = $this->grammarForClassList($classList);
 
                 try {

@@ -226,7 +226,7 @@ final readonly class OgImageGenerator
 <title>{$title} | {$siteTitle}</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #0c141d; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0f172a; }
 </style>
 </head>
 <body data-docsmith-og-card>
@@ -262,7 +262,7 @@ HTML;
         height: 630px;
         padding: 72px 84px 64px;
         color: #e9f1fb;
-        background: radial-gradient(circle at 0% 0%, #16293c 0%, #0c141d 62%, #08131f 100%);
+        background: radial-gradient(circle at 0% 0%, #1e293b 0%, #0f172a 62%, #0b1120 100%);
         font-family: "Space Grotesk", "Segoe UI", sans-serif;
     }
 
@@ -284,7 +284,7 @@ HTML;
         font-size: 28px;
         font-weight: 700;
         letter-spacing: -0.02em;
-        color: #a6b8cc;
+        color: #94a3b8;
     }
 
     .og-card-title {
@@ -293,18 +293,26 @@ HTML;
         line-height: 1.08;
         letter-spacing: -0.025em;
         margin-bottom: 26px;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
     }
 
     .og-card-description {
         max-width: 900px;
         font-size: 28px;
         line-height: 1.4;
-        color: #a6b8cc;
+        color: #94a3b8;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
     }
 
     .og-card-footer {
         padding-top: 30px;
-        border-top: 1px solid #2a4157;
+        border-top: 1px solid #334155;
     }
 
     .og-card-site {
