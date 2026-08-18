@@ -19,6 +19,7 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Search overlay with `Cmd+K` / `Ctrl+K` keyboard shortcut.
 - AI-consumable export: `llms.txt`, `llms-full.txt`, `export/docs.md`.
 - Open Graph / Twitter card tags and generated social preview images.
+- Sidebar "Built with DocSmith" attribution that can be disabled per build.
 - Validate the package with Pest, PHPStan, Rector, and Pint.
 
 ## Current status

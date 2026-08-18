@@ -22,6 +22,7 @@ final class Docsmith
         string $siteUrl = '',
         string $editBranch = 'main',
         string $editPrefix = '',
+        bool $showDocsmithBadge = true,
     ): void {
         self::make()
             ->source($source)
@@ -37,6 +38,7 @@ final class Docsmith
             ->siteUrl($siteUrl)
             ->editBranch($editBranch)
             ->editPrefix($editPrefix)
+            ->showDocsmithBadge($showDocsmithBadge)
             ->build();
     }
 

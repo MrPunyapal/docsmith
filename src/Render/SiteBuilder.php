@@ -210,6 +210,7 @@ final readonly class SiteBuilder
                     <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
                 </div>
                 <nav class="nav" data-docsmith-nav>{$navigation}</nav>
+                {$this->docsmithBadge($config)}
             </div>
         </aside>
         <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
@@ -286,6 +287,7 @@ HTML;
                     <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
                 </div>
                 <nav class="nav" data-docsmith-nav>{$navigation}</nav>
+                {$this->docsmithBadge($config)}
             </div>
         </aside>
         <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
@@ -701,6 +703,19 @@ HTML;
         }
 
         return '<div class="sidebar-actions">' . $repositoryLink . '<button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>';
+    }
+
+    private function docsmithBadge(BuildConfig $config): string
+    {
+        if (! $config->metadata->showDocsmithBadge) {
+            return '';
+        }
+
+        return '<a class="docsmith-badge" href="https://github.com/MrPunyapal/docsmith" target="_blank" rel="noopener noreferrer" data-docsmith-badge>'
+            . '<svg class="docsmith-badge-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-6.716-4.35-9.428-7.052C.4 11.692-.21 8.9 1.38 6.87 2.736 5.14 5.09 4.583 6.86 5.686 8 6.41 8.86 7.55 9.6 8.7c.74-1.15 1.6-2.29 2.74-3.014 1.77-1.103 4.124-.546 5.48 1.184 1.59 2.03.98 4.822-1.192 7.078C18.716 16.65 12 21 12 21z"/></svg>'
+            . '<span class="docsmith-badge-text">Built with</span>'
+            . '<span class="docsmith-badge-brand">DocSmith</span>'
+            . '</a>';
     }
 
     private function breadcrumbs(Document $document): string

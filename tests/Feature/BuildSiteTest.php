@@ -537,3 +537,44 @@ it('generates llms.txt, llms-full.txt, and export/docs.md for ai consumption', f
         ->toContain('# Installation')
         ->toContain('# Configuration');
 });
+
+it('renders a powered-by docsmith badge in the sidebar by default', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-badge-' . uniqid();
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Docsmith Docs',
+        description: 'Generated documentation for testing.',
+    );
+
+    $installationPage = file_get_contents($outputPath . '/installation/index.html');
+    $landingPage = file_get_contents($outputPath . '/index.html');
+
+    expect($installationPage)
+        ->toContain('Built with')
+        ->toContain('DocSmith')
+        ->toContain('data-docsmith-badge')
+        ->and($landingPage)->toContain('Built with')
+        ->toContain('data-docsmith-badge');
+});
+
+it('can disable the powered-by docsmith badge', function (): void {
+    $sourcePath = __DIR__ . '/../Fixtures/Content';
+    $outputPath = sys_get_temp_dir() . '/docsmith-no-badge-' . uniqid();
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->title('Docsmith Docs')
+        ->description('Generated documentation for testing.')
+        ->showDocsmithBadge(false)
+        ->build();
+
+    $installationPage = file_get_contents($outputPath . '/installation/index.html');
+    $landingPage = file_get_contents($outputPath . '/index.html');
+
+    expect($installationPage)->not->toContain('Built with DocSmith')
+        ->and($landingPage)->not->toContain('Built with DocSmith');
+});

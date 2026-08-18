@@ -20,6 +20,7 @@ final readonly class SiteMetadata
         public bool $generateNoJekyll = true,
         public bool $llmsExport = true,
         public string $favicon = '',
+        public bool $showDocsmithBadge = true,
     ) {
     }
 }

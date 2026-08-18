@@ -64,6 +64,8 @@ final class Builder
 
     private bool $keepOgPreviews = false;
 
+    private bool $showDocsmithBadge = true;
+
     private bool $siteUrlOgWarned = false;
 
     private string $capturistBinary = '';
@@ -339,6 +341,13 @@ final class Builder
         return $this;
     }
 
+    public function showDocsmithBadge(bool $showDocsmithBadge = true): self
+    {
+        $this->showDocsmithBadge = $showDocsmithBadge;
+
+        return $this;
+    }
+
     /**
      * Whether to run Open Graph image capture during build (default true).
      * When false, preview HTML and capturist.config.json are still written.
@@ -418,6 +427,7 @@ final class Builder
                 generateNoJekyll: $this->generateNoJekyll,
                 llmsExport: $this->llmsExport,
                 favicon: $this->favicon,
+                showDocsmithBadge: $this->showDocsmithBadge,
             ),
             baseUrl: $this->baseUrl,
             rightSidebar: $this->rightSidebar,
@@ -481,6 +491,7 @@ final class Builder
                     generateNoJekyll: $this->generateNoJekyll,
                     llmsExport: $this->llmsExport,
                     favicon: $this->favicon,
+                    showDocsmithBadge: $this->showDocsmithBadge,
                 ),
                 baseUrl: $this->baseUrl,
                 rightSidebar: $this->rightSidebar,

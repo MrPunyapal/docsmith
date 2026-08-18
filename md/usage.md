@@ -62,6 +62,7 @@ php bin/docsmith build --source=md --output=docs --title="Project Docs"
 | `--repository-url=URL` | Repository URL for edit links | — |
 | `--site-url=URL` | Canonical site URL | — |
 | `--edit-branch=BRANCH` | Branch used for edit links | `main` |
+| `--no-docsmith-badge` | Hide the "Built with DocSmith" sidebar badge | shown |
 | `--help` | Show usage | — |
 
 Example with edit links, right sidebar, and search-ready output:
@@ -216,6 +217,30 @@ Three files are generated in the output directory:
 If the source directory does not contain `index.md`, Docsmith includes a generated landing page in the export files.
 
 `siteUrl` is required for correct URL generation in `llms.txt`.
+
+## Docsmith attribution badge
+
+Docsmith adds a small **"Built with DocSmith"** link at the bottom of the sidebar that credits the generator and points back to the project. It's shown by default and can be disabled per site:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/dist')
+    ->showDocsmithBadge(false) // hide the sidebar credit
+    ->build();
+```
+
+Or via the static API:
+
+```php
+Docsmith::build(
+    source: __DIR__ . '/md',
+    output: __DIR__ . '/dist',
+    showDocsmithBadge: false,
+);
+```
+
+Via the CLI, pass `--no-docsmith-badge`.
 
 ## Current output model
 

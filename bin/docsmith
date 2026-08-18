@@ -27,6 +27,7 @@ Options:
   --edit-branch=BRANCH  Branch used for edit links (default: main)
   --edit-prefix=PREFIX  Path prefix prepended to file path in edit links (e.g. md/)
   --favicon=FILE        Custom favicon URL, data URI, or file path
+  --no-docsmith-badge   Hide the "Built with DocSmith" sidebar badge
   --og-type=TYPE        Open Graph image type: generated or link
   --og-scope=SCOPE      Open Graph image scope: all or per-page
   --og-url=URL          Open Graph image URL/path (required for --og-type=link)
@@ -74,7 +75,8 @@ $builder = Docsmith::make()
     ->repositoryUrl(stringOption($options, 'repository-url', ''))
     ->siteUrl(stringOption($options, 'site-url', ''))
     ->editBranch(stringOption($options, 'edit-branch', 'main'))
-    ->editPrefix(stringOption($options, 'edit-prefix', ''));
+    ->editPrefix(stringOption($options, 'edit-prefix', ''))
+    ->showDocsmithBadge(! boolOption($options, 'no-docsmith-badge'));
 
 $favicon = stringOption($options, 'favicon', '');
 
