@@ -6,3 +6,4 @@ parameters:
 
     excludePaths:
         - tests/Fixtures/Expected (?)
+        - tests/Fixtures/SampleProject

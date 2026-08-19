@@ -6,10 +6,11 @@
     "require": {
         "php": "^8.3",
         "league/commonmark": "^2.7",
-        "phiki/phiki": "^2.2"
+        "phiki/phiki": "^2.2",
+        "symfony/console": "^7.4 || ^8.1",
+        "symfony/process": "^7.4 || ^8.1"
     },
     "require-dev": {
-        "laravel/pao": "^1.1",
         "laravel/pint": "^1.18",
         "pestphp/pest": "^3.8 || ^4.0",
         "phpstan/phpstan": "^2.1",
@@ -45,6 +46,7 @@
             "pint --test --parallel"
         ],
         "test:types": "phpstan analyse --ansi",
+        "test:ai": "pest tests/Unit/Ai tests/Feature/Ai --parallel",
         "test:unit": "pest --parallel",
         "test": [
             "Composer\\Config::disableProcessTimeout",
