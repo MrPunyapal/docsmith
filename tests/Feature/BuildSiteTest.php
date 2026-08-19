@@ -578,3 +578,71 @@ it('can disable the powered-by docsmith badge', function (): void {
     expect($installationPage)->not->toContain('Built with DocSmith')
         ->and($landingPage)->not->toContain('Built with DocSmith');
 });
+
+it('links breadcrumb directory crumbs to the first page when no section index exists', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-breadcrumb-nested-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-breadcrumb-nested-dist-' . uniqid();
+
+    mkdir($sourcePath . '/guides', 0777, true);
+
+    file_put_contents($sourcePath . '/index.md', "# Home\n\nHome page.\n");
+    file_put_contents($sourcePath . '/guides/quickstart.md', <<<'MD'
+---
+title: Quickstart
+order: 1
+---
+# Quickstart
+
+Get started.
+MD);
+    file_put_contents($sourcePath . '/guides/advanced.md', <<<'MD'
+---
+title: Advanced
+order: 2
+---
+# Advanced
+
+Go deeper.
+MD);
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Breadcrumb Docs',
+        description: 'Breadcrumb test.',
+    );
+
+    // No section index page is generated for guides/
+    expect($outputPath . '/guides/index.html')->not->toBeFile();
+
+    // The Guides crumb on the second page points at the first page in the
+    // directory instead of a non-existent guides/index.html (which was a 404).
+    $advancedPage = file_get_contents($outputPath . '/guides/advanced/index.html');
+
+    expect($advancedPage)
+        ->not->toContain('guides/index.html')
+        ->toContain('href="../quickstart/"');
+});
+
+it('links breadcrumb directory crumbs to the section index when one exists', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-breadcrumb-index-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-breadcrumb-index-dist-' . uniqid();
+
+    mkdir($sourcePath . '/guides', 0777, true);
+
+    file_put_contents($sourcePath . '/index.md', "# Home\n\nHome page.\n");
+    file_put_contents($sourcePath . '/guides/index.md', "# Guides\n\nSection index.\n");
+    file_put_contents($sourcePath . '/guides/quickstart.md', "# Quickstart\n\nGet started.\n");
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Breadcrumb Docs',
+        description: 'Breadcrumb test.',
+    );
+
+    $quickstartPage = file_get_contents($outputPath . '/guides/quickstart/index.html');
+
+    expect($quickstartPage)
+        ->toContain('href="../"');
+});

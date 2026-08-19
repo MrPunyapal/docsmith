@@ -166,7 +166,7 @@ final readonly class SiteBuilder
         $contentHtml = $tocData['html'];
         $neighbors = $this->neighbors($documents, $document);
         $editUrl = $this->editUrl($config, $document);
-        $breadcrumbs = $this->breadcrumbs($document);
+        $breadcrumbs = $this->breadcrumbs($document, $documents);
         $showRightSidebar = $config->rightSidebar && $toc !== [];
         $navigation = $this->navigation($documents, $document, $document->outputPath);
         $assetPath = $this->assetPath($document->outputPath);
@@ -762,7 +762,8 @@ HTML;
             . '</a>';
     }
 
-    private function breadcrumbs(Document $document): string
+    /** @param list<Document> $documents */
+    private function breadcrumbs(Document $document, array $documents): string
     {
         $segments = $this->directorySegments($document->relativePath);
 
@@ -773,16 +774,46 @@ HTML;
         $parts = [];
         $parts[] = '<a href="' . htmlspecialchars($this->relativePagePath($document->outputPath, 'index.html'), ENT_QUOTES, 'UTF-8') . '">Docs</a>';
 
+        $indexByPath = [];
+
+        foreach ($documents as $candidate) {
+            $indexByPath[strtolower($candidate->outputPath)] = $candidate;
+        }
+
         $runningPath = '';
 
         foreach ($segments as $segment) {
             $runningPath .= ($runningPath === '' ? '' : '/') . $segment;
             $segmentTitle = ucwords(str_replace(['-', '_'], ' ', $segment));
-            $href = $this->relativePagePath($document->outputPath, $runningPath . '/index.html');
-            $parts[] = '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '">' . $this->escape($segmentTitle) . '</a>';
+
+            $target = $indexByPath[strtolower($runningPath . '/index.html')]
+                ?? $this->firstDocumentUnder($documents, $runningPath);
+
+            if ($target instanceof Document) {
+                $href = $this->relativePagePath($document->outputPath, $target->outputPath);
+                $parts[] = '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '">' . $this->escape($segmentTitle) . '</a>';
+            } else {
+                $parts[] = '<span>' . $this->escape($segmentTitle) . '</span>';
+            }
         }
 
         return '<nav class="breadcrumbs" aria-label="Breadcrumbs">' . implode('<span class="breadcrumb-sep">/</span>', $parts) . '</nav>';
+    }
+
+    /**
+     * @param list<Document> $documents
+     */
+    private function firstDocumentUnder(array $documents, string $directory): ?Document
+    {
+        $prefix = ltrim($directory, '/') . '/';
+
+        foreach ($documents as $document) {
+            if (str_starts_with(ltrim($document->outputPath, '/'), $prefix)) {
+                return $document;
+            }
+        }
+
+        return null;
     }
 
     private function writeNoJekyll(BuildConfig $config, ?string $outputPath = null): void

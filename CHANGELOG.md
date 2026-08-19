@@ -1,7 +1,10 @@
 # DocSmith Change Log
 
-> Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.0`.
+> Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
+
+## 0.2.1 — 2026-08-19
+- **Fix: breadcrumb 404 on nested pages without a section index.** Directory crumbs now resolve to the section's `index.html` when one exists, otherwise to the first page inside that directory (respecting frontmatter `order` / navigation sort) instead of linking to a page that was never generated.
 
 ## 0.2.0 — 2026-08-19
 
