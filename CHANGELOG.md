@@ -3,10 +3,19 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
-## Unreleased
+## 0.3.0-beta.1 — 2026-08-22
 
 ### Features
+- **Docs Hub** — build several independent documentation sets into one site via `->hub()`. Each entry gets a single dropdown option mounted at `/{slug}/`; the root forwards to the first entry. A hub entry may embed its own `versions` list: it stays one dropdown item while its pages carry v1/v2 pills.
 - **Remote Sources** — pull Markdown documentation from other Git repositories into your project via a new `docsmith.sources.php` manifest and `docsmith sync` / `build --sync`. Implemented on top of [mrpunyapal/git-reader](https://github.com/MrPunyapal/git-reader), a standalone read-only Git **smart-HTTP** client (protocol v0, shallow `deepen 1` fetches, streaming packfile parser with ofs/ref delta support): no provider APIs, no system `git` binary, no clones, works with GitHub/GitLab/Bitbucket/Gitea/self-hosted over plain HTTPS. Includes ref resolution (branch/tag/annotated-tag peel/tip SHA), SHA-keyed incremental sync via `docsmith.sources.lock.json`, atomic staging materialization with path-traversal/symlink/device-name guards, size & file-count budgets, typed error taxonomy, and a deterministic offline wire-protocol test suite.
+
+### Changed
+- **Versioned docs refined** (existing feature): the header dropdown switcher is replaced by v1/v2 pill buttons on every page; per-version sidebar order via a `navigation` key with fallback to global `->navigationOrder()`; versioned builds are fully decoupled from hub builds internally.
+- Hub dropdown UI uses `.hub-switcher` / `.hub-select` (`data-docsmith-hub-*`) so hub and version markup are named after their own features.
+- Generated assets renamed to `assets/app.css` / `assets/app.js` consistently across single-site, versioned, and hub builds.
+
+### Fixed
+- **Stale root assets**: previously built sites kept their old `app.js` / `app.css` forever because assets were only copied when the output `assets/` directory did not exist. Root assets now refresh on every build.
 
 ## 0.2.1 — 2026-08-19
 - **Fix: breadcrumb 404 on nested pages without a section index.** Directory crumbs now resolve to the section's `index.html` when one exists, otherwise to the first page inside that directory (respecting frontmatter `order` / navigation sort) instead of linking to a page that was never generated.
