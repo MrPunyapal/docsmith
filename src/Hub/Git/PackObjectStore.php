@@ -770,12 +770,27 @@ final class PackObjectStore
     }
 
     /**
-     * Apply a git delta (copy/insert instruction stream) to a base buffer.
+     * Apply a git delta to a base buffer.
+     *
+     * Delta payload = varint(source size) + varint(target size) + instruction
+     * stream of copy/insert opcodes.
      */
     public static function applyDelta(string $base, string $delta): string
     {
         $position = 0;
         $length = strlen($delta);
+
+        $sourceSize = self::readDeltaVarint($delta, $position);
+        $targetSize = self::readDeltaVarint($delta, $position);
+
+        if ($sourceSize !== strlen($base)) {
+            throw new ProtocolException(sprintf(
+                'Corrupt delta: base is %d bytes but delta expects %d.',
+                strlen($base),
+                $sourceSize,
+            ));
+        }
+
         $output = '';
 
         while ($position < $length) {
@@ -838,6 +853,37 @@ final class PackObjectStore
             $position += $opcode;
         }
 
+        if (strlen($output) !== $targetSize) {
+            throw new ProtocolException(sprintf(
+                'Corrupt delta: reconstructed %d bytes but header declares %d.',
+                strlen($output),
+                $targetSize,
+            ));
+        }
+
         return $output;
+    }
+
+    /**
+     * Little-endian base-128 varint used in delta size headers.
+     */
+    private static function readDeltaVarint(string $delta, int &$position): int
+    {
+        $value = 0;
+        $shift = 0;
+
+        while (true) {
+            if ($position >= strlen($delta)) {
+                throw new ProtocolException('Corrupt delta: truncated size header.');
+            }
+
+            $byte = ord($delta[$position++]);
+            $value |= ($byte & 0x7F) << $shift;
+            $shift += 7;
+
+            if (($byte & 0x80) === 0) {
+                return $value;
+            }
+        }
     }
 }
