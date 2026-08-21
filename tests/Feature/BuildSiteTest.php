@@ -470,8 +470,8 @@ it('builds multiple versions with version switcher', function (): void {
     $rootPage = file_get_contents($outputPath . '/index.html');
     expect($rootPage)->toContain('V2 Home');
 
-    // Version switcher present on all pages
-    $rootUsage = file_get_contents($outputPath . '/usage/index.html');
+    // Switching a package always lands on that package's home.
+    $rootUsage = (string) file_get_contents($outputPath . '/usage/index.html');
     expect($rootUsage)
         ->toContain('version-switcher')
         ->toContain('version-select')
@@ -479,10 +479,10 @@ it('builds multiple versions with version switcher', function (): void {
         ->toContain('2.x');
 
     // Default version option points to root (no slug prefix)
-    expect($rootUsage)->toContain('<option value="/usage/" selected>2.x</option>');
+    expect($rootUsage)->toContain('<option value="/" selected>2.x</option>');
 
     // Non-default version options are slug-prefixed
-    expect($rootUsage)->toContain('<option value="/v1/usage/">1.x</option>');
+    expect($rootUsage)->toContain('<option value="/v1/">1.x</option>');
 });
 
 it('builds every version under its slug with a landing page when no default is set', function (): void {

@@ -122,7 +122,7 @@ final readonly class SiteBuilder
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
-            $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug, $document, $config->baseUrl);
+            $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug, $config->baseUrl);
 
             $absoluteOutputPath = rtrim($writeTarget, '/') . '/' . $document->outputPath;
             $directory = dirname($absoluteOutputPath);
@@ -138,14 +138,7 @@ final readonly class SiteBuilder
         }
 
         if (! $hasRootIndex) {
-            $rootDoc = new Document(
-                sourcePath: '',
-                relativePath: '',
-                outputPath: 'index.html',
-                title: $config->metadata->title,
-                markdown: '',
-            );
-            $landing = $this->landingPage($config, $visibleDocuments, $this->versionSwitcherHtml($versions, $currentSlug, $rootDoc, $config->baseUrl));
+            $landing = $this->landingPage($config, $visibleDocuments, $this->versionSwitcherHtml($versions, $currentSlug, $config->baseUrl));
             file_put_contents(rtrim($writeTarget, '/') . '/index.html', $landing);
         }
 
@@ -1103,23 +1096,20 @@ HTML;
     }
 
     /** @param list<array{slug: string, label: string, default: bool}> $versions */
-    private function versionSwitcherHtml(array $versions, string $currentSlug, Document $document, string $baseUrl = '/'): string
+    private function versionSwitcherHtml(array $versions, string $currentSlug, string $baseUrl = '/'): string
     {
         if (count($versions) < 2) {
             return '';
         }
 
-        $pagePath = str_replace(['/index.html', 'index.html'], '/', $document->outputPath);
-        $pagePath = $pagePath === '/' ? '' : $pagePath;
-
         $basePath = rtrim($baseUrl, '/');
 
         $options = array_map(
-            function (array $version) use ($currentSlug, $pagePath, $basePath): string {
+            function (array $version) use ($currentSlug, $basePath): string {
                 $selected = $version['slug'] === $currentSlug ? ' selected' : '';
                 $label = htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8');
                 $href = htmlspecialchars(
-                    ($version['default'] ? $basePath : $basePath . '/' . $version['slug']) . '/' . $pagePath,
+                    ($version['default'] ? $basePath : $basePath . '/' . $version['slug']) . '/',
                     ENT_QUOTES,
                     'UTF-8',
                 );
