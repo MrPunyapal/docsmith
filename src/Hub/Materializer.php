@@ -9,6 +9,7 @@ use Docsmith\Hub\Git\PackObjectStore;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use Throwable;
 
 /**
  * Materializes a remote Git subtree into a local directory.
@@ -21,12 +22,12 @@ use SplFileInfo;
  *  - extraction happens in a sibling staging directory and is swapped into
  *    place with renames, so failures never leave a half-updated target.
  */
-final class Materializer
+final readonly class Materializer
 {
     public function __construct(
-        private readonly int $maxFileBytes = 20 * 1024 * 1024,
-        private readonly int $maxTotalBytes = 200 * 1024 * 1024,
-        private readonly int $maxFiles = 20000,
+        private int $maxFileBytes = 20 * 1024 * 1024,
+        private int $maxTotalBytes = 200 * 1024 * 1024,
+        private int $maxFiles = 20000,
     ) {
     }
 
@@ -64,8 +65,8 @@ final class Materializer
                 $destination = $staging . '/' . $path;
 
                 if ($mode === 0o40000) {
-                    self::assertSafeRelativePath($path);
-                    self::ensureDirectory($destination);
+                    $this->assertSafeRelativePath($path);
+                    $this->ensureDirectory($destination);
 
                     continue;
                 }
@@ -82,7 +83,7 @@ final class Materializer
                     continue;
                 }
 
-                self::assertSafeRelativePath(dirname($path) === '.' ? $path : dirname($path) . '/' . basename($path));
+                $this->assertSafeRelativePath(dirname($path) === '.' ? $path : dirname($path) . '/' . basename($path));
 
                 $size = $store->looseSize($sha);
 
@@ -90,8 +91,8 @@ final class Materializer
                     $warnings[] = sprintf(
                         'Skipped [%s]: %s exceeds the per-file limit of %s.',
                         $path,
-                        self::humanBytes($size),
-                        self::humanBytes($this->maxFileBytes),
+                        $this->humanBytes($size),
+                        $this->humanBytes($this->maxFileBytes),
                     );
 
                     continue;
@@ -100,7 +101,7 @@ final class Materializer
                 if ($totalBytes + $size > $this->maxTotalBytes) {
                     throw new GitException(sprintf(
                         'Repository content exceeds the total size limit of %s; increase the limit only if you trust this source.',
-                        self::humanBytes($this->maxTotalBytes),
+                        $this->humanBytes($this->maxTotalBytes),
                     ));
                 }
 
@@ -111,11 +112,11 @@ final class Materializer
                     ));
                 }
 
-                self::ensureDirectory(dirname($destination));
+                $this->ensureDirectory(dirname($destination));
 
                 if (basename($path) !== '') {
                     // Re-check the file name itself (device names, trailing dots).
-                    self::assertSafeFileName(basename($path));
+                    $this->assertSafeFileName(basename($path));
                 }
 
                 $store->copyLooseTo($sha, $destination);
@@ -152,11 +153,11 @@ final class Materializer
             if ($hadPrevious) {
                 self::removeDirectory($trash);
             }
-        } catch (\Throwable $error) {
+        } catch (Throwable $throwable) {
             self::removeDirectory($staging);
             self::removeDirectory($trash);
 
-            throw $error;
+            throw $throwable;
         }
 
         return new ExtractionResult($files, $warnings, count($files), $totalBytes);
@@ -212,18 +213,18 @@ final class Materializer
      * Validate one slash-free relative path made of directory segments plus an
      * optional file name.
      */
-    private static function assertSafeRelativePath(string $path): void
+    private function assertSafeRelativePath(string $path): void
     {
         foreach (explode('/', str_replace('\\', '/', $path)) as $segment) {
-            if ($segment === '' || $segment === '.' || $segment === '..') {
+            if (in_array($segment, ['', '.', '..'], true)) {
                 throw new GitException(sprintf('Refusing unsafe path segment in [%s].', $path));
             }
 
-            self::assertSafeFileName($segment);
+            $this->assertSafeFileName($segment);
         }
     }
 
-    private static function assertSafeFileName(string $name): void
+    private function assertSafeFileName(string $name): void
     {
         if ($name === '' || str_contains($name, "\0")) {
             throw new GitException(sprintf('Refusing unsafe file name "%s".', $name));
@@ -246,7 +247,7 @@ final class Materializer
         }
     }
 
-    private static function ensureDirectory(string $directory): void
+    private function ensureDirectory(string $directory): void
     {
         if (! is_dir($directory) && ! mkdir($directory, 0777, true) && ! is_dir($directory)) {
             throw new GitException(sprintf('Unable to create directory [%s].', $directory));
@@ -284,7 +285,7 @@ final class Materializer
         @rmdir($directory);
     }
 
-    private static function humanBytes(int $bytes): string
+    private function humanBytes(int $bytes): string
     {
         if ($bytes >= 1024 * 1024) {
             return round($bytes / 1024 / 1024, 1) . 'MB';

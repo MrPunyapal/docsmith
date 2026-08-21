@@ -9,14 +9,14 @@ namespace Docsmith\Hub\Git;
  *
  * @internal
  */
-final class PktLineReader
+final readonly class PktLineReader
 {
-    private const FLUSH_PREFIX = '0000';
+    private const string FLUSH_PREFIX = '0000';
 
     /**
      * @param  resource  $stream
      */
-    public function __construct(private readonly mixed $stream)
+    public function __construct(private mixed $stream)
     {
     }
 

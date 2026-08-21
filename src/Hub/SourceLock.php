@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Docsmith\Hub;
 
+use JsonException;
+
 /**
  * Persistent record of the last synchronized revision of each source.
  *
@@ -12,9 +14,9 @@ namespace Docsmith\Hub;
  */
 final class SourceLock
 {
-    public const FILE_NAME = 'docsmith.sources.lock.json';
+    public const string FILE_NAME = 'docsmith.sources.lock.json';
 
-    private const VERSION = 1;
+    private const int VERSION = 1;
 
     /**
      * @return array<string, array<string, mixed>>
@@ -34,7 +36,7 @@ final class SourceLock
         try {
             /** @var mixed $decoded */
             $decoded = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
+        } catch (JsonException) {
             return [];
         }
 
@@ -42,8 +44,14 @@ final class SourceLock
             return [];
         }
 
-        /** @var array<string, array<string, mixed>> */
-        return is_array($decoded['sources'] ?? null) ? $decoded['sources'] : [];
+        $sources = $decoded['sources'] ?? null;
+
+        if (! is_array($sources)) {
+            return [];
+        }
+
+        /** @var array<string, array<string, mixed>> $sources */
+        return $sources;
     }
 
     /**

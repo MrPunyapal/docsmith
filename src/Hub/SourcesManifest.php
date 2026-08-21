@@ -20,7 +20,7 @@ namespace Docsmith\Hub;
  */
 final class SourcesManifest
 {
-    public const FILE_NAME = 'docsmith.sources.php';
+    public const string FILE_NAME = 'docsmith.sources.php';
 
     /**
      * @return list<DocumentationSource>

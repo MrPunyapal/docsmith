@@ -7,6 +7,7 @@ namespace Docsmith\Hub;
 use Docsmith\Hub\Git\GitException;
 use Docsmith\Hub\Git\RemoteRepository;
 use Docsmith\Hub\Git\SmartHttpTransport;
+use Throwable;
 
 /**
  * Orchestrates fetching remote documentation sources and materializing them
@@ -15,9 +16,9 @@ use Docsmith\Hub\Git\SmartHttpTransport;
  * The compiler never talks to Git: this component only prepares the input
  * tree, so plain `docsmith build` keeps working with zero network access.
  */
-final class SourceSynchronizer
+final readonly class SourceSynchronizer
 {
-    public function __construct(private readonly SyncOptions $options = new SyncOptions())
+    public function __construct(private SyncOptions $options = new SyncOptions())
     {
     }
 
@@ -94,7 +95,7 @@ final class SourceSynchronizer
                 foreach ($result->warnings as $warning) {
                     $log('  ⚠ ' . $warning);
                 }
-            } catch (\Throwable $error) {
+            } catch (Throwable $error) {
                 $message = sprintf('%s failed: %s', $source->describe(), $error->getMessage());
                 $report = $report->add($source->target, SyncReport::FAILED, $message);
                 $output('[Docsmith] ERROR ' . $message);

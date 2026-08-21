@@ -7,18 +7,18 @@ namespace Docsmith\Hub;
 /**
  * Outcome of a synchronization run across all configured sources.
  */
-final class SyncReport
+final readonly class SyncReport
 {
-    public const SYNCED = 'synced';
+    public const string SYNCED = 'synced';
 
-    public const UP_TO_DATE = 'up-to-date';
+    public const string UP_TO_DATE = 'up-to-date';
 
-    public const FAILED = 'failed';
+    public const string FAILED = 'failed';
 
     /**
      * @param  list<array{target: string, status: string, message: string, warnings: list<string>}>  $entries
      */
-    public function __construct(private readonly array $entries = [])
+    public function __construct(private array $entries = [])
     {
     }
 
@@ -27,7 +27,7 @@ final class SyncReport
      */
     public function add(string $target, string $status, string $message, array $warnings = []): self
     {
-        return new self([...$this->entries, compact('target', 'status', 'message', 'warnings')]);
+        return new self([...$this->entries, ['target' => $target, 'status' => $status, 'message' => $message, 'warnings' => $warnings]]);
     }
 
     /**

@@ -262,8 +262,6 @@ final class RemoteRepository
             return sprintf('https://%s/%s.git', $matches[1], $matches[2]);
         }
 
-        $url = rtrim($url, '/');
-
-        return $url;
+        return rtrim($url, '/');
     }
 }

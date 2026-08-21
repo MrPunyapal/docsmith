@@ -7,7 +7,7 @@ namespace Docsmith\Hub\Git;
 /**
  * Parsed result of `info/refs?service=git-upload-pack` ref discovery.
  */
-final class RefAdvertisement
+final readonly class RefAdvertisement
 {
     /**
      * @param  array<string, string>  $refs    Full ref name => SHA (e.g. refs/heads/main => abc...).
@@ -15,9 +15,9 @@ final class RefAdvertisement
      * @param  list<string>           $capabilities
      */
     public function __construct(
-        public readonly array $refs,
-        public readonly array $peeled,
-        public readonly array $capabilities,
+        public array $refs,
+        public array $peeled,
+        public array $capabilities,
     ) {
     }
 

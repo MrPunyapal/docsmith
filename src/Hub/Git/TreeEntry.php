@@ -9,11 +9,15 @@ namespace Docsmith\Hub\Git;
  */
 final readonly class TreeEntry
 {
-    public const MODE_DIRECTORY = 0o40000;
-    public const MODE_REGULAR = 0o100644;
-    public const MODE_EXECUTABLE = 0o100755;
-    public const MODE_SYMLINK = 0o120000;
-    public const MODE_SUBMODULE = 0o160000;
+    public const int MODE_DIRECTORY = 0o40000;
+
+    public const int MODE_REGULAR = 0o100644;
+
+    public const int MODE_EXECUTABLE = 0o100755;
+
+    public const int MODE_SYMLINK = 0o120000;
+
+    public const int MODE_SUBMODULE = 0o160000;
 
     public function __construct(
         public int $mode,

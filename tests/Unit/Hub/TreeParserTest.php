@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Docsmith\Hub\Git\GitException;
 use Docsmith\Hub\Git\GitObject;
 use Docsmith\Hub\Git\GitObjectType;
 use Docsmith\Hub\Git\PackObjectStore;
@@ -80,4 +81,4 @@ it('resolves subtree paths and refuses missing ones', function (): void {
     expect($entry->sha)->toBe($blob->sha);
 
     $store->resolveTreePath($tree->sha, 'nope/guide.md');
-})->throws(Docsmith\Hub\Git\GitException::class, '[nope] was not found');
+})->throws(GitException::class, '[nope] was not found');

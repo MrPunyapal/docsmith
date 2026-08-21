@@ -7,6 +7,7 @@ use Docsmith\Hub\Git\PktLine;
 use Docsmith\Hub\Git\PktLineReader;
 use Docsmith\Hub\Git\ProtocolException;
 use Docsmith\Hub\Git\RefAdvertisement;
+use Docsmith\Hub\Git\RefNotFoundException;
 use Docsmith\Hub\InvalidSourcesConfiguration;
 use Docsmith\Hub\SourcesManifest;
 
@@ -75,11 +76,11 @@ it('accepts advertised tip SHAs and rejects unknown ones', function () use ($adv
     expect($advertisement()->resolve(str_repeat('2', 40))->sha)->toBe(str_repeat('2', 40));
 
     $advertisement()->resolve(str_repeat('9', 40));
-})->throws(Docsmith\Hub\Git\RefNotFoundException::class);
+})->throws(RefNotFoundException::class);
 
 it('rejects unknown branch names with a clear message', function () use ($advertisement): void {
     $advertisement()->resolve('nope');
-})->throws(Docsmith\Hub\Git\RefNotFoundException::class, '[nope] was not found');
+})->throws(RefNotFoundException::class, '[nope] was not found');
 
 // ---------------------------------------------------------------- manifest
 

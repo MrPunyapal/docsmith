@@ -16,10 +16,10 @@ namespace Docsmith\Hub\Git;
  */
 final class PackObjectStore
 {
-    private const PACK_SIGNATURE = 'PACK';
+    private const string PACK_SIGNATURE = 'PACK';
 
     /** @var resource|null */
-    private $packStream = null;
+    private $packStream;
 
     /** @var array<string, GitObjectType> */
     private array $types = [];
@@ -124,7 +124,7 @@ final class PackObjectStore
 
         $type = $this->types[$sha] ?? null;
 
-        if ($type === null || $type === GitObjectType::OfsDelta || $type === GitObjectType::RefDelta) {
+        if (in_array($type, [null, GitObjectType::OfsDelta, GitObjectType::RefDelta], true)) {
             throw new GitException(sprintf('Object [%s] is not present in the fetched pack.', $sha));
         }
 
@@ -507,19 +507,19 @@ final class PackObjectStore
 
         if ($type === GitObjectType::OfsDelta) {
             $baseOffset = $offset - (is_int($baseReference) ? $baseReference : 0);
-            $base = $this->loadCached($stream, $baseOffset);
+            $base = $this->loadCached($baseOffset);
             $data = self::applyDelta($base->data, $raw);
-            $sha = self::hashObject($base->type, $data);
+            $sha = $this->hashObject($base->type, $data);
             $resolvedType = $base->type;
         } elseif ($type === GitObjectType::RefDelta) {
             $baseSha = is_string($baseReference) ? strtolower($baseReference) : '';
             $base = $this->object($baseSha);
             $data = self::applyDelta($base->data, $raw);
-            $sha = self::hashObject($base->type, $data);
+            $sha = $this->hashObject($base->type, $data);
             $resolvedType = $base->type;
         } else {
             $data = $raw;
-            $sha = self::hashObject($type, $data);
+            $sha = $this->hashObject($type, $data);
             $resolvedType = $type;
         }
 
@@ -530,10 +530,8 @@ final class PackObjectStore
 
     /**
      * Return a previously materialized object, re-reading it from disk on cache miss.
-     *
-     * @param resource $stream
      */
-    private function loadCached($stream, int $offset): GitObject
+    private function loadCached(int $offset): GitObject
     {
         if (isset($this->cache[$offset])) {
             [$type, $data] = $this->cache[$offset];
@@ -646,7 +644,7 @@ final class PackObjectStore
         $output = '';
         $fed = 0;
 
-        while (inflate_get_status($context) !== self::streamEndStatus()) {
+        while (inflate_get_status($context) !== $this->streamEndStatus()) {
             $chunk = fread($stream, 128 * 1024);
 
             if ($chunk === false || $chunk === '') {
@@ -678,9 +676,9 @@ final class PackObjectStore
         return $output;
     }
 
-    private static function streamEndStatus(): int
+    private function streamEndStatus(): int
     {
-        return defined('ZLIB_STREAM_END') ? (int) constant('ZLIB_STREAM_END') : 1;
+        return defined('ZLIB_STREAM_END') ? constant('ZLIB_STREAM_END') : 1;
     }
 
     /**
@@ -766,7 +764,7 @@ final class PackObjectStore
         }
     }
 
-    private static function hashObject(GitObjectType $type, string $data): string
+    private function hashObject(GitObjectType $type, string $data): string
     {
         return sha1($type->label() . ' ' . strlen($data) . "\0" . $data);
     }

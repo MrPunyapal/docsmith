@@ -13,15 +13,15 @@ namespace Docsmith\Hub\Git;
  *
  * @internal
  */
-final class SmartHttpTransport
+final readonly class SmartHttpTransport
 {
-    private const REDIRECT_STATUSES = [301, 302, 303, 307, 308];
+    private const array REDIRECT_STATUSES = [301, 302, 303, 307, 308];
 
     public function __construct(
-        private readonly float $timeout = 60.0,
-        private readonly bool $verifyTls = true,
-        private readonly int $maxRedirects = 5,
-        private readonly string $userAgent = 'docsmith-hub/0.1',
+        private float $timeout = 60.0,
+        private bool $verifyTls = true,
+        private int $maxRedirects = 5,
+        private string $userAgent = 'docsmith-hub/0.1',
     ) {
     }
 
@@ -59,7 +59,7 @@ final class SmartHttpTransport
                 throw new GitException(sprintf(
                     'Unable to connect to %s (%s).',
                     $currentUrl,
-                    preg_replace('/^.*?:\s*/', '', (string) $error) ?: 'unknown error',
+                    preg_replace('/^.*?:\s*/', '', $error) ?: 'unknown error',
                 ));
             }
 
@@ -128,16 +128,9 @@ final class SmartHttpTransport
         }
 
         $previous = error_reporting(0);
-        /** @var resource|false $stream */
         $stream = fopen($url, 'rb', false, stream_context_create($options));
         error_reporting($previous);
-
-        // The stream wrapper populates $http_response_header in this scope.
-        $responseHeaders = [];
-
-        foreach ((array) $http_response_header as $line) {
-            $responseHeaders[] = (string) $line;
-        }
+        $responseHeaders = $http_response_header;
 
         return [$stream, $responseHeaders];
     }

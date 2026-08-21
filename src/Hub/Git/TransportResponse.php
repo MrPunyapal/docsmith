@@ -9,17 +9,17 @@ namespace Docsmith\Hub\Git;
  *
  * @internal
  */
-final class TransportResponse
+final readonly class TransportResponse
 {
     /**
      * @param resource             $bodyStream
      * @param array<string, string> $headers   Header map with lowercase names.
      */
     public function __construct(
-        public readonly int $status,
-        public readonly array $headers,
-        public readonly mixed $bodyStream,
-        public readonly string $effectiveUrl,
+        public int $status,
+        public array $headers,
+        public mixed $bodyStream,
+        public string $effectiveUrl,
     ) {
     }
 
