@@ -23,7 +23,24 @@ Docsmith::make()
 
 - Each entry gets one dropdown option and mounts under its slug (`/package-a/…`, `/package-b/…`).
 - Nothing is generated at the root: `/` simply forwards to the first entry.
-- `navigation` can be set per entry; frontmatter `order:` still applies per page.
+- Frontmatter `order:` still applies per page.
+
+## Navigation order
+
+Set `navigation` on an entry to control its sidebar order. Entries are matched by title, sidebar label, or file path; pages not listed keep their natural order after the listed ones.
+
+```php
+->hub([
+    'package-a' => [
+        'label' => 'Package A',
+        'source' => __DIR__ . '/md/a',
+        'navigation' => ['index.md', 'installation.md', 'usage.md'],
+    ],
+    'package-b' => ['label' => 'Package B', 'source' => __DIR__ . '/md/b'],
+])
+```
+
+Entries without `navigation` fall back to the global `->navigationOrder([...])`.
 
 ## Hub entries with versions
 

@@ -282,7 +282,24 @@ Docsmith::make()
 
 - Each entry gets one dropdown option and mounts under its slug (`/package-a/…`, `/package-b/…`).
 - Nothing is generated at the root: `/` simply forwards to the first entry.
-- `navigation` can be set per entry; frontmatter `order:` still applies per page.
+- Frontmatter `order:` still applies per page.
+
+## Navigation order
+
+Set `navigation` on an entry to control its sidebar order. Entries are matched by title, sidebar label, or file path; pages not listed keep their natural order after the listed ones.
+
+```php
+->hub([
+    'package-a' => [
+        'label' => 'Package A',
+        'source' => __DIR__ . '/md/a',
+        'navigation' => ['index.md', 'installation.md', 'usage.md'],
+    ],
+    'package-b' => ['label' => 'Package B', 'source' => __DIR__ . '/md/b'],
+])
+```
+
+Entries without `navigation` fall back to the global `->navigationOrder([...])`.
 
 ## Hub entries with versions
 
@@ -921,4 +938,35 @@ md/
 - Pages that exist only in a non-default version are **not** duplicated to the root.
 - Pill buttons on every page switch versions. They link to the same page in another version when it exists there, otherwise to that version's home.
 - `navigation` can be set per version; frontmatter `order:` still applies per page.
+
+## Default version
+
+The version flagged `default: true` owns the site root. If no version is flagged, the **first listed** version is the default — flag a later one to override:
+
+```php
+->versions([
+    ['slug' => 'v2', 'label' => 'v2.0'],                     // first listed...
+    ['slug' => 'v1', 'label' => 'v1.0', 'default' => true],  // ...but v1 owns the root
+])
+```
+
+Here `/` serves v1 and `/v2/` holds the other version.
+
+## Navigation order
+
+Set `navigation` on a version to control its sidebar order. Entries are matched by title, sidebar label, or file path; pages not listed keep their natural order after the listed ones. Frontmatter `order:` still applies per page.
+
+```php
+->versions([
+    [
+        'slug' => 'v2',
+        'label' => 'v2.0',
+        'default' => true,
+        'navigation' => ['index.md', 'usage.md', 'installation.md'],
+    ],
+    ['slug' => 'v1', 'label' => 'v1.0', 'source' => __DIR__ . '/md/v1'],
+])
+```
+
+Versions without their own `navigation` fall back to the global `->navigationOrder([...])`.
 

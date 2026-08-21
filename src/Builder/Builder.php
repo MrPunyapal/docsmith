@@ -288,7 +288,7 @@ final class Builder
 
         // The first listed version is the default unless one is flagged.
         if ($defaults === 0) {
-            $firstSlug = (string) array_key_first($parsed);
+            $firstSlug = array_key_first($parsed);
             $rebuilt = [];
 
             foreach ($parsed as $slug => $version) {
