@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use Docsmith\Hub\DocumentationSource;
 use Docsmith\Hub\ExtractionResult;
-use Docsmith\Hub\Git\GitException;
-use Docsmith\Hub\Git\GitObject;
-use Docsmith\Hub\Git\GitObjectType;
-use Docsmith\Hub\Git\PackObjectStore;
 use Docsmith\Hub\Materializer;
+use GitReader\GitException;
+use GitReader\GitObject;
+use GitReader\GitObjectType;
+use GitReader\PackObjectStore;
 
 if (! function_exists('fixtureBlob')) {
     function fixtureBlob(string $contents): GitObject

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use Docsmith\Hub\Git\ProtocolException;
-use Docsmith\Hub\Git\RefAdvertisement;
-use Docsmith\Hub\Git\RemoteRepository;
-use Docsmith\Hub\Git\RepositoryNotFoundException;
 use Docsmith\Hub\Hub;
 use Docsmith\Hub\SourcesManifest;
+use GitReader\ProtocolException;
+use GitReader\RefAdvertisement;
+use GitReader\RemoteRepository;
+use GitReader\RepositoryNotFoundException;
 
 const WIRE_FIXTURES = __DIR__ . '/../Fixtures/Wire';
 

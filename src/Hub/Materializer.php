@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Docsmith\Hub;
 
-use Docsmith\Hub\Git\GitException;
-use Docsmith\Hub\Git\PackObjectStore;
+use GitReader\GitException;
+use GitReader\PackObjectStore;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;

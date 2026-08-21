@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Docsmith\Hub;
 
-use Docsmith\Hub\Git\GitException;
-use Docsmith\Hub\Git\RemoteRepository;
-use Docsmith\Hub\Git\SmartHttpTransport;
+use GitReader\GitException;
+use GitReader\RemoteRepository;
+use GitReader\SmartHttpTransport;
 use Throwable;
 
 /**
