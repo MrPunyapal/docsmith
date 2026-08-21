@@ -15,8 +15,8 @@
     <meta name="twitter:title" content="Architecture | Docsmith">
     <meta name="twitter:description" content="">
     <meta name="twitter:image" content="https://mrpunyapal.github.io/docsmith/og/cover.png">
-    <link rel="stylesheet" href="../assets/docsmith.css">
-    <script src="../assets/docsmith.js" defer></script>
+    <link rel="stylesheet" href="../assets/app.css">
+    <script src="../assets/app.js" defer></script>
 </head>
 <body data-docsmith-root="../">
     <div class="shell has-right-rail">
@@ -57,7 +57,7 @@
 <li><code>BuildConfig</code> validates source and output paths.</li>
 <li><code>SourceScanner</code> discovers Markdown files (respects per-version source directories).</li>
 <li><code>CommonMarkRenderer</code> converts Markdown into HTML.</li>
-<li><code>SiteBuilder</code> writes HTML pages, version switcher, search overlay, and publishes CSS/JS assets.</li>
+<li><code>SiteBuilder</code> writes HTML pages, hub dropdown and version pills, search overlay, and publishes CSS/JS assets.</li>
 <li><code>AssetPublisher</code> generates <code>search-index.json</code>, <code>sitemap.xml</code>, <code>.nojekyll</code>, <code>llms.txt</code>, <code>llms-full.txt</code>, and <code>export/docs.md</code>.</li>
 </ol>
 <h2 id="current-source-model">Current source model</h2>
@@ -76,7 +76,7 @@
 <li>a sidebar navigation</li>
 <li>a main content area</li>
 <li>a generated landing page when needed</li>
-<li>local CSS under <code>assets/docsmith.css</code></li>
+<li>local CSS under <code>assets/app.css</code></li>
 </ul>
 <p>This is the minimal implementation baseline, not the final architecture.</p>
 

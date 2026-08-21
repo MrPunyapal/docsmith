@@ -17,8 +17,8 @@ final class AssetPublisher
             mkdir($assetsDirectory, 0777, true);
         }
 
-        file_put_contents($assetsDirectory . '/docsmith.css', $this->css($metadata));
-        file_put_contents($assetsDirectory . '/docsmith.js', $this->js());
+        file_put_contents($assetsDirectory . '/app.css', $this->css($metadata));
+        file_put_contents($assetsDirectory . '/app.js', $this->js());
         $this->publishFavicon($assetsDirectory, $metadata);
     }
 
@@ -250,14 +250,14 @@ a {
     color: var(--accent);
 }
 
-.version-switcher {
+.hub-switcher {
     position: relative;
     display: flex;
     align-items: center;
     margin-bottom: 0.75rem;
 }
 
-.version-select {
+.hub-select {
     width: 100%;
     appearance: none;
     -webkit-appearance: none;
@@ -274,17 +274,17 @@ a {
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.version-select:hover {
+.hub-select:hover {
     border-color: var(--accent);
 }
 
-.version-select:focus {
+.hub-select:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.version-switcher::after {
+.hub-switcher::after {
     content: '';
     position: absolute;
     right: 0.7rem;
@@ -1347,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.documentElement.setAttribute('data-docsmith-theme', theme);
     };
 
-    var versionSelect = document.querySelector('[data-docsmith-version-select]');
+    var hubSelect = document.querySelector('[data-docsmith-hub-select]');
 
     if (versionSelect) {
         versionSelect.addEventListener('change', function () {

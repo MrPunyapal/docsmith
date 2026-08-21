@@ -145,7 +145,7 @@ final readonly class SiteBuilder
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
-            $versionSwitcher = $this->versionSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
+            $hubSwitcher = $this->hubSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
                 . $this->versionPillsHtml(
                     $pillMembers,
                     $unitId,
@@ -163,7 +163,7 @@ final readonly class SiteBuilder
 
             file_put_contents(
                 $absoluteOutputPath,
-                $this->page($config, $document, $visibleDocuments, $versionSwitcher),
+                $this->page($config, $document, $visibleDocuments, $hubSwitcher),
             );
         }
 
@@ -171,7 +171,7 @@ final readonly class SiteBuilder
             $landing = $this->landingPage(
                 $config,
                 $visibleDocuments,
-                $this->versionSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
+                $this->hubSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
                 . $this->versionPillsHtml($pillMembers, $unitId, $docsHref, 'index.html', $pageSets),
             );
             file_put_contents($writeTarget . '/index.html', $landing);
@@ -225,7 +225,7 @@ HTML;
     }
 
     /** @param list<Document> $documents */
-    private function page(BuildConfig $config, Document $document, array $documents, string $versionSwitcher = ''): string
+    private function page(BuildConfig $config, Document $document, array $documents, string $hubSwitcher = ''): string
     {
         $tocData = $this->tocFromHtml($document->html);
         $toc = $tocData['items'];
@@ -269,7 +269,7 @@ HTML;
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
-                {$versionSwitcher}
+                {$hubSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
                     <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
@@ -306,7 +306,7 @@ HTML;
     }
 
     /** @param list<Document> $documents */
-    private function landingPage(BuildConfig $config, array $documents, string $versionSwitcher = ''): string
+    private function landingPage(BuildConfig $config, array $documents, string $hubSwitcher = ''): string
     {
         $pageLinks = array_map(
             fn (Document $document): string => sprintf(
@@ -332,8 +332,8 @@ HTML;
     <title>{$title}</title>
     <meta name="description" content="{$description}">
     {$this->landingHeadExtras($config)}
-    <link rel="stylesheet" href="assets/docsmith.css">
-    <script src="assets/docsmith.js" defer></script>
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/app.js" defer></script>
 </head>
 <body data-docsmith-root="./">
     <div class="shell">
@@ -346,7 +346,7 @@ HTML;
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
-                {$versionSwitcher}
+                {$hubSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
                     <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
@@ -668,12 +668,12 @@ HTML;
 
     private function assetPath(string $outputPath): string
     {
-        return $this->relativeAssetHref($outputPath, 'assets/docsmith.css');
+        return $this->relativeAssetHref($outputPath, 'assets/app.css');
     }
 
     private function scriptPath(string $outputPath): string
     {
-        return $this->relativeAssetHref($outputPath, 'assets/docsmith.js');
+        return $this->relativeAssetHref($outputPath, 'assets/app.js');
     }
 
     private function relativeAssetHref(string $fromOutputPath, string $assetPath): string
@@ -1122,7 +1122,7 @@ HTML;
      *
      * @param  list<array{label: string, href: string, key: string}>  $groups
      */
-    private function versionSwitcherHtml(array $groups, string $activeKey, string $baseUrl): string
+    private function hubSwitcherHtml(array $groups, string $activeKey, string $baseUrl): string
     {
         if (count($groups) < 2) {
             return '';
@@ -1139,7 +1139,7 @@ HTML;
             $options .= sprintf('<option value="%s"%s>%s</option>', $href, $selected, $label);
         }
 
-        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Docs"><select class="version-select" data-docsmith-version-select aria-label="Select docs">' . $options . '</select></nav>';
+        return '<nav class="hub-switcher" data-docsmith-hub-switcher aria-label="Docs"><select class="hub-select" data-docsmith-hub-select aria-label="Select docs">' . $options . '</select></nav>';
     }
 
     /**

@@ -97,7 +97,7 @@ Docsmith::make()
 	->build();
 ```
 
-Or pass a path to a CSS file which will be appended to `assets/docsmith.css`:
+Or pass a path to a CSS file which will be appended to `assets/app.css`:
 
 ```php
 Docsmith::make()
