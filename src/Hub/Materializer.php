@@ -27,7 +27,8 @@ final class Materializer
         private readonly int $maxFileBytes = 20 * 1024 * 1024,
         private readonly int $maxTotalBytes = 200 * 1024 * 1024,
         private readonly int $maxFiles = 20000,
-    ) {}
+    ) {
+    }
 
     /**
      * @throws GitException when extraction cannot be completed safely.

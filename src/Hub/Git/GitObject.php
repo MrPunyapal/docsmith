@@ -13,5 +13,6 @@ final readonly class GitObject
         public GitObjectType $type,
         public string $sha,
         public string $data,
-    ) {}
+    ) {
+    }
 }

@@ -12,5 +12,6 @@ final readonly class ResolvedRef
     public function __construct(
         public string $name,
         public string $sha,
-    ) {}
+    ) {
+    }
 }

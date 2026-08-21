@@ -20,7 +20,8 @@ final class TransportResponse
         public readonly array $headers,
         public readonly mixed $bodyStream,
         public readonly string $effectiveUrl,
-    ) {}
+    ) {
+    }
 
     public function header(string $name): ?string
     {

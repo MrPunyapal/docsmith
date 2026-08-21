@@ -18,5 +18,6 @@ final readonly class ExtractionResult
         public array $warnings,
         public int $fileCount,
         public int $bytes,
-    ) {}
+    ) {
+    }
 }

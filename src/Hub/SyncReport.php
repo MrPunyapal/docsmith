@@ -18,7 +18,9 @@ final class SyncReport
     /**
      * @param  list<array{target: string, status: string, message: string, warnings: list<string>}>  $entries
      */
-    public function __construct(private readonly array $entries = []) {}
+    public function __construct(private readonly array $entries = [])
+    {
+    }
 
     /**
      * @param  list<string>  $warnings

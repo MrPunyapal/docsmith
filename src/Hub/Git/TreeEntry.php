@@ -19,7 +19,8 @@ final readonly class TreeEntry
         public int $mode,
         public string $name,
         public string $sha,
-    ) {}
+    ) {
+    }
 
     public function isDirectory(): bool
     {
