@@ -105,13 +105,8 @@ final readonly class SiteBuilder
     }
 
     /**
-     * @param  list<array{label: string, hrefSlug: string, slugs: list<string>}>  $dropdownGroups
-     * @param  array<string, list<array{slug: string, label: string, isDefault: bool}>>  $pillGroups
-     * @param  array<string, array<string, true>>  $pageSets
-     */
-    /**
      * @param  list<array{label: string, href: string, key: string}>  $dropdownGroups
-     * @param  list<array{segment: string, label: string, isPrimary: bool, unitId: string}>  $pillMembers
+     * @param  list<array{href?: string, segment: string, label: string, isPrimary: bool, unitId: string}>  $pillMembers
      * @param  array<string, array<string, true>>  $pageSets
      */
     public function buildDocsUnit(
@@ -1152,7 +1147,7 @@ HTML;
      * entry. A pill links to the same page in that version when it exists
      * there, otherwise to the version home.
      *
-     * @param  list<array{segment: string, label: string, isPrimary: bool, unitId: string}>  $members
+     * @param  list<array{href?: string, segment: string, label: string, isPrimary: bool, unitId: string}>  $members
      * @param  array<string, array<string, true>>  $pageSets
      */
     private function versionPillsHtml(array $members, string $activeUnitId, string $docsHref, string $currentOutputPath, array $pageSets): string
@@ -1165,7 +1160,7 @@ HTML;
         $links = '';
 
         foreach ($members as $member) {
-            $base = rtrim($docsHref . $member['segment'] . '/', '/');
+            $base = rtrim(($member['href'] ?? $docsHref) . $member['segment'] . '/', '/');
 
             if ($member['unitId'] !== $activeUnitId && isset($pageSets[$member['unitId']][$currentOutputPath]) && $pagePath !== '/') {
                 $href = $base . '/' . ltrim($pagePath, '/');

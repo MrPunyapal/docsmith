@@ -471,6 +471,56 @@ it('builds a docs entry with internal versions using the classic versioned layou
         ->toContain('href="/kd/1.x/usage/">1.x</a>');
 });
 
+it('builds a standalone versions() set with pill buttons and no docs dropdown', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-vers-standalone-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-vers-standalone-dist-' . uniqid();
+
+    mkdir($projectPath . '/v2', 0777, true);
+    mkdir($projectPath . '/v1', 0777, true);
+
+    file_put_contents($projectPath . '/v2/index.md', "# V2 Home\n");
+    file_put_contents($projectPath . '/v2/usage.md', "# V2 Usage\n");
+    file_put_contents($projectPath . '/v1/index.md', "# V1 Home\n");
+    file_put_contents($projectPath . '/v1/usage.md', "# V1 Usage\n");
+
+    Docsmith::make()
+        ->source($projectPath)
+        ->output($outputPath)
+        ->versions([
+            ['slug' => 'v2', 'label' => 'v2.0', 'default' => true],
+            ['slug' => 'v1', 'label' => 'v1.0'],
+        ])
+        ->build();
+
+    // Default version mounts at the root, siblings under their slug.
+    // Sources were implied from {source}/{slug}.
+    expect(file_get_contents($outputPath . '/index.html'))->toContain('V2 Home')
+        ->and(file_get_contents($outputPath . '/v1/index.html'))->toContain('V1 Home')
+        ->and(file_exists($outputPath . '/v2/index.html'))->toBeFalse();
+
+    // Pills switch versions; there is no docs dropdown in this mode.
+    $usage = (string) file_get_contents($outputPath . '/usage/index.html');
+    expect($usage)->toContain('version-pills')
+        ->toContain('<a class="version-link version-link-current" href="/">v2.0</a>')
+        ->toContain('href="/v1/usage/">v1.0</a>');
+    expect(str_contains($usage, 'data-docsmith-version-switcher'))->toBeFalse();
+
+    // The first version is the default when none is flagged.
+    $outputPathAuto = sys_get_temp_dir() . '/docsmith-vers-auto-' . uniqid();
+
+    Docsmith::make()
+        ->source($projectPath)
+        ->output($outputPathAuto)
+        ->versions([
+            ['slug' => 'v2', 'label' => 'v2.0'],
+            ['slug' => 'v1', 'label' => 'v1.0'],
+        ])
+        ->build();
+
+    expect(file_get_contents($outputPathAuto . '/index.html'))->toContain('V2 Home')
+        ->and(file_exists($outputPathAuto . '/v1/index.html'))->toBeTrue();
+});
+
 it('builds every version under its slug and redirects the root to the first one when no default is set', function (): void {
     $projectPath = sys_get_temp_dir() . '/docsmith-hub-' . uniqid();
     $outputPath = sys_get_temp_dir() . '/docsmith-hub-dist-' . uniqid();
@@ -526,7 +576,7 @@ it('applies navigation order per version instead of globally', function (): void
         ->output($outputPath)
         ->navigationOrder(['index.md', 'beta.md', 'alpha.md'])   // global: beta first
         ->versions([
-            'one' => ['label' => 'One', 'source' => $projectPath . '/one'],
+            'one' => ['label' => 'One', 'source' => $projectPath . '/one', 'default' => true],
             'two' => [
                 'label' => 'Two',
                 'source' => $projectPath . '/two',
@@ -535,7 +585,8 @@ it('applies navigation order per version instead of globally', function (): void
         ])
         ->build();
 
-    $globalNav = (string) file_get_contents($outputPath . '/one/alpha/index.html');
+    // The default version mounts at the root, siblings under their slug.
+    $globalNav = (string) file_get_contents($outputPath . '/alpha/index.html');
     $perVersionNav = (string) file_get_contents($outputPath . '/two/alpha/index.html');
 
     $navOnly = function (string $html): string {
