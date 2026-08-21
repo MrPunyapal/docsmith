@@ -547,9 +547,7 @@ it('applies navigation order per version instead of globally', function (): void
     $globalNav = $navOnly($globalNav);
     $perVersionNav = $navOnly($perVersionNav);
 
-    $orderOf = function (string $html, string $needle): int {
-        return (int) strpos($html, $needle);
-    };
+    $orderOf = (fn (string $html, string $needle): int => (int) strpos($html, $needle));
 
     // Global list applies to version one: beta sits before alpha.
     expect($orderOf($globalNav, 'Beta') < $orderOf($globalNav, 'Alpha'))->toBeTrue()

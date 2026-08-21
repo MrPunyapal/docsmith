@@ -79,6 +79,7 @@ final class Builder
      * @var list<array{slug: string, label: string, source: string, navigation: ?list<string>, versions: array<string, array{label: string, source: string, default?: bool}>|null}>
      */
     private array $docsEntries = [];
+
     /**
      * Define the documentation sets to build. Each entry becomes one item in
      * the docs selector and is mounted under its own path. An entry may
@@ -578,7 +579,7 @@ final class Builder
         $pageSets = [];
         $units = [];
 
-        foreach ($this->docsEntries as $index => $entry) {
+        foreach ($this->docsEntries as $entry) {
             $entrySlug = (string) $entry['slug'];
 
             $dropdownGroups[] = [
