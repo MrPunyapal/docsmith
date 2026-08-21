@@ -6,13 +6,16 @@ declare(strict_types=1);
 require __DIR__ . '/../vendor/autoload.php';
 
 use Docsmith\Docsmith;
+use Docsmith\Hub\Hub;
+use Docsmith\Hub\InvalidSourcesConfiguration;
 
 const USAGE = <<<TXT
 Usage:
   php bin/docsmith build [options]
+  php bin/docsmith sync [options]
   php bin/docsmith --help
 
-Options:
+Build options:
   --source=DIR          Directory with markdown sources (required)
   --output=DIR          Output directory (default: docs)
   --title=TITLE         Site title (default: Documentation)
@@ -35,10 +38,33 @@ Options:
   --no-og-capture       Write OG previews/config only; skip screenshot capture
   --force-og            Recapture every Open Graph image (ignore cache)
 
-Example:
-  php bin/docsmith build --source=md --output=docs --title="My Docs" --site-url=https://example.com
-  php bin/docsmith build --source=md --favicon=favicon.svg --og-type=generated --og-scope=all
+Documentation Hub:
+  sync                  Fetch remote documentation sources and materialize
+                        them under the markdown root, then exit.
+  build --sync          Synchronize remote sources before building.
+  --sources=FILE        Sources manifest path (default: ./docsmith.sources.php)
+  --force               Re-download even when the remote revision is unchanged.
+  --verify              Verify materialized files against recorded hashes.
+  --md=DIR              Markdown root for materialized targets (default: md)
+
+Remote sources never change how `build` behaves when no docsmith.sources.php
+is present; builds stay deterministic and work fully offline.
+
+Examples:
+  php bin/docsmith build --source=md --output=docs --title="My Docs"
+  php bin/docsmith sync
+  php bin/docsmith build --source=md --sync --output=docs
 TXT;
+
+$argv = array_values($GLOBALS['argv'] ?? []);
+$command = $argv[1] ?? null;
+
+if ($command === 'build' || $command === 'sync') {
+    array_splice($argv, 1, 1);
+} else {
+    // Legacy invocation style without a subcommand behaves like `build`.
+    $command = 'build';
+}
 
 $options = parseArgs($argv);
 
@@ -47,6 +73,26 @@ if (isset($options['help'])) {
 
     exit(0);
 }
+
+$markdownRoot = stringOption($options, 'md', 'md');
+
+// --------------------------------------------------------------------- sync
+
+if ($command === 'sync' || isset($options['sync'])) {
+    $exitCode = runSync($options, $command === 'sync', $markdownRoot);
+
+    if ($exitCode !== 0) {
+        exit($exitCode);
+    }
+
+    if ($command === 'sync') {
+        echo 'Sync complete.' . PHP_EOL;
+
+        exit(0);
+    }
+}
+
+// -------------------------------------------------------------------- build
 
 $source = $options['source'] ?? null;
 
@@ -66,7 +112,7 @@ $builder = Docsmith::make()
     ->source($source)
     ->output(stringOption($options, 'output', 'docs'))
     ->title(stringOption($options, 'title', 'Documentation'))
-    ->description(stringOption($options, 'description', 'Project documentation.'))
+    ->description(stringOption($options, 'description', 'Documentation.'))
     ->accentColor(stringOption($options, 'accent-color', '#ff2d20'))
     ->accentColorDark(stringOption($options, 'accent-color-dark', ''))
     ->customCss(stringOption($options, 'custom-css', ''))
@@ -106,6 +152,51 @@ if (boolOption($options, 'force-og')) {
 $builder->build();
 
 echo "Built docs from {$source} to " . stringOption($options, 'output', 'docs') . "\n";
+
+/**
+ * @param  array<string, string|bool>  $options
+ */
+function runSync(array $options, bool $required, string $markdownRoot): int
+{
+    $sourcesPath = stringOption($options, 'sources', getcwd() . '/' . \Docsmith\Hub\SourcesManifest::FILE_NAME);
+
+    if (! is_file($sourcesPath)) {
+        if ($required) {
+            fwrite(STDERR, "No sources manifest found at {$sourcesPath}.\nCreate one to pull documentation from other Git repositories.\n");
+
+            return 1;
+        }
+
+        return 0; // `--sync` requested but nothing configured: keep builds unchanged.
+    }
+
+    try {
+        $report = \Docsmith\Hub\Hub::sync(
+            $sourcesPath,
+            markdownRoot: $markdownRoot,
+            force: boolOption($options, 'force'),
+            verify: boolOption($options, 'verify'),
+        );
+    } catch (InvalidSourcesConfiguration $error) {
+        fwrite(STDERR, '[Docsmith] ' . $error->getMessage() . "\n");
+
+        return 1;
+    } catch (\Throwable $error) {
+        fwrite(STDERR, '[Docsmith] Sync failed: ' . $error->getMessage() . "\n");
+
+        return 1;
+    }
+
+    foreach ($report->entries() as $entry) {
+        foreach ($entry['warnings'] as $warning) {
+            echo '[Docsmith] warning: ' . $warning . PHP_EOL;
+        }
+    }
+
+    echo '[Docsmith] Sources: ' . $report->summary() . PHP_EOL;
+
+    return $report->isSuccessful() ? 0 : 1;
+}
 
 /**
  * @param  array<int, string>  $argv

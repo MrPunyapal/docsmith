@@ -282,6 +282,29 @@ Supported list styles include patterns used by:
 - laravel-undocumented
 - laravel-attributes-list
 
+## Documentation Hub
+
+Pull Markdown from other Git repositories into your build — no `git` binary, no provider APIs, no clones. DocSmith speaks standard Git smart-HTTPS directly and works with any host.
+
+```php
+// docsmith.sources.php
+return [
+    [
+        'repository' => 'https://github.com/laravel/framework.git',
+        'ref' => '12.x',
+        'path' => 'docs',
+        'target' => 'laravel',   // materialized to md/laravel
+    ],
+];
+```
+
+```bash
+php bin/docsmith sync          # fetch remote sources
+php bin/docsmith build --sync  # or fetch + build in one step
+```
+
+Plain builds never touch the network; without a `docsmith.sources.php`, nothing changes. See [Documentation Hub](md/documentation-hub.md) for caching, safety limits, and programmatic usage.
+
 ## Output Model
 
 - md/index.md -> index.html

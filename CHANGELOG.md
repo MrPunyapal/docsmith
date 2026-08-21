@@ -3,6 +3,11 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
+## Unreleased
+
+### Features
+- **Documentation Hub** — pull Markdown documentation from other Git repositories into your project via a new `docsmith.sources.php` manifest and `docsmith sync` / `build --sync`. Implemented as an in-house, read-only Git **smart-HTTP** client (protocol v0, shallow `deepen 1` fetches, streaming packfile parser with ofs/ref delta support): no provider APIs, no system `git` binary, no clones, works with GitHub/GitLab/Bitbucket/Gitea/self-hosted over plain HTTPS. Includes ref resolution (branch/tag/annotated-tag peel/tip SHA), SHA-keyed incremental sync via `docsmith.sources.lock.json`, atomic staging materialization with path-traversal/symlink/device-name guards, size & file-count budgets, typed error taxonomy, and a deterministic offline wire-protocol test suite.
+
 ## 0.2.1 — 2026-08-19
 - **Fix: breadcrumb 404 on nested pages without a section index.** Directory crumbs now resolve to the section's `index.html` when one exists, otherwise to the first page inside that directory (respecting frontmatter `order` / navigation sort) instead of linking to a page that was never generated.
 
