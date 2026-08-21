@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Docsmith\Hub;
+namespace Docsmith\RemoteSources;
 
 /**
  * Result of extracting a remote subtree into a staging directory.

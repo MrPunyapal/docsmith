@@ -6,8 +6,10 @@
 - https://mrpunyapal.github.io/docsmith/open-graph: Open Graph Images
 - https://mrpunyapal.github.io/docsmith/architecture: Architecture
 - https://mrpunyapal.github.io/docsmith/development: Development
+- https://mrpunyapal.github.io/docsmith/docs-hub: Docs Hub
 - https://mrpunyapal.github.io/docsmith/: Docsmith
 - https://mrpunyapal.github.io/docsmith/installation: Installation
 - https://mrpunyapal.github.io/docsmith/llm-export: LLM Export
+- https://mrpunyapal.github.io/docsmith/remote-sources: Remote Sources
 - https://mrpunyapal.github.io/docsmith/usage: Usage
 - https://mrpunyapal.github.io/docsmith/versioned-docs: Versioned Docs

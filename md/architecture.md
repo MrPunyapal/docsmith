@@ -30,6 +30,6 @@ The current renderer produces:
 - a sidebar navigation
 - a main content area
 - a generated landing page when needed
-- local CSS under `assets/app.css`
+- local CSS under `assets/docsmith.css`
 
 This is the minimal implementation baseline, not the final architecture.

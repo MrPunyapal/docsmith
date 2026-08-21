@@ -97,7 +97,7 @@ Docsmith::make()
 	->build();
 ```
 
-Or pass a path to a CSS file which will be appended to `assets/app.css`:
+Or pass a path to a CSS file which will be appended to `assets/docsmith.css`:
 
 ```php
 Docsmith::make()
@@ -282,15 +282,11 @@ Supported list styles include patterns used by:
 - laravel-undocumented
 - laravel-attributes-list
 
-## Versions and Docs Hub
+## Versioned Docs
 
-Two separate features:
-
-- **`versions()`** — multiple versions of one documentation set. Pages get v1/v2/v3 pill buttons. No dropdown.
-- **`hub()`** — a docs hub of independent sets with one sidebar dropdown.
+Multiple versions of one documentation set. Pages get v1/v2/v3 pill buttons; no dropdown.
 
 ```php
-// Versioned single doc set: reads md/v1/ and md/v2/ ({source}/{slug}).
 Docsmith::make()
     ->source(__DIR__ . '/md')
     ->output(__DIR__ . '/dist')
@@ -299,8 +295,15 @@ Docsmith::make()
         ['slug' => 'v2', 'label' => 'v2.0'],
     ])
     ->build();
+```
 
-// Hub: each entry gets one dropdown option at /{slug}/.
+Each version reads `md/{slug}/`; the default version mounts at the site root, siblings under `/{slug}/`. See [Versioned Docs](md/versioned-docs.md).
+
+## Docs Hub
+
+Several independent documentation sets in one site, one sidebar dropdown to switch between them.
+
+```php
 Docsmith::make()
     ->output(__DIR__ . '/dist')
     ->hub([
@@ -310,24 +313,9 @@ Docsmith::make()
     ->build();
 ```
 
-A hub entry may embed its own `versions` list — it stays one dropdown item, and its pages carry v1/v2 pills:
+Each entry gets one dropdown option mounted at `/{slug}/`; a hub entry may embed its own `versions` list for pills on its pages. See [Docs Hub](md/docs-hub.md).
 
-```php
-->hub([
-    'auth-jobs' => [
-        'label' => 'Auth Jobs',
-        'source' => __DIR__ . '/md/auth-jobs',   // backs the default version
-        'versions' => [
-            ['slug' => 'v2', 'label' => 'v2', 'default' => true],
-            ['slug' => 'v1', 'label' => 'v1', 'source' => __DIR__ . '/md/auth-jobs-1x'],
-        ],
-    ],
-])
-```
-
-See [Versioned Docs](md/versioned-docs.md) and [Docs Hub](md/docs-hub.md) for mounting rules and switcher behavior.
-
-## Documentation Hub
+## Remote Sources
 
 Pull Markdown from other Git repositories into your build — no `git` binary, no provider APIs, no clones. DocSmith speaks standard Git smart-HTTPS directly and works with any host.
 
@@ -348,7 +336,7 @@ php bin/docsmith sync          # fetch remote sources
 php bin/docsmith build --sync  # or fetch + build in one step
 ```
 
-Plain builds never touch the network; without a `docsmith.sources.php`, nothing changes. See [Documentation Hub](md/documentation-hub.md) for caching, safety limits, and programmatic usage.
+Plain builds never touch the network; without a `docsmith.sources.php`, nothing changes. Synced sources are plain local directories afterward — they work with a normal build, a versioned build, or a hub equally. See [Remote Sources](md/remote-sources.md) for caching, safety limits, and programmatic usage.
 
 ## Output Model
 

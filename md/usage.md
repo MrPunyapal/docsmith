@@ -171,7 +171,7 @@ Docsmith::make()
 - Non-default versions are namespaced under `{slug}/` (e.g., `v2/installation/index.html`).
 - Pages that exist only in a non-default version are not duplicated to the root.
 - Pill buttons on each page link to the same page in another version when it exists there, otherwise to that version's home.
-- No docs dropdown appears in this mode — see [Versioned Docs](versioned-docs.md) and [Docs Hub](docs-hub.md) for the two separate features.
+- No docs dropdown appears in this mode.
 
 ### Version directory structure
 

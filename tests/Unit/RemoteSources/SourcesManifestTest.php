@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Docsmith\Hub\DocumentationSource;
-use Docsmith\Hub\InvalidSourcesConfiguration;
-use Docsmith\Hub\SourcesManifest;
+use Docsmith\RemoteSources\DocumentationSource;
+use Docsmith\RemoteSources\InvalidSourcesConfiguration;
+use Docsmith\RemoteSources\SourcesManifest;
 
 /**
  * @param  string|list<array<string, mixed>>  $payload

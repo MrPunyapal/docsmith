@@ -332,8 +332,8 @@ HTML;
     <title>{$title}</title>
     <meta name="description" content="{$description}">
     {$this->landingHeadExtras($config)}
-    <link rel="stylesheet" href="assets/app.css">
-    <script src="assets/app.js" defer></script>
+    <link rel="stylesheet" href="assets/docsmith.css">
+    <script src="assets/docsmith.js" defer></script>
 </head>
 <body data-docsmith-root="./">
     <div class="shell">
@@ -668,12 +668,12 @@ HTML;
 
     private function assetPath(string $outputPath): string
     {
-        return $this->relativeAssetHref($outputPath, 'assets/app.css');
+        return $this->relativeAssetHref($outputPath, 'assets/docsmith.css');
     }
 
     private function scriptPath(string $outputPath): string
     {
-        return $this->relativeAssetHref($outputPath, 'assets/app.js');
+        return $this->relativeAssetHref($outputPath, 'assets/docsmith.js');
     }
 
     private function relativeAssetHref(string $fromOutputPath, string $assetPath): string

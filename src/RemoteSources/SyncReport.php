@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Docsmith\Hub;
+namespace Docsmith\RemoteSources;
 
 /**
  * Outcome of a synchronization run across all configured sources.

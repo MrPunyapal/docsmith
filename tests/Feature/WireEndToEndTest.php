@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Docsmith\Hub\Hub;
-use Docsmith\Hub\SourcesManifest;
+use Docsmith\RemoteSources\RemoteSources;
+use Docsmith\RemoteSources\SourcesManifest;
 use GitReader\ProtocolException;
 use GitReader\RefAdvertisement;
 use GitReader\RemoteRepository;
@@ -79,7 +79,7 @@ it('synchronizes remote documentation over smart HTTP end-to-end', function (): 
             var_export('http://127.0.0.1:' . $port . '/fixture.git', true),
         ));
 
-        $report = Hub::sync($project . '/' . SourcesManifest::FILE_NAME, markdownRoot: $project . '/md');
+        $report = RemoteSources::sync($project . '/' . SourcesManifest::FILE_NAME, markdownRoot: $project . '/md');
 
         expect($report->isSuccessful())->toBeTrue()
             ->and(file_get_contents($project . '/md/remote-docs/index.md'))->toContain('Fixture Docs')
@@ -92,11 +92,11 @@ it('synchronizes remote documentation over smart HTTP end-to-end', function (): 
 
         expect(is_array($lock) && ($lock['sources']['remote-docs']['commit'] ?? null) === $head)->toBeTrue();
 
-        $second = Hub::sync($project . '/' . SourcesManifest::FILE_NAME, markdownRoot: $project . '/md');
+        $second = RemoteSources::sync($project . '/' . SourcesManifest::FILE_NAME, markdownRoot: $project . '/md');
 
         expect($second->summary())->toContain('up-to-date');
 
-        $forced = Hub::sync($project . '/' . SourcesManifest::FILE_NAME, markdownRoot: $project . '/md', force: true);
+        $forced = RemoteSources::sync($project . '/' . SourcesManifest::FILE_NAME, markdownRoot: $project . '/md', force: true);
 
         expect($forced->isSuccessful())->toBeTrue();
     } finally {

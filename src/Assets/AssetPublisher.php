@@ -17,8 +17,8 @@ final class AssetPublisher
             mkdir($assetsDirectory, 0777, true);
         }
 
-        file_put_contents($assetsDirectory . '/app.css', $this->css($metadata));
-        file_put_contents($assetsDirectory . '/app.js', $this->js());
+        file_put_contents($assetsDirectory . '/docsmith.css', $this->css($metadata));
+        file_put_contents($assetsDirectory . '/docsmith.js', $this->js());
         $this->publishFavicon($assetsDirectory, $metadata);
     }
 

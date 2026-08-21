@@ -404,7 +404,7 @@ final class Builder
     }
 
     /**
-     * Accept raw CSS or a path to a CSS file to append to generated assets/app.css.
+     * Accept raw CSS or a path to a CSS file to append to generated assets/docsmith.css.
      */
     public function customCss(string $cssOrPath): self
     {

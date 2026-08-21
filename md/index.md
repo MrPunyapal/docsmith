@@ -15,7 +15,9 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Hide pages from navigation, search, and pagination via frontmatter `hidden: true`.
 - Generate `search-index.json`, `sitemap.xml`, and `.nojekyll`.
 - Support repository/edit links and previous/next page navigation.
-- Build multiple documentation versions with a version switcher.
+- Build multiple versions of one documentation set with pill buttons on every page.
+- Assemble a docs hub of independent documentation sets with a sidebar dropdown.
+- Sync Markdown from remote Git repositories via smart HTTPS (no git binary, no clones).
 - Search overlay with `Cmd+K` / `Ctrl+K` keyboard shortcut.
 - AI-consumable export: `llms.txt`, `llms-full.txt`, `export/docs.md`.
 - Open Graph / Twitter card tags and generated social preview images.
@@ -40,5 +42,6 @@ Search includes both:
 - Development
 - Versioned Docs
 - Docs Hub
+- Remote Sources
 - LLM Export
 - Open Graph

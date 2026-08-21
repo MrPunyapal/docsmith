@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Docsmith\Hub\DocumentationSource;
-use Docsmith\Hub\ExtractionResult;
-use Docsmith\Hub\Materializer;
+use Docsmith\RemoteSources\DocumentationSource;
+use Docsmith\RemoteSources\ExtractionResult;
+use Docsmith\RemoteSources\Materializer;
 use GitReader\GitException;
 use GitReader\GitObject;
 use GitReader\GitObjectType;

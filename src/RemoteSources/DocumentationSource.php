@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Docsmith\Hub;
+namespace Docsmith\RemoteSources;
 
 /**
  * A single remote documentation source definition.

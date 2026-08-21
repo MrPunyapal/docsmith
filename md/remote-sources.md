@@ -1,4 +1,4 @@
-# Documentation Hub
+# Remote Sources
 
 Pull Markdown documentation from other Git repositories into your DocSmith project — without cloning, without provider APIs, and without a system `git` executable.
 
@@ -15,6 +15,10 @@ return [
 ```
 
 Running `docsmith sync` materializes the remote `docs/` directory to `md/laravel/`. After that, `docsmith build` works exactly as it always has.
+
+## Works with any build
+
+Remote sources only materialize local folders under your markdown root — nothing more. What you build from those folders is entirely up to you: a plain single-docs site, a [versioned](versioned-docs.md) build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.
 
 ## How it works
 
@@ -75,13 +79,13 @@ Private repositories are **not** supported yet; authentication attempts fail wit
 ## Programmatic use
 
 ```php
-use Docsmith\Hub\Hub;
+use Docsmith\RemoteSources\RemoteSources;
 
-$report = Hub::sync('docsmith.sources.php');       // or pass an inline array
+$report = RemoteSources::sync('docsmith.sources.php');       // or pass an inline array
 
 $report->isSuccessful();                           // false if any source failed
 $report->summary();                                // "2 synced, 1 up-to-date, 0 failed"
-Hub::sync('docsmith.sources.php', force: true);
+RemoteSources::sync('docsmith.sources.php', force: true);
 ```
 
 The compiler itself is untouched: synchronization simply prepares the input tree beforehand.

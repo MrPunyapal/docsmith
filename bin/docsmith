@@ -6,8 +6,8 @@ declare(strict_types=1);
 require __DIR__ . '/../vendor/autoload.php';
 
 use Docsmith\Docsmith;
-use Docsmith\Hub\Hub;
-use Docsmith\Hub\InvalidSourcesConfiguration;
+use Docsmith\RemoteSources\RemoteSources;
+use Docsmith\RemoteSources\InvalidSourcesConfiguration;
 
 const USAGE = <<<TXT
 Usage:
@@ -38,7 +38,7 @@ Build options:
   --no-og-capture       Write OG previews/config only; skip screenshot capture
   --force-og            Recapture every Open Graph image (ignore cache)
 
-Documentation Hub:
+Remote Sources:
   sync                  Fetch remote documentation sources and materialize
                         them under the markdown root, then exit.
   build --sync          Synchronize remote sources before building.
@@ -158,7 +158,7 @@ echo "Built docs from {$source} to " . stringOption($options, 'output', 'docs') 
  */
 function runSync(array $options, bool $required, string $markdownRoot): int
 {
-    $sourcesPath = stringOption($options, 'sources', getcwd() . '/' . \Docsmith\Hub\SourcesManifest::FILE_NAME);
+    $sourcesPath = stringOption($options, 'sources', getcwd() . '/' . \Docsmith\RemoteSources\SourcesManifest::FILE_NAME);
 
     if (! is_file($sourcesPath)) {
         if ($required) {
@@ -171,7 +171,7 @@ function runSync(array $options, bool $required, string $markdownRoot): int
     }
 
     try {
-        $report = \Docsmith\Hub\Hub::sync(
+        $report = \Docsmith\RemoteSources\RemoteSources::sync(
             $sourcesPath,
             markdownRoot: $markdownRoot,
             force: boolOption($options, 'force'),

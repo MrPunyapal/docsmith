@@ -18,25 +18,25 @@ it('builds a static site from markdown files', function (): void {
     expect($outputPath . '/index.html')->toBeFile()
         ->and($outputPath . '/installation/index.html')->toBeFile()
         ->and($outputPath . '/guides/configuration/index.html')->toBeFile()
-        ->and($outputPath . '/assets/app.css')->toBeFile()
-        ->and($outputPath . '/assets/app.js')->toBeFile();
+        ->and($outputPath . '/assets/docsmith.css')->toBeFile()
+        ->and($outputPath . '/assets/docsmith.js')->toBeFile();
 
     $landingPage = file_get_contents($outputPath . '/index.html');
     $installationPage = file_get_contents($outputPath . '/installation/index.html');
     $configurationPage = file_get_contents($outputPath . '/guides/configuration/index.html');
-    $appCss = file_get_contents($outputPath . '/assets/app.css');
+    $appCss = file_get_contents($outputPath . '/assets/docsmith.css');
 
     expect($landingPage)->toContain('Docsmith Docs')
         ->toContain('installation/')
         ->toContain('guides/configuration/')
         ->toContain('data-docsmith-search')
-        ->toContain('assets/app.js')
+        ->toContain('assets/docsmith.js')
         ->and($installationPage)->toContain('<h1>Installation</h1>')
-        ->toContain('assets/app.css')
-        ->toContain('assets/app.js')
+        ->toContain('assets/docsmith.css')
+        ->toContain('assets/docsmith.js')
         ->and($configurationPage)->toContain('<h1>Configuration</h1>')
-        ->toContain('../../assets/app.css')
-        ->toContain('../../assets/app.js')
+        ->toContain('../../assets/docsmith.css')
+        ->toContain('../../assets/docsmith.js')
         ->and($appCss)->toContain('--accent: #ff2d20;');
 });
 
@@ -56,12 +56,12 @@ it('can build into the same folder as the markdown source', function (): void {
 
     expect($sourcePath . '/index.html')->toBeFile()
         ->and($sourcePath . '/usage/index.html')->toBeFile()
-        ->and($sourcePath . '/assets/app.css')->toBeFile()
-        ->and($sourcePath . '/assets/app.js')->toBeFile()
+        ->and($sourcePath . '/assets/docsmith.css')->toBeFile()
+        ->and($sourcePath . '/assets/docsmith.js')->toBeFile()
         ->and(file_get_contents($sourcePath . '/index.html'))->toContain('Docsmith')
         ->toContain('data-docsmith-search')
-        ->and(file_get_contents($sourcePath . '/usage/index.html'))->toContain('../assets/app.css')
-        ->toContain('../assets/app.js');
+        ->and(file_get_contents($sourcePath . '/usage/index.html'))->toContain('../assets/docsmith.css')
+        ->toContain('../assets/docsmith.js');
 });
 
 it('builds from laravel-undocumented style readme index', function (): void {
@@ -159,8 +159,8 @@ it('defaults output directory to docs when not configured', function (): void {
     chdir($initialWorkingDirectory);
 
     expect($projectPath . '/docs/index.html')->toBeFile()
-        ->and($projectPath . '/docs/assets/app.css')->toBeFile()
-        ->and($projectPath . '/docs/assets/app.js')->toBeFile();
+        ->and($projectPath . '/docs/assets/docsmith.css')->toBeFile()
+        ->and($projectPath . '/docs/assets/docsmith.js')->toBeFile();
 });
 
 it('renders an optional right sidebar toc when enabled', function (): void {
@@ -349,7 +349,7 @@ it('allows overriding the accent color during builds', function (): void {
         ->accentColorDark('#60a5fa')
         ->build();
 
-    $appCss = file_get_contents($outputPath . '/assets/app.css');
+    $appCss = file_get_contents($outputPath . '/assets/docsmith.css');
 
     expect($appCss)
         ->toContain('--accent: #1d4ed8;')
@@ -370,7 +370,7 @@ it('allows appending custom css as raw string', function (): void {
         ->customCss('/* my override */ .brand { color: #123456 }')
         ->build();
 
-    $appCss = file_get_contents($outputPath . '/assets/app.css');
+    $appCss = file_get_contents($outputPath . '/assets/docsmith.css');
 
     expect($appCss)->toContain('/* my override */ .brand { color: #123456 }');
 });

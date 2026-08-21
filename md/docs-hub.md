@@ -2,8 +2,6 @@
 
 The docs hub builds several **independent** documentation sets into one site. A dropdown in the sidebar switches between them.
 
-This is a separate feature from [Versioned Docs](versioned-docs.md): versions switch between v1/v2/v3 of one doc set with pill buttons; the hub switches between different packages with a dropdown.
-
 ## Setup
 
 Pass one entry per documentation set to `->hub()`:
@@ -33,10 +31,6 @@ An entry can embed a `versions` list. The entry stays a **single** dropdown item
 
 ```php
 ->hub([
-    'extended-relationships' => [
-        'label' => 'Extended Relationships',
-        'source' => __DIR__ . '/md/extended-relationships',
-    ],
     'auth-jobs' => [
         'label' => 'Auth Jobs',
         'source' => __DIR__ . '/md/auth-jobs',          // backs the default version
@@ -49,12 +43,8 @@ An entry can embed a `versions` list. The entry stays a **single** dropdown item
 ])
 ```
 
-- The embedded `versions` list uses the same shape as `->versions()`. It describes all versions of that entry.
+- The `versions` list describes all versions of that entry.
 - The primary version — flagged `default`, else the first listed — mounts at the entry root (`/auth-jobs/…`); siblings nest under it (`/auth-jobs/v1/…`).
 - The entry-level `source` may stand in for the primary version's source (as above). Other versions need their own `source`, or resolve to `{source}/{entry-slug}/{version-slug}` when `->source()` is set.
 
-So in the built site the dropdown shows only "Extended Relationships" and "Auth Jobs" — never "Auth Jobs v1" — while Auth Jobs pages carry v1/v2 pills.
-
-## Remote sources are orthogonal
-
-`docsmith sync` materializes remote repositories into `md/<target>` before building. It works identically for a plain build, a versioned build, or a hub — see [Documentation Hub (sync)](documentation-hub.md).
+So in the built site the dropdown shows only "Auth Jobs" — never "Auth Jobs v1" — while Auth Jobs pages carry v1/v2 pills.

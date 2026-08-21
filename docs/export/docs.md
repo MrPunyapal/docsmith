@@ -154,7 +154,7 @@ The current renderer produces:
 - a sidebar navigation
 - a main content area
 - a generated landing page when needed
-- local CSS under `assets/app.css`
+- local CSS under `assets/docsmith.css`
 
 This is the minimal implementation baseline, not the final architecture.
 
@@ -255,6 +255,62 @@ Adjust the PHP version, source paths, and build command to match your project. W
 
 ---
 
+# Docs Hub
+
+# Docs Hub
+
+The docs hub builds several **independent** documentation sets into one site. A dropdown in the sidebar switches between them.
+
+## Setup
+
+Pass one entry per documentation set to `->hub()`:
+
+```php
+use Docsmith\Docsmith;
+
+Docsmith::make()
+    ->output(__DIR__ . '/dist')
+    ->title('Acme Docs')
+    ->hub([
+        'package-a' => ['label' => 'Package A', 'source' => __DIR__ . '/md/a'],
+        'package-b' => ['label' => 'Package B', 'source' => __DIR__ . '/md/b'],
+    ])
+    ->build();
+```
+
+## How it works
+
+- Each entry gets one dropdown option and mounts under its slug (`/package-a/…`, `/package-b/…`).
+- Nothing is generated at the root: `/` simply forwards to the first entry.
+- `navigation` can be set per entry; frontmatter `order:` still applies per page.
+
+## Hub entries with versions
+
+An entry can embed a `versions` list. The entry stays a **single** dropdown item, and its pages get version pill buttons:
+
+```php
+->hub([
+    'auth-jobs' => [
+        'label' => 'Auth Jobs',
+        'source' => __DIR__ . '/md/auth-jobs',          // backs the default version
+        'navigation' => ['index.md', 'usage.md', ...],  // optional, per entry
+        'versions' => [
+            ['slug' => 'v2', 'label' => 'v2', 'default' => true],
+            ['slug' => 'v1', 'label' => 'v1', 'source' => __DIR__ . '/md/auth-jobs-1x'],
+        ],
+    ],
+])
+```
+
+- The `versions` list describes all versions of that entry.
+- The primary version — flagged `default`, else the first listed — mounts at the entry root (`/auth-jobs/…`); siblings nest under it (`/auth-jobs/v1/…`).
+- The entry-level `source` may stand in for the primary version's source (as above). Other versions need their own `source`, or resolve to `{source}/{entry-slug}/{version-slug}` when `->source()` is set.
+
+So in the built site the dropdown shows only "Auth Jobs" — never "Auth Jobs v1" — while Auth Jobs pages carry v1/v2 pills.
+
+
+---
+
 # Docsmith
 
 # Docsmith
@@ -274,7 +330,9 @@ Docsmith is a small PHP package for turning Markdown files into a static documen
 - Hide pages from navigation, search, and pagination via frontmatter `hidden: true`.
 - Generate `search-index.json`, `sitemap.xml`, and `.nojekyll`.
 - Support repository/edit links and previous/next page navigation.
-- Build multiple documentation versions with a version switcher.
+- Build multiple versions of one documentation set with pill buttons on every page.
+- Assemble a docs hub of independent documentation sets with a sidebar dropdown.
+- Sync Markdown from remote Git repositories via smart HTTPS (no git binary, no clones).
 - Search overlay with `Cmd+K` / `Ctrl+K` keyboard shortcut.
 - AI-consumable export: `llms.txt`, `llms-full.txt`, `export/docs.md`.
 - Open Graph / Twitter card tags and generated social preview images.
@@ -298,6 +356,8 @@ Search includes both:
 - Architecture
 - Development
 - Versioned Docs
+- Docs Hub
+- Remote Sources
 - LLM Export
 - Open Graph
 
@@ -424,6 +484,103 @@ Every page's raw Markdown merged into a single file with frontmatter metadata:
 `siteUrl` must be set for correct URL generation in `llms.txt`.
 
 If no `index.md` exists in the source directory, a generated landing page is included in the export.
+
+
+---
+
+# Remote Sources
+
+# Remote Sources
+
+Pull Markdown documentation from other Git repositories into your DocSmith project — without cloning, without provider APIs, and without a system `git` executable.
+
+```php
+// docsmith.sources.php
+return [
+    [
+        'repository' => 'https://github.com/laravel/framework.git',
+        'ref' => '12.x',          // branch, tag, or advertised commit SHA
+        'path' => 'docs',         // subdirectory inside the repository
+        'target' => 'laravel',    // local directory under your markdown root
+    ],
+];
+```
+
+Running `docsmith sync` materializes the remote `docs/` directory to `md/laravel/`. After that, `docsmith build` works exactly as it always has.
+
+## Works with any build
+
+Remote sources only materialize local folders under your markdown root — nothing more. What you build from those folders is entirely up to you: a plain single-docs site, a [versioned](versioned-docs.md) build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.
+
+## How it works
+
+DocSmith speaks the standard Git **smart HTTP** protocol directly over HTTPS:
+
+```
+GET  {repo}/info/refs?service=git-upload-pack   → ref advertisement
+POST {repo}/git-upload-pack                     → want <sha> + deepen 1 + done
+                                                ← packfile (depth-1 snapshot)
+parse packfile → walk trees → write files
+```
+
+Because it is plain Git protocol:
+
+- **Any host works** — GitHub, GitLab, Bitbucket, Gitea, self-hosted Git over HTTPS. DocSmith never knows (or cares) who hosts the repository.
+- **No `git` binary required** — pure PHP using only bundled extensions (`zlib`, streams).
+- **No full clone** — a single depth-1 fetch downloads one compressed snapshot of the requested ref.
+- **No provider APIs or rate limits** — the same transport `git clone` uses.
+
+## Commands
+
+```bash
+docsmith sync              # fetch/update all sources from docsmith.sources.php
+docsmith sync --force      # re-download even if the remote revision is unchanged
+docsmith sync --verify     # also verify local file contents against recorded hashes
+docsmith build --sync      # synchronize, then build in one step
+docsmith build             # unchanged: never touches the network
+```
+
+Plain builds remain fully deterministic and offline. If no `docsmith.sources.php` exists, everything behaves exactly as before.
+
+## Source options
+
+| Key | Required | Description |
+|---|---|---|
+| `repository` | yes | HTTP(S) Git URL. SSH-style (`git@host:owner/repo.git`) is normalized to HTTPS. |
+| `ref` | yes | Branch name, tag name, or an advertised tip SHA. Annotated tags resolve to their commit. |
+| `path` | no | Subdirectory to extract. Empty or `/` means the whole tree. `..` is rejected. |
+| `target` | yes | Directory name under the markdown root (`[A-Za-z0-9._-]+`). Must be unique across sources. |
+
+### Caching and determinism
+
+Each run first resolves the configured ref with a single cheap HTTPS request. If it still points at the recorded commit **and** the materialized files are intact, nothing is downloaded. The resolved state lives in `docsmith.sources.lock.json`, which is safe to commit for reproducible CI builds.
+
+Delete the lock file (or pass `--force`) to re-sync from scratch; `--verify` additionally re-hashes every local file against its recorded blob SHA before declaring it up-to-date.
+
+## Safety
+
+Materialization is hardened by default:
+
+- Path segments are strictly validated (`..`, absolute paths, `.git`, Windows device names, trailing dots/spaces are refused).
+- Symlink and submodule entries are skipped with warnings — never followed.
+- Per-file (20 MB), total-size (200 MB), and file-count (20 000) budgets guard against oversized or hostile repositories.
+- Extraction writes to a staging directory and swaps atomically, so failures never leave half-updated targets.
+
+Private repositories are **not** supported yet; authentication attempts fail with a clear message.
+
+## Programmatic use
+
+```php
+use Docsmith\RemoteSources\RemoteSources;
+
+$report = RemoteSources::sync('docsmith.sources.php');       // or pass an inline array
+
+$report->isSuccessful();                           // false if any source failed
+$report->summary();                                // "2 synced, 1 up-to-date, 0 failed"
+RemoteSources::sync('docsmith.sources.php', force: true);
+```
+
+The compiler itself is untouched: synchronization simply prepares the input tree beforehand.
 
 
 ---
@@ -581,7 +738,7 @@ The overlay searches the same `search-index.json` as the sidebar search.
 
 ## Versioned Docs
 
-Docsmith supports building multiple documentation versions with a version switcher.
+Docsmith supports building multiple documentation versions with pill buttons on every page.
 
 ```php
 use Docsmith\Docsmith;
@@ -602,7 +759,8 @@ Docsmith::make()
 - The default version writes pages to the root (e.g., `installation/index.html`).
 - Non-default versions are namespaced under `{slug}/` (e.g., `v2/installation/index.html`).
 - Pages that exist only in a non-default version are not duplicated to the root.
-- A version switcher dropdown appears in the site header.
+- Pill buttons on each page link to the same page in another version when it exists there, otherwise to that version's home.
+- No docs dropdown appears in this mode.
 
 ### Version directory structure
 
@@ -722,7 +880,7 @@ Supported README item styles:
 
 # Versioned Docs
 
-Docsmith supports building multiple documentation versions with a version switcher in the header.
+Docsmith can build multiple versions of one documentation set. Every page shows v1/v2/v3 pill buttons for switching between them.
 
 ## Setup
 
@@ -742,8 +900,6 @@ Docsmith::make()
     ->build();
 ```
 
-Each version reads Markdown from `md/{slug}/`.
-
 ## Directory structure
 
 ```
@@ -758,8 +914,11 @@ md/
 
 ## How it works
 
-- The version marked `default: true` writes pages to the root (e.g., `installation/index.html`).
-- Non-default versions are namespaced under `{slug}/` (e.g., `v2/installation/index.html`).
+- Each version reads Markdown from `{source}/{slug}` — the config above reads `md/v1/` and `md/v2/`. You can also set `source` per version to point anywhere.
+- Keyed maps work too: `'v1' => ['label' => 'v1.0']`.
+- The version marked `default: true` writes pages to the site root (`installation/index.html`). If none is marked, the first listed version is used.
+- Other versions are namespaced under their slug (`v2/installation/index.html`).
 - Pages that exist only in a non-default version are **not** duplicated to the root.
-- A version switcher dropdown appears in the site header linking between versions.
+- Pill buttons on every page switch versions. They link to the same page in another version when it exists there, otherwise to that version's home.
+- `navigation` can be set per version; frontmatter `order:` still applies per page.
 

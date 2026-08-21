@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Docsmith\Hub;
+namespace Docsmith\RemoteSources;
 
 /**
  * Loads and validates the `docsmith.sources.php` manifest.
