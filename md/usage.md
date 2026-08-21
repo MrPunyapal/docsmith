@@ -149,7 +149,7 @@ The overlay searches the same `search-index.json` as the sidebar search.
 
 ## Versioned Docs
 
-Docsmith supports building multiple documentation versions with a version switcher.
+Docsmith supports building multiple documentation versions with pill buttons on every page.
 
 ```php
 use Docsmith\Docsmith;
@@ -170,7 +170,8 @@ Docsmith::make()
 - The default version writes pages to the root (e.g., `installation/index.html`).
 - Non-default versions are namespaced under `{slug}/` (e.g., `v2/installation/index.html`).
 - Pages that exist only in a non-default version are not duplicated to the root.
-- A version switcher dropdown appears in the site header.
+- Pill buttons on each page link to the same page in another version when it exists there, otherwise to that version's home.
+- No docs dropdown appears in this mode — see [Versioned Docs](versioned-docs.md) and [Docs Hub](docs-hub.md) for the two separate features.
 
 ### Version directory structure
 

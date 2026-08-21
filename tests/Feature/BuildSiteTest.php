@@ -449,7 +449,7 @@ it('builds a docs entry with internal versions using the classic versioned layou
 
     Docsmith::make()
         ->output($outputPath)
-        ->docs([
+        ->hub([
             'kd' => [
                 'label' => 'Versioned Docs',
                 'versions' => [
@@ -535,7 +535,7 @@ it('builds every version under its slug and redirects the root to the first one 
         ->output($outputPath)
         ->title('Hub')
         ->description('All packages.')
-        ->docs([
+        ->hub([
             'pkg-one' => ['label' => 'Package One', 'source' => $projectPath . '/pkg-one'],
             'pkg-two' => ['label' => 'Package Two', 'source' => $projectPath . '/pkg-two'],
         ])
@@ -621,7 +621,7 @@ it('groups related versions under one dropdown entry with pill buttons on the pa
 
     Docsmith::make()
         ->output($outputPath)
-        ->docs([
+        ->hub([
             'pkg' => [
                 'label' => 'My Package',
                 'versions' => [

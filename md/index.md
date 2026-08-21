@@ -39,5 +39,6 @@ Search includes both:
 - Architecture
 - Development
 - Versioned Docs
+- Docs Hub
 - LLM Export
 - Open Graph

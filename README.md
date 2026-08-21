@@ -282,12 +282,12 @@ Supported list styles include patterns used by:
 - laravel-undocumented
 - laravel-attributes-list
 
-## Versions and Docs Sets
+## Versions and Docs Hub
 
 Two separate features:
 
 - **`versions()`** — multiple versions of one documentation set. Pages get v1/v2/v3 pill buttons. No dropdown.
-- **`docs()`** — a docs hub of independent sets with one sidebar dropdown.
+- **`hub()`** — a docs hub of independent sets with one sidebar dropdown.
 
 ```php
 // Versioned single doc set: reads md/v1/ and md/v2/ ({source}/{slug}).
@@ -303,29 +303,29 @@ Docsmith::make()
 // Hub: each entry gets one dropdown option at /{slug}/.
 Docsmith::make()
     ->output(__DIR__ . '/dist')
-    ->docs([
+    ->hub([
         'package-a' => ['label' => 'Package A', 'source' => __DIR__ . '/md/a'],
         'package-b' => ['label' => 'Package B', 'source' => __DIR__ . '/md/b'],
     ])
     ->build();
-
-// Combined: one dropdown item whose pages also carry v1/v2 pills.
-Docsmith::make()
-    ->output(__DIR__ . '/dist')
-    ->docs([
-        'auth-jobs' => [
-            'label' => 'Auth Jobs',
-            'source' => __DIR__ . '/md/auth-jobs',   // backs the default version
-            'versions' => [
-                ['slug' => 'v2', 'label' => 'v2', 'default' => true],
-                ['slug' => 'v1', 'label' => 'v1', 'source' => __DIR__ . '/md/auth-jobs-1x'],
-            ],
-        ],
-    ])
-    ->build();
 ```
 
-See [Versioned Docs](md/versioned-docs.md) for mounting rules and switcher behavior.
+A hub entry may embed its own `versions` list — it stays one dropdown item, and its pages carry v1/v2 pills:
+
+```php
+->hub([
+    'auth-jobs' => [
+        'label' => 'Auth Jobs',
+        'source' => __DIR__ . '/md/auth-jobs',   // backs the default version
+        'versions' => [
+            ['slug' => 'v2', 'label' => 'v2', 'default' => true],
+            ['slug' => 'v1', 'label' => 'v1', 'source' => __DIR__ . '/md/auth-jobs-1x'],
+        ],
+    ],
+])
+```
+
+See [Versioned Docs](md/versioned-docs.md) and [Docs Hub](md/docs-hub.md) for mounting rules and switcher behavior.
 
 ## Documentation Hub
 

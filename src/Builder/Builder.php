@@ -76,9 +76,20 @@ final class Builder
     private array $readmeSkipSections = [];
 
     /**
+     * Hub entries when ->hub() is used.
+     *
      * @var list<array{slug: string, label: string, source: string, navigation: ?list<string>, versions: array<string, array{label: string, source: string|null, default?: bool}>|null, default?: bool}>
      */
-    private array $docsEntries = [];
+    private array $hubEntries = [];
+
+    /**
+     * Versions of a single documentation set when ->versions() is used.
+     * Kept fully separate from hub state: the two features do not touch
+     * each other's configuration.
+     *
+     * @var array<string, array{label: string, source: string|null, navigation: list<string>|null, default: bool}>|null
+     */
+    private ?array $versionedVersions = null;
 
     /**
      * Whether the build uses the versions() feature: one documentation set,
@@ -87,29 +98,28 @@ final class Builder
     private bool $isVersionedBuild = false;
 
     /**
-     * Define the documentation sets to build. Each entry becomes one item in
-     * the docs selector and is mounted under its own path.
+     * Define the docs hub: independent documentation sets, one dropdown
+     * option each, mounted under `/{slug}/`.
      *
-     * An entry may optionally declare versions using the same shape as
-     * ->versions(); those versions then get pill switcher buttons on the page
-     * while the entry itself stays a single item in the docs dropdown.
+     * An entry may embed a `versions` list to get pill buttons on its pages
+     * while staying a single dropdown item.
      *
-     * @param  array<string, mixed>  $docs
+     * @param  array<string, mixed>  $entries
      */
-    public function docs(array $docs): self
+    public function hub(array $entries): self
     {
-        $this->docsEntries = [];
+        $this->hubEntries = [];
         $seenSlugs = [];
 
-        foreach ($docs as $slug => $config) {
+        foreach ($entries as $slug => $config) {
             $slug = (string) $slug;
 
             if (! is_array($config)) {
-                throw new LogicException(sprintf('Docs [%s] must be defined as an array.', $slug));
+                throw new LogicException(sprintf('Hub entry [%s] must be defined as an array.', $slug));
             }
 
             if (isset($seenSlugs[$slug])) {
-                throw new LogicException(sprintf('Duplicate docs slug [%s].', $slug));
+                throw new LogicException(sprintf('Duplicate hub entry slug [%s].', $slug));
             }
 
             $seenSlugs[$slug] = true;
@@ -119,18 +129,18 @@ final class Builder
                 : null;
 
             if ($declaredVersions === []) {
-                throw new LogicException(sprintf('Docs [%s] must declare at least one version.', $slug));
+                throw new LogicException(sprintf('Hub entry [%s] must declare at least one version.', $slug));
             }
 
             if ($declaredVersions !== null) {
                 if (! is_string($config['label'] ?? null)) {
                     throw new LogicException(sprintf(
-                        'Docs [%s] must define a string label when versions are declared.',
+                        'Hub entry [%s] must define a string label when versions are declared.',
                         $slug,
                     ));
                 }
             } elseif (! isset($config['source'], $config['label']) || ! is_string($config['source']) || ! is_string($config['label'])) {
-                throw new LogicException(sprintf('Docs [%s] must define a string label and source.', $slug));
+                throw new LogicException(sprintf('Hub entry [%s] must define a string label and source.', $slug));
             }
 
             $navigation = $this->navigationFrom($config);
@@ -138,7 +148,7 @@ final class Builder
 
             // No explicit versions: the entry itself is the only unit.
             if ($declaredVersions === null) {
-                $this->docsEntries[] = [
+                $this->hubEntries[] = [
                     'slug' => $slug,
                     'label' => (string) $config['label'],
                     'source' => $primarySource,
@@ -210,7 +220,7 @@ final class Builder
                 }
             }
 
-            $this->docsEntries[] = [
+            $this->hubEntries[] = [
                 'slug' => $slug,
                 'label' => (string) $config['label'],
                 'source' => $primaryVersionSource,
@@ -224,10 +234,13 @@ final class Builder
     }
 
     /**
-     * Version a single documentation set: every entry gets a v1/v2/v3 pill
+     * Version a single documentation set: every version gets a v1/v2/v3 pill
      * switcher on the page, the default version mounts at the site root and
      * its siblings under `/{slug}/`. Sources default to `{source}/{slug}`,
      * and the first entry is the default unless one is flagged.
+     *
+     * This feature is independent of ->hub(): it parses and stores its own
+     * configuration and produces no docs dropdown.
      *
      * @param  array<array-key, mixed>  $versions
      */
@@ -235,7 +248,7 @@ final class Builder
     {
         $this->isVersionedBuild = true;
 
-        $normalized = [];
+        $parsed = [];
         $defaults = 0;
 
         foreach ($versions as $key => $config) {
@@ -247,9 +260,52 @@ final class Builder
                 ? $config['slug']
                 : (string) $key;
 
-            $resolved = $config;
+            if (! isset($config['label']) || ! is_string($config['label'])) {
+                throw new LogicException(sprintf('Version [%s] must define a string label.', $slug));
+            }
 
-            if (! isset($resolved['source']) || ! is_string($resolved['source']) || $resolved['source'] === '') {
+            $isDefault = (bool) ($config['default'] ?? false);
+
+            if ($isDefault) {
+                $defaults++;
+            }
+
+            $parsed[$slug] = [
+                'label' => $config['label'],
+                'source' => isset($config['source']) && is_string($config['source']) ? $config['source'] : null,
+                'navigation' => $this->navigationFrom($config),
+                'default' => $isDefault,
+            ];
+        }
+
+        if ($defaults > 1) {
+            throw new LogicException('Only one version can be marked as default.');
+        }
+
+        if ($parsed === []) {
+            throw new LogicException('At least one version is required.');
+        }
+
+        // The first listed version is the default unless one is flagged.
+        if ($defaults === 0) {
+            $firstSlug = (string) array_key_first($parsed);
+            $rebuilt = [];
+
+            foreach ($parsed as $slug => $version) {
+                $rebuilt[$slug] = [
+                    'label' => $version['label'],
+                    'source' => $version['source'],
+                    'navigation' => $version['navigation'],
+                    'default' => $slug === $firstSlug,
+                ];
+            }
+
+            $parsed = $rebuilt;
+        }
+
+        // Sources are implied as {source}/{slug}.
+        foreach ($parsed as $slug => $version) {
+            if ($version['source'] === null) {
                 if ($this->sourcePath === null) {
                     throw new LogicException(sprintf(
                         'Version [%s] has no source. Define ->source() so versions resolve to {source}/%s, or set the version source explicitly.',
@@ -258,41 +314,28 @@ final class Builder
                     ));
                 }
 
-                $resolved['source'] = rtrim($this->sourcePath, '/\\') . '/' . $slug;
+                $parsed[$slug]['source'] = rtrim($this->sourcePath, '/\\') . '/' . $slug;
             }
-
-            if ((bool) ($resolved['default'] ?? false)) {
-                $defaults++;
-            }
-
-            $normalized[$slug] = $resolved + ['label' => ''];
         }
 
-        if ($defaults > 1) {
-            throw new LogicException('Only one version can be marked as default.');
-        }
+        $this->versionedVersions = $parsed;
 
-        if ($defaults === 0 && $normalized !== []) {
-            $firstSlug = array_key_first($normalized);
-            $normalized[$firstSlug]['default'] = true;
-        }
-
-        return $this->docs($normalized);
+        return $this;
     }
 
-    private function impliedVersionSource(string $docsSlug, string $versionSlug): string
+    private function impliedVersionSource(string $entrySlug, string $versionSlug): string
     {
         if ($this->sourcePath === null) {
             throw new LogicException(sprintf(
-                'Version [%s] of docs [%s] has no source. Define ->source() so versions resolve to {source}/%s/%s, or set the version source explicitly.',
+                'Version [%s] of hub entry [%s] has no source. Define ->source() so versions resolve to {source}/%s/%s, or set the version source explicitly.',
                 $versionSlug,
-                $docsSlug,
-                $docsSlug,
+                $entrySlug,
+                $entrySlug,
                 $versionSlug,
             ));
         }
 
-        return rtrim($this->sourcePath, '/\\') . '/' . $docsSlug . '/' . $versionSlug;
+        return rtrim($this->sourcePath, '/\\') . '/' . $entrySlug . '/' . $versionSlug;
     }
 
     /**
@@ -623,7 +666,7 @@ final class Builder
 
     public function build(): void
     {
-        if ($this->docsEntries !== []) {
+        if ($this->hubEntries !== [] || $this->versionedVersions !== null) {
             $this->buildDocs();
             return;
         }
@@ -697,74 +740,104 @@ final class Builder
         $pageSets = [];
         $units = [];
 
-        foreach ($this->docsEntries as $entry) {
-            $entrySlug = (string) $entry['slug'];
-            $isRootEntry = $this->isVersionedBuild && ! empty($entry['default']);
+        if ($this->versionedVersions !== null) {
+            // versions() feature: every version is one unit in a shared pill
+            // group; the default mounts at the site root. No dropdown.
+            $defaultSlug = null;
 
-            // The docs dropdown belongs to hub builds only; versioned builds
-            // switch with pills instead.
-            if (! $this->isVersionedBuild) {
-                $dropdownGroups[] = [
-                    'label' => $entry['label'],
-                    'href' => rtrim($this->baseUrl, '/') . '/' . $entry['slug'] . '/',
-                    'key' => $entrySlug,
-                ];
-            }
+            foreach ($this->versionedVersions as $slug => $version) {
+                if ($version['default']) {
+                    $defaultSlug = $slug;
 
-            // All versions of a versioned build share one pill group so the
-            // page shows v1/v2/v3 buttons across them.
-            $groupKey = $this->isVersionedBuild ? '__versions__' : $entrySlug;
-
-            if ($entry['versions'] === null) {
-                $unitId = 'e' . $entrySlug;
-                $units[] = [
-                    'unitId' => $unitId,
-                    'docsSlug' => $entry['slug'],
-                    'group' => $groupKey,
-                    'segment' => '',
-                    'isPrimary' => true,
-                    'isRoot' => $isRootEntry,
-                    'label' => $entry['label'],
-                    'source' => (string) $entry['source'],
-                    'navigation' => $entry['navigation'],
-                ];
-
-                continue;
-            }
-
-            $primaryKey = (string) array_key_first($entry['versions']);
-            $defaultKey = null;
-
-            foreach ($entry['versions'] as $versionSlug => $version) {
-                if (! empty($version['default'])) {
-                    if ($defaultKey !== null) {
-                        throw new LogicException(sprintf(
-                            'Only one version of docs [%s] can be marked as default.',
-                            $entry['slug'],
-                        ));
-                    }
-
-                    $defaultKey = (string) $versionSlug;
+                    break;
                 }
             }
 
-            $primaryKey = $defaultKey ?? $primaryKey;
+            $defaultSlug ??= (string) array_key_first($this->versionedVersions);
 
-            foreach ($entry['versions'] as $versionSlug => $version) {
-                $isPrimary = (string) $versionSlug === $primaryKey;
-                $segment = $isPrimary ? '' : $this->versionSegment((string) $versionSlug);
-
+            foreach ($this->versionedVersions as $slug => $version) {
                 $units[] = [
-                    'unitId' => 'e' . $entrySlug . '|' . $versionSlug,
-                    'docsSlug' => $entry['slug'],
-                    'group' => $groupKey,
-                    'segment' => $segment,
-                    'isPrimary' => $isPrimary,
-                    'isRoot' => $isRootEntry && $isPrimary,
+                    'unitId' => 'v|' . $slug,
+                    'docsSlug' => $slug,
+                    'group' => '__versions__',
+                    'segment' => '',
+                    'isPrimary' => true,
+                    'isRoot' => $slug === $defaultSlug,
                     'label' => (string) $version['label'],
                     'source' => (string) $version['source'],
-                    'navigation' => $entry['navigation'],
+                    'navigation' => $version['navigation'],
                 ];
+            }
+        } else {
+            foreach ($this->hubEntries as $entry) {
+                $entrySlug = (string) $entry['slug'];
+                $isRootEntry = $this->isVersionedBuild && ! empty($entry['default']);
+
+                // The docs dropdown belongs to hub builds only; versioned builds
+                // switch with pills instead.
+                if (! $this->isVersionedBuild) {
+                    $dropdownGroups[] = [
+                        'label' => $entry['label'],
+                        'href' => rtrim($this->baseUrl, '/') . '/' . $entry['slug'] . '/',
+                        'key' => $entrySlug,
+                    ];
+                }
+
+                // All versions of a versioned build share one pill group so the
+                // page shows v1/v2/v3 buttons across them.
+                $groupKey = $this->isVersionedBuild ? '__versions__' : $entrySlug;
+
+                if ($entry['versions'] === null) {
+                    $unitId = 'e' . $entrySlug;
+                    $units[] = [
+                        'unitId' => $unitId,
+                        'docsSlug' => $entry['slug'],
+                        'group' => $groupKey,
+                        'segment' => '',
+                        'isPrimary' => true,
+                        'isRoot' => $isRootEntry,
+                        'label' => $entry['label'],
+                        'source' => (string) $entry['source'],
+                        'navigation' => $entry['navigation'],
+                    ];
+
+                    continue;
+                }
+
+                $primaryKey = (string) array_key_first($entry['versions']);
+                $defaultKey = null;
+
+                foreach ($entry['versions'] as $versionSlug => $version) {
+                    if (! empty($version['default'])) {
+                        if ($defaultKey !== null) {
+                            throw new LogicException(sprintf(
+                                'Only one version of hub entry [%s] can be marked as default.',
+                                $entry['slug'],
+                            ));
+                        }
+
+                        $defaultKey = (string) $versionSlug;
+                    }
+                }
+
+                $primaryKey = $defaultKey ?? $primaryKey;
+
+                foreach ($entry['versions'] as $versionSlug => $version) {
+                    $isPrimary = (string) $versionSlug === $primaryKey;
+                    $segment = $isPrimary ? '' : $this->versionSegment((string) $versionSlug);
+
+                    $units[] = [
+                        'unitId' => 'e' . $entrySlug . '|' . $versionSlug,
+                        'docsSlug' => $entry['slug'],
+                        'group' => $groupKey,
+                        'segment' => $segment,
+                        'isPrimary' => $isPrimary,
+                        'isRoot' => $isRootEntry && $isPrimary,
+                        'label' => (string) $version['label'],
+                        'source' => (string) $version['source'],
+                        'navigation' => $entry['navigation'],
+                    ];
+                }
             }
         }
 
@@ -845,7 +918,7 @@ final class Builder
         }
 
         if (! $this->isVersionedBuild) {
-            $firstEntry = $this->docsEntries[0] ?? null;
+            $firstEntry = $this->hubEntries[0] ?? null;
 
             if ($firstEntry !== null) {
                 $siteBuilder->buildVersionsRedirect($outputPath, '/' . $firstEntry['slug'] . '/');
@@ -862,7 +935,7 @@ final class Builder
             }
         }
 
-        $this->writeAssetsToRoot($outputPath, $rootUnitSourceSlug ?? ($this->docsEntries[0]['slug'] ?? null));
+        $this->writeAssetsToRoot($outputPath, $rootUnitSourceSlug ?? ($this->hubEntries[0]['slug'] ?? null));
     }
 
     private function versionSegment(string $slug): string
