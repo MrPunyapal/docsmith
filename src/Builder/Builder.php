@@ -8,7 +8,6 @@ use Docsmith\Compatibility\ReadmeIndexImporter;
 use Docsmith\Config\BuildConfig;
 use Docsmith\Config\OgImageConfig;
 use Docsmith\Config\SiteMetadata;
-use Docsmith\Config\VersionConfig;
 use Docsmith\Content\Document;
 use Docsmith\Markdown\CommonMarkRenderer;
 use Docsmith\Render\OgImageGenerator;
@@ -76,103 +75,127 @@ final class Builder
     /** @var list<string> */
     private array $readmeSkipSections = [];
 
-    /** @var list<VersionConfig> */
-    private array $versions = [];
-
-    /** @var list<array{label: string|null, members: list<VersionConfig>}> */
-    private array $versionGroups = [];
-
     /**
-     * Define versioned builds. Each entry is either a plain version config or
-     * a group of related versions that share one dropdown entry and expose
-     * pill buttons for switching between each other on the page.
-     *
-     * @param  array<string, mixed>  $versions
+     * @var list<array{slug: string, label: string, source: string, navigation: ?list<string>, versions: array<string, array{label: string, source: string, default?: bool}>|null}>
      */
-    public function versions(array $versions): self
+    private array $docsEntries = [];
+    /**
+     * Define the documentation sets to build. Each entry becomes one item in
+     * the docs selector and is mounted under its own path. An entry may
+     * contain internal versions, which then behave exactly like a classic
+     * versioned build scoped to that entry.
+     *
+     * @param  array<string, mixed>  $docs
+     */
+    public function docs(array $docs): self
     {
-        $this->versions = [];
-        $this->versionGroups = [];
+        $this->docsEntries = [];
         $seenSlugs = [];
-        $defaults = 0;
 
-        foreach ($versions as $key => $config) {
+        foreach ($docs as $slug => $config) {
+            $slug = (string) $slug;
+
             if (! is_array($config)) {
-                throw new LogicException(sprintf('Version [%s] must be defined as an array.', (string) $key));
+                throw new LogicException(sprintf('Docs [%s] must be defined as an array.', $slug));
             }
 
+            if (isset($seenSlugs[$slug])) {
+                throw new LogicException(sprintf('Duplicate docs slug [%s].', $slug));
+            }
+
+            $seenSlugs[$slug] = true;
+
             if (isset($config['versions'])) {
-                if (! is_array($config['versions']) || ! is_string($config['label'] ?? null)) {
+                if (! is_array($config['versions']) || $config['versions'] === [] || ! is_string($config['label'] ?? null)) {
                     throw new LogicException(sprintf(
-                        'Grouped version [%s] must define a string label and a versions map.',
-                        (string) $key,
+                        'Docs [%s] must define a string label and a non-empty versions map.',
+                        $slug,
                     ));
                 }
 
-                $members = [];
+                $versions = [];
 
-                foreach ($config['versions'] as $memberSlug => $memberConfig) {
-                    $memberConfig = (array) $memberConfig;
+                foreach ($config['versions'] as $versionSlug => $versionConfig) {
+                    $versionConfig = (array) $versionConfig;
+                    $versionSlug = (string) $versionSlug;
 
-                    if (! isset($memberConfig['source'], $memberConfig['label']) || ! is_string($memberConfig['source']) || ! is_string($memberConfig['label'])) {
+                    if (! isset($versionConfig['source'], $versionConfig['label']) || ! is_string($versionConfig['source']) || ! is_string($versionConfig['label'])) {
                         throw new LogicException(sprintf(
-                            'Version [%s] inside group [%s] must define a string label and source.',
-                            (string) $memberSlug,
-                            (string) $key,
+                            'Version [%s] inside docs [%s] must define a string label and source.',
+                            $versionSlug,
+                            $slug,
                         ));
                     }
 
-                    /** @var array{label: string, source: string, default?: bool, navigation?: list<string>} $memberConfig */
-                    $member = VersionConfig::fromArray((string) $memberSlug, $memberConfig);
-
-                    if (isset($seenSlugs[$member->slug])) {
-                        throw new LogicException(sprintf('Duplicate version slug [%s].', $member->slug));
-                    }
-
-                    $seenSlugs[$member->slug] = true;
-                    $defaults += (int) $member->isDefault;
-                    $members[] = $member;
-                    $this->versions[] = $member;
+                    $versions[$versionSlug] = [
+                        'label' => $versionConfig['label'],
+                        'source' => $versionConfig['source'],
+                        'default' => (bool) ($versionConfig['default'] ?? false),
+                    ];
                 }
 
-                $this->versionGroups[] = [
+                $this->docsEntries[] = [
+                    'slug' => $slug,
                     'label' => $config['label'],
-                    'members' => $members,
+                    'source' => '',
+                    'navigation' => $this->navigationFrom($config),
+                    'versions' => $versions,
                 ];
 
                 continue;
             }
 
-            unset($config['versions']);
-
             if (! isset($config['source'], $config['label']) || ! is_string($config['source']) || ! is_string($config['label'])) {
-                throw new LogicException(sprintf(
-                    'Version [%s] must define a string label and source.',
-                    (string) $key,
-                ));
+                throw new LogicException(sprintf('Docs [%s] must define a string label and source.', $slug));
             }
 
-            /** @var array{label: string, source: string, default?: bool, navigation?: list<string>} $config */
-            $version = VersionConfig::fromArray((string) $key, $config);
-
-            if (isset($seenSlugs[$version->slug])) {
-                throw new LogicException(sprintf('Duplicate version slug [%s].', $version->slug));
-            }
-
-            $seenSlugs[$version->slug] = true;
-            $defaults += (int) $version->isDefault;
-            $this->versions[] = $version;
-            $this->versionGroups[] = [
-                'label' => null,
-                'members' => [$version],
+            $this->docsEntries[] = [
+                'slug' => $slug,
+                'label' => $config['label'],
+                'source' => $config['source'],
+                'navigation' => $this->navigationFrom($config),
+                'versions' => null,
             ];
         }
 
-        if ($defaults > 1) {
-            throw new LogicException('Only one version can be marked as default.');
+        return $this;
+    }
+
+    /**
+     * @deprecated Use docs(). Kept for backwards compatibility.
+     *
+     * @param  array<string, mixed>  $versions
+     */
+    public function versions(array $versions): self
+    {
+        return $this->docs($versions);
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @return array<int, string>|null
+     */
+    /**
+     * @param  array<array-key, mixed>  $config
+     * @return list<string>|null
+     */
+    private function navigationFrom(array $config): ?array
+    {
+        $navigation = $config['navigation'] ?? null;
+
+        if (! is_array($navigation)) {
+            return null;
         }
 
-        return $this;
+        $items = array_values(array_filter(
+            array_map(
+                static fn ($value): string => is_string($value) ? $value : '',
+                array_values($navigation),
+            ),
+            static fn (string $item): bool => $item !== '',
+        ));
+
+        return $items === [] ? null : $items;
     }
 
     public function source(string $sourcePath): self
@@ -480,8 +503,8 @@ final class Builder
 
     public function build(): void
     {
-        if ($this->versions !== []) {
-            $this->buildVersions();
+        if ($this->docsEntries !== []) {
+            $this->buildDocs();
             return;
         }
 
@@ -546,64 +569,106 @@ final class Builder
         );
     }
 
-    private function buildVersions(): void
+    private function buildDocs(): void
     {
         $outputPath = $this->requireOutputPath();
         $siteBuilder = new SiteBuilder();
 
-        $pageSets = [];
-
-        foreach ($this->versions as $version) {
-            $pageSets[$version->slug] = $siteBuilder->scanDocumentPaths($version->sourcePath);
-        }
-
         $dropdownGroups = [];
-        $pillGroups = [];
+        $pageSets = [];
+        $units = [];
 
-        foreach ($this->versionGroups as $group) {
-            $primary = $group['members'][0];
-
-            foreach ($group['members'] as $member) {
-                if ($member->isDefault) {
-                    $primary = $member;
-
-                    break;
-                }
-            }
+        foreach ($this->docsEntries as $index => $entry) {
+            $entrySlug = (string) $entry['slug'];
 
             $dropdownGroups[] = [
-                'label' => $group['label'] ?? $primary->label,
-                'hrefSlug' => $primary->isDefault ? '' : $primary->slug,
-                'slugs' => array_map(fn (VersionConfig $m): string => $m->slug, $group['members']),
+                'label' => $entry['label'],
+                'href' => rtrim($this->baseUrl, '/') . '/' . $entry['slug'] . '/',
+                'key' => $entrySlug,
             ];
 
-            if (count($group['members']) > 1) {
-                $pillList = array_map(
-                    fn (VersionConfig $m): array => ['slug' => $m->slug, 'label' => $m->label, 'isDefault' => $m->isDefault],
-                    $group['members'],
-                );
+            if ($entry['versions'] === null) {
+                $unitId = 'e' . $entrySlug;
+                $units[] = [
+                    'unitId' => $unitId,
+                    'docsSlug' => $entry['slug'],
+                    'segment' => '',
+                    'isPrimary' => true,
+                    'label' => $entry['label'],
+                    'source' => (string) $entry['source'],
+                    'navigation' => $entry['navigation'],
+                ];
 
-                foreach ($group['members'] as $member) {
-                    $pillGroups[$member->slug] = $pillList;
+                continue;
+            }
+
+            $primaryKey = (string) array_key_first($entry['versions']);
+            $defaultKey = null;
+
+            foreach ($entry['versions'] as $versionSlug => $version) {
+                if (! empty($version['default'])) {
+                    if ($defaultKey !== null) {
+                        throw new LogicException(sprintf(
+                            'Only one version of docs [%s] can be marked as default.',
+                            $entry['slug'],
+                        ));
+                    }
+
+                    $defaultKey = (string) $versionSlug;
                 }
+            }
+
+            $primaryKey = $defaultKey ?? $primaryKey;
+
+            foreach ($entry['versions'] as $versionSlug => $version) {
+                $isPrimary = (string) $versionSlug === $primaryKey;
+                $segment = $isPrimary ? '' : $this->versionSegment((string) $versionSlug);
+
+                $units[] = [
+                    'unitId' => 'e' . $entrySlug . '|' . $versionSlug,
+                    'docsSlug' => $entry['slug'],
+                    'segment' => $segment,
+                    'isPrimary' => $isPrimary,
+                    'label' => (string) $version['label'],
+                    'source' => (string) $version['source'],
+                    'navigation' => $entry['navigation'],
+                ];
             }
         }
 
-        $versionsData = array_map(
-            fn (VersionConfig $v): array => ['slug' => $v->slug, 'label' => $v->label, 'default' => $v->isDefault],
-            $this->versions,
-        );
+        foreach ($units as $unit) {
+            $pageSets[$unit['unitId']] = $siteBuilder->scanDocumentPaths($unit['source']);
+        }
 
-        $hasDefault = (bool) array_filter($this->versions, fn (VersionConfig $v): bool => $v->isDefault);
+        $pillMembersByUnit = [];
 
-        foreach ($this->versions as $version) {
-            $versionDocPath = rtrim($outputPath, '/') . '/' . $version->slug;
-            $isDefault = $version->isDefault;
-            $navigationOrder = $version->navigationOrder ?? $this->navigationOrder;
+        foreach ($units as $unit) {
+            $siblings = array_values(array_filter(
+                $units,
+                fn (array $candidate): bool => $candidate['docsSlug'] === $unit['docsSlug'],
+            ));
+
+            if (count($siblings) > 1) {
+                $pillMembersByUnit[$unit['unitId']] = array_map(
+                    fn (array $sibling): array => [
+                        'segment' => $sibling['segment'],
+                        'label' => $sibling['label'],
+                        'isPrimary' => $sibling['isPrimary'],
+                        'unitId' => $sibling['unitId'],
+                    ],
+                    $siblings,
+                );
+            }
+        }
+
+        foreach ($units as $unit) {
+            $writeTarget = rtrim($outputPath, '/') . '/' . $unit['docsSlug']
+                . ($unit['segment'] !== '' ? '/' . $unit['segment'] : '');
+            $navigationOrder = $unit['navigation'] ?? $this->navigationOrder;
 
             $config = BuildConfig::fromInput(
-                sourcePath: $version->sourcePath,
-                outputPath: $versionDocPath,
+                sourcePath: $unit['source'],
+                outputPath: $writeTarget,
                 metadata: new SiteMetadata(
                     title: $this->title,
                     description: $this->description,
@@ -626,36 +691,44 @@ final class Builder
                 ogImage: $this->ogImage,
             );
 
-            $writeTarget = $isDefault ? $outputPath : $versionDocPath;
-
-            $siteBuilder->buildVersion(
+            $siteBuilder->buildDocsUnit(
                 config: $config,
+                activeKey: $unit['docsSlug'],
+                unitId: $unit['unitId'],
+                docsHref: '/' . $unit['docsSlug'] . '/',
                 dropdownGroups: $dropdownGroups,
-                pillGroups: $pillGroups,
+                pillMembers: $pillMembersByUnit[$unit['unitId']] ?? [],
                 pageSets: $pageSets,
-                currentSlug: $version->slug,
-                isDefault: $isDefault,
-                rootOutput: $outputPath,
             );
 
             $this->generateOgImages($config, null, $writeTarget);
         }
 
-        if (! $hasDefault) {
-            (new SiteBuilder())->buildVersionsLanding(
-                $outputPath,
-                $versionsData,
-                $this->title,
-                $this->description,
-            );
+        $firstEntry = $this->docsEntries[0] ?? null;
+
+        if ($firstEntry !== null && count($this->docsEntries) > 1) {
+            $siteBuilder->buildVersionsRedirect($outputPath, '/' . $firstEntry['slug'] . '/');
+        } elseif ($firstEntry !== null) {
+            // A single docs entry still owns its slug path only; forward the
+            // bare root for convenience.
+            $siteBuilder->buildVersionsRedirect($outputPath, '/' . $firstEntry['slug'] . '/');
         }
 
-        $this->writeAssetsToRoot($outputPath);
+        $this->writeAssetsToRoot($outputPath, $this->docsEntries[0]['slug'] ?? null);
     }
 
-    private function writeAssetsToRoot(string $outputPath): void
+    private function versionSegment(string $slug): string
     {
-        $assetsSource = rtrim($outputPath, '/') . '/' . $this->versions[0]->slug . '/assets';
+        return (string) preg_replace('/[^A-Za-z0-9._-]+/', '-', trim($slug, '/-'));
+    }
+
+    private function writeAssetsToRoot(string $outputPath, ?string $docsSlug): void
+    {
+        if ($docsSlug === null) {
+            return;
+        }
+
+        $assetsSource = rtrim($outputPath, '/') . '/' . $docsSlug . '/assets';
         $assetsTarget = rtrim($outputPath, '/') . '/assets';
 
         if (is_dir($assetsSource) && ! is_dir($assetsTarget)) {

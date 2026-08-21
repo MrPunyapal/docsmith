@@ -109,14 +109,19 @@ final readonly class SiteBuilder
      * @param  array<string, list<array{slug: string, label: string, isDefault: bool}>>  $pillGroups
      * @param  array<string, array<string, true>>  $pageSets
      */
-    public function buildVersion(
+    /**
+     * @param  list<array{label: string, href: string, key: string}>  $dropdownGroups
+     * @param  list<array{segment: string, label: string, isPrimary: bool, unitId: string}>  $pillMembers
+     * @param  array<string, array<string, true>>  $pageSets
+     */
+    public function buildDocsUnit(
         BuildConfig $config,
+        string $activeKey,
+        string $unitId,
+        string $docsHref,
         array $dropdownGroups,
-        array $pillGroups,
+        array $pillMembers,
         array $pageSets,
-        string $currentSlug,
-        bool $isDefault,
-        string $rootOutput,
     ): void {
         $documents = array_map(
             fn (Document $document): Document => $document->html === ''
@@ -135,7 +140,7 @@ final readonly class SiteBuilder
         ));
         $visibleDocuments = $this->sortNavigationDocuments($visibleDocuments, $config->metadata->navigationOrder);
 
-        $writeTarget = $isDefault ? $rootOutput : $config->outputPath;
+        $writeTarget = rtrim($config->outputPath, '/');
 
         if (! is_dir($writeTarget)) {
             mkdir($writeTarget, 0777, true);
@@ -145,16 +150,16 @@ final readonly class SiteBuilder
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
-            $versionSwitcher = $this->versionSwitcherHtml($dropdownGroups, $currentSlug, $config->baseUrl)
+            $versionSwitcher = $this->versionSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
                 . $this->versionPillsHtml(
-                    $pillGroups[$currentSlug] ?? [],
-                    $currentSlug,
+                    $pillMembers,
+                    $unitId,
+                    $docsHref,
                     $document->outputPath,
                     $pageSets,
-                    $config->baseUrl,
                 );
 
-            $absoluteOutputPath = rtrim($writeTarget, '/') . '/' . $document->outputPath;
+            $absoluteOutputPath = $writeTarget . '/' . $document->outputPath;
             $directory = dirname($absoluteOutputPath);
 
             if (! is_dir($directory)) {
@@ -171,10 +176,10 @@ final readonly class SiteBuilder
             $landing = $this->landingPage(
                 $config,
                 $visibleDocuments,
-                $this->versionSwitcherHtml($dropdownGroups, $currentSlug, $config->baseUrl)
-                . $this->versionPillsHtml($pillGroups[$currentSlug] ?? [], $currentSlug, 'index.html', $pageSets, $config->baseUrl),
+                $this->versionSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
+                . $this->versionPillsHtml($pillMembers, $unitId, $docsHref, 'index.html', $pageSets),
             );
-            file_put_contents(rtrim($writeTarget, '/') . '/index.html', $landing);
+            file_put_contents($writeTarget . '/index.html', $landing);
         }
 
         $this->writeSearchIndex($config, $documents, ! $hasRootIndex, $writeTarget);
@@ -193,25 +198,16 @@ final readonly class SiteBuilder
     }
 
     /**
-     * Write a root landing page that links to every version when no version
-     * is marked as default. Every version then lives under its own slug.
-     *
-     * @param  list<array{slug: string, label: string, default: bool}>  $versions
+     * When no docs entry owns the root, a tiny stub forwards visitors to the
+     * first entry's home.
      */
-    public function buildVersionsLanding(string $rootOutput, array $versions, string $title, string $description): void
+    public function buildVersionsRedirect(string $rootOutput, string $href): void
     {
         if (! is_dir($rootOutput)) {
             mkdir($rootOutput, 0777, true);
         }
 
-        $cards = implode('', array_map(
-            fn (array $version): string => sprintf(
-                '<a class="versions-landing-card" href="%s/"><span class="versions-landing-name">%s</span><span class="versions-landing-hint">Open documentation</span></a>',
-                htmlspecialchars($version['slug'], ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8'),
-            ),
-            $versions,
-        ));
+        $href = rtrim('/' . ltrim($href, '/'), '/') . '/';
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -219,17 +215,13 @@ final readonly class SiteBuilder
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{$title}</title>
-    <meta name="description" content="{$description}">
-    <link rel="stylesheet" href="assets/app.css">
-    <script src="assets/app.js" defer></script>
+    <title>Redirecting…</title>
+    <link rel="canonical" href="{$href}">
+    <script>location.replace("{$href}");</script>
+    <meta http-equiv="refresh" content="0; url={$href}">
 </head>
-<body data-docsmith-root="">
-    <main class="versions-landing">
-        <h1 class="versions-landing-title">{$title}</h1>
-        <p class="versions-landing-description">{$description}</p>
-        <div class="versions-landing-grid">{$cards}</div>
-    </main>
+<body>
+    <p>Redirecting… <a href="{$href}">Continue</a></p>
 </body>
 </html>
 HTML;
@@ -1131,11 +1123,11 @@ HTML;
     }
 
     /**
-     * Dropdown with one entry per top-level group.
+     * Docs selector: one entry per documentation set.
      *
-     * @param  list<array{label: string, hrefSlug: string, slugs: list<string>}>  $groups
+     * @param  list<array{label: string, href: string, key: string}>  $groups
      */
-    private function versionSwitcherHtml(array $groups, string $currentSlug, string $baseUrl): string
+    private function versionSwitcherHtml(array $groups, string $activeKey, string $baseUrl): string
     {
         if (count($groups) < 2) {
             return '';
@@ -1145,49 +1137,43 @@ HTML;
         $options = '';
 
         foreach ($groups as $group) {
-            $selected = in_array($currentSlug, $group['slugs'], true) ? ' selected' : '';
-            $href = htmlspecialchars(
-                ($group['hrefSlug'] === '' ? $basePath : $basePath . '/' . $group['hrefSlug']) . '/',
-                ENT_QUOTES,
-                'UTF-8',
-            );
+            $selected = $group['key'] === $activeKey ? ' selected' : '';
+            $href = htmlspecialchars($basePath . $group['href'], ENT_QUOTES, 'UTF-8');
             $label = htmlspecialchars($group['label'], ENT_QUOTES, 'UTF-8');
 
             $options .= sprintf('<option value="%s"%s>%s</option>', $href, $selected, $label);
         }
 
-        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version"><select class="version-select" data-docsmith-version-select aria-label="Select version">' . $options . '</select></nav>';
+        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Docs"><select class="version-select" data-docsmith-version-select aria-label="Select docs">' . $options . '</select></nav>';
     }
 
     /**
-     * Pill buttons for switching between the versions of the current package.
-     * A pill links to the same page in that version when it exists there,
-     * otherwise to the version home.
+     * Version pills for switching between the versions of the current docs
+     * entry. A pill links to the same page in that version when it exists
+     * there, otherwise to the version home.
      *
-     * @param  list<array{slug: string, label: string, isDefault: bool}>  $members
+     * @param  list<array{segment: string, label: string, isPrimary: bool, unitId: string}>  $members
      * @param  array<string, array<string, true>>  $pageSets
      */
-    private function versionPillsHtml(array $members, string $currentSlug, string $currentOutputPath, array $pageSets, string $baseUrl): string
+    private function versionPillsHtml(array $members, string $activeUnitId, string $docsHref, string $currentOutputPath, array $pageSets): string
     {
         if (count($members) < 2) {
             return '';
         }
 
-        $basePath = rtrim($baseUrl, '/');
         $pagePath = str_replace(['/index.html', 'index.html'], '/', $currentOutputPath);
         $links = '';
 
         foreach ($members as $member) {
-            $base = $member['isDefault'] ? $basePath : $basePath . '/' . $member['slug'];
-            $samePage = isset($pageSets[$member['slug']][$currentOutputPath]);
+            $base = rtrim($docsHref . $member['segment'] . '/', '/');
 
-            if ($samePage && $pagePath !== '/') {
-                $href = rtrim($base . '/' . ltrim($pagePath, '/'), '/') . '/';
+            if ($member['unitId'] !== $activeUnitId && isset($pageSets[$member['unitId']][$currentOutputPath]) && $pagePath !== '/') {
+                $href = $base . '/' . ltrim($pagePath, '/');
             } else {
-                $href = $base . '/';
+                $href = $base === '' ? '/' : $base . '/';
             }
 
-            $current = $member['slug'] === $currentSlug ? ' version-link-current' : '';
+            $current = $member['unitId'] === $activeUnitId ? ' version-link-current' : '';
             $label = htmlspecialchars($member['label'], ENT_QUOTES, 'UTF-8');
 
             $links .= sprintf('<a class="version-link%s" href="%s">%s</a>', $current, $href, $label);
