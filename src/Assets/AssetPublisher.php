@@ -1349,8 +1349,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var hubSelect = document.querySelector('[data-docsmith-hub-select]');
 
-    if (versionSelect) {
-        versionSelect.addEventListener('change', function () {
+    if (hubSelect) {
+        hubSelect.addEventListener('change', function () {
             if (this.value !== '') {
                 window.location.href = this.value;
             }

@@ -952,7 +952,9 @@ final class Builder
         $assetsSource = rtrim($outputPath, '/') . '/' . $docsSlug . '/assets';
         $assetsTarget = rtrim($outputPath, '/') . '/assets';
 
-        if (is_dir($assetsSource) && ! is_dir($assetsTarget)) {
+        // Always re-copy: a previously built site must not keep stale
+        // app.css/app.js when the generated assets change.
+        if (is_dir($assetsSource)) {
             $this->copyDirectory($assetsSource, $assetsTarget);
         }
     }
