@@ -87,13 +87,36 @@ final readonly class SiteBuilder
         }
     }
 
-    /** @param list<array{slug: string, label: string, default: bool}> $versions */
-    public function buildVersion(
+    /**
+     * Pre-scan a version source so cross-version links can fall back to the
+     * member home when a page does not exist in that version.
+     *
+     * @return array<string, true>
+     */
+    public function scanDocumentPaths(string $sourcePath): array
+    {
+        $paths = [];
+
+        foreach ($this->scanner->scan($sourcePath) as $document) {
+            $paths[$document->outputPath] = true;
+        }
+
+        return $paths;
+    }
+
+    /**
+     * @param  list<array{label: string, href: string, key: string}>  $dropdownGroups
+     * @param  list<array{href?: string, segment: string, label: string, isPrimary: bool, unitId: string}>  $pillMembers
+     * @param  array<string, array<string, true>>  $pageSets
+     */
+    public function buildDocsUnit(
         BuildConfig $config,
-        array $versions,
-        string $currentSlug,
-        bool $isDefault,
-        string $rootOutput,
+        string $activeKey,
+        string $unitId,
+        string $docsHref,
+        array $dropdownGroups,
+        array $pillMembers,
+        array $pageSets,
     ): void {
         $documents = array_map(
             fn (Document $document): Document => $document->html === ''
@@ -106,7 +129,13 @@ final readonly class SiteBuilder
             throw new RuntimeException('The source directory does not contain any markdown files.');
         }
 
-        $writeTarget = $isDefault ? $rootOutput : $config->outputPath;
+        $visibleDocuments = array_values(array_filter(
+            $documents,
+            fn (Document $document): bool => ! $document->hidden,
+        ));
+        $visibleDocuments = $this->sortNavigationDocuments($visibleDocuments, $config->metadata->navigationOrder);
+
+        $writeTarget = rtrim($config->outputPath, '/');
 
         if (! is_dir($writeTarget)) {
             mkdir($writeTarget, 0777, true);
@@ -116,9 +145,16 @@ final readonly class SiteBuilder
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
-            $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug, $document, $config->baseUrl);
+            $hubSwitcher = $this->hubSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
+                . $this->versionPillsHtml(
+                    $pillMembers,
+                    $unitId,
+                    $docsHref,
+                    $document->outputPath,
+                    $pageSets,
+                );
 
-            $absoluteOutputPath = rtrim($writeTarget, '/') . '/' . $document->outputPath;
+            $absoluteOutputPath = $writeTarget . '/' . $document->outputPath;
             $directory = dirname($absoluteOutputPath);
 
             if (! is_dir($directory)) {
@@ -127,20 +163,18 @@ final readonly class SiteBuilder
 
             file_put_contents(
                 $absoluteOutputPath,
-                $this->page($config, $document, $documents, $versionSwitcher),
+                $this->page($config, $document, $visibleDocuments, $hubSwitcher),
             );
         }
 
         if (! $hasRootIndex) {
-            $rootDoc = new Document(
-                sourcePath: '',
-                relativePath: '',
-                outputPath: 'index.html',
-                title: $config->metadata->title,
-                markdown: '',
+            $landing = $this->landingPage(
+                $config,
+                $visibleDocuments,
+                $this->hubSwitcherHtml($dropdownGroups, $activeKey, $config->baseUrl)
+                . $this->versionPillsHtml($pillMembers, $unitId, $docsHref, 'index.html', $pageSets),
             );
-            $landing = $this->landingPage($config, $documents, $this->versionSwitcherHtml($versions, $currentSlug, $rootDoc, $config->baseUrl));
-            file_put_contents(rtrim($writeTarget, '/') . '/index.html', $landing);
+            file_put_contents($writeTarget . '/index.html', $landing);
         }
 
         $this->writeSearchIndex($config, $documents, ! $hasRootIndex, $writeTarget);
@@ -158,8 +192,40 @@ final readonly class SiteBuilder
         }
     }
 
+    /**
+     * When no docs entry owns the root, a tiny stub forwards visitors to the
+     * first entry's home.
+     */
+    public function buildVersionsRedirect(string $rootOutput, string $href): void
+    {
+        if (! is_dir($rootOutput)) {
+            mkdir($rootOutput, 0777, true);
+        }
+
+        $href = rtrim('/' . ltrim($href, '/'), '/') . '/';
+
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting…</title>
+    <link rel="canonical" href="{$href}">
+    <script>location.replace("{$href}");</script>
+    <meta http-equiv="refresh" content="0; url={$href}">
+</head>
+<body>
+    <p>Redirecting… <a href="{$href}">Continue</a></p>
+</body>
+</html>
+HTML;
+
+        file_put_contents(rtrim($rootOutput, '/') . '/index.html', $html);
+    }
+
     /** @param list<Document> $documents */
-    private function page(BuildConfig $config, Document $document, array $documents, string $versionSwitcher = ''): string
+    private function page(BuildConfig $config, Document $document, array $documents, string $hubSwitcher = ''): string
     {
         $tocData = $this->tocFromHtml($document->html);
         $toc = $tocData['items'];
@@ -203,7 +269,7 @@ final readonly class SiteBuilder
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
-                {$versionSwitcher}
+                {$hubSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
                     <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
@@ -240,7 +306,7 @@ HTML;
     }
 
     /** @param list<Document> $documents */
-    private function landingPage(BuildConfig $config, array $documents, string $versionSwitcher = ''): string
+    private function landingPage(BuildConfig $config, array $documents, string $hubSwitcher = ''): string
     {
         $pageLinks = array_map(
             fn (Document $document): string => sprintf(
@@ -280,7 +346,7 @@ HTML;
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
             <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
-                {$versionSwitcher}
+                {$hubSwitcher}
                 {$this->sidebarActions($config)}
                 <div class="search">
                     <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
@@ -1051,38 +1117,64 @@ HTML;
         return '<aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links">' . implode('', $links) . '</nav></aside>';
     }
 
-    /** @param list<array{slug: string, label: string, default: bool}> $versions */
-    private function versionSwitcherHtml(array $versions, string $currentSlug, Document $document, string $baseUrl = '/'): string
+    /**
+     * Docs selector: one entry per documentation set.
+     *
+     * @param  list<array{label: string, href: string, key: string}>  $groups
+     */
+    private function hubSwitcherHtml(array $groups, string $activeKey, string $baseUrl): string
     {
-        if (count($versions) < 2) {
+        if (count($groups) < 2) {
             return '';
         }
 
-        $pagePath = str_replace(['/index.html', 'index.html'], '/', $document->outputPath);
-        $pagePath = $pagePath === '/' ? '' : $pagePath;
-
         $basePath = rtrim($baseUrl, '/');
+        $options = '';
 
-        $options = array_map(
-            function (array $version) use ($currentSlug, $pagePath, $basePath): string {
-                $selected = $version['slug'] === $currentSlug;
-                $label = htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8');
-                $slug = htmlspecialchars($version['slug'], ENT_QUOTES, 'UTF-8');
-                $href = $version['default']
-                    ? $basePath . '/' . $pagePath
-                    : $basePath . '/' . $slug . '/' . $pagePath;
+        foreach ($groups as $group) {
+            $selected = $group['key'] === $activeKey ? ' selected' : '';
+            $href = htmlspecialchars($basePath . $group['href'], ENT_QUOTES, 'UTF-8');
+            $label = htmlspecialchars($group['label'], ENT_QUOTES, 'UTF-8');
 
-                return sprintf(
-                    '<a class="version-link%s" href="%s">%s</a>',
-                    $selected ? ' version-link-current' : '',
-                    $href,
-                    $label,
-                );
-            },
-            $versions,
-        );
+            $options .= sprintf('<option value="%s"%s>%s</option>', $href, $selected, $label);
+        }
 
-        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version">' . implode('', $options) . '</nav>';
+        return '<nav class="hub-switcher" data-docsmith-hub-switcher aria-label="Docs"><select class="hub-select" data-docsmith-hub-select aria-label="Select docs">' . $options . '</select></nav>';
+    }
+
+    /**
+     * Version pills for switching between the versions of the current docs
+     * entry. A pill links to the same page in that version when it exists
+     * there, otherwise to the version home.
+     *
+     * @param  list<array{href?: string, segment: string, label: string, isPrimary: bool, unitId: string}>  $members
+     * @param  array<string, array<string, true>>  $pageSets
+     */
+    private function versionPillsHtml(array $members, string $activeUnitId, string $docsHref, string $currentOutputPath, array $pageSets): string
+    {
+        if (count($members) < 2) {
+            return '';
+        }
+
+        $pagePath = str_replace(['/index.html', 'index.html'], '/', $currentOutputPath);
+        $links = '';
+
+        foreach ($members as $member) {
+            $base = rtrim(($member['href'] ?? $docsHref) . $member['segment'] . '/', '/');
+
+            if ($member['unitId'] !== $activeUnitId && isset($pageSets[$member['unitId']][$currentOutputPath]) && $pagePath !== '/') {
+                $href = $base . '/' . ltrim($pagePath, '/');
+            } else {
+                $href = $base === '' ? '/' : $base . '/';
+            }
+
+            $current = $member['unitId'] === $activeUnitId ? ' version-link-current' : '';
+            $label = htmlspecialchars($member['label'], ENT_QUOTES, 'UTF-8');
+
+            $links .= sprintf('<a class="version-link%s" href="%s">%s</a>', $current, $href, $label);
+        }
+
+        return '<nav class="version-pills" data-docsmith-version-pills aria-label="Versions">' . $links . '</nav>';
     }
 
     private function searchOverlay(): string

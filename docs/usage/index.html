@@ -36,7 +36,7 @@
                     <div class="search-results" data-docsmith-search-results hidden></div>
                     <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
                 </div>
-                <nav class="nav" data-docsmith-nav><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../open-graph/" data-nav-item data-title="Open Graph" data-search="Open Graph Images Open Graph">Open Graph</a><a class="" href="../llm-export/" data-nav-item data-title="LLM Export" data-search="LLM Export LLM Export">LLM Export</a><a class="" href="../versioned-docs/" data-nav-item data-title="Versioned Docs" data-search="Versioned Docs Versioned Docs">Versioned Docs</a></nav>
+                <nav class="nav" data-docsmith-nav><a class="" href="../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="active" href="./" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a><a class="" href="../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../open-graph/" data-nav-item data-title="Open Graph" data-search="Open Graph Images Open Graph">Open Graph</a><a class="" href="../llm-export/" data-nav-item data-title="LLM Export" data-search="LLM Export LLM Export">LLM Export</a><a class="" href="../versioned-docs/" data-nav-item data-title="Versioned Docs" data-search="Versioned Docs Versioned Docs">Versioned Docs</a><a class="" href="../docs-hub/" data-nav-item data-title="Docs Hub" data-search="Docs Hub Docs Hub">Docs Hub</a><a class="" href="../remote-sources/" data-nav-item data-title="Remote Sources" data-search="Remote Sources Remote Sources">Remote Sources</a></nav>
                 <a class="docsmith-badge" href="https://github.com/MrPunyapal/docsmith" target="_blank" rel="noopener noreferrer" data-docsmith-badge aria-label="Built with DocSmith"><svg class="docsmith-badge-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-6.716-4.35-9.428-7.052C.4 11.692-.21 8.9 1.38 6.87 2.736 5.14 5.09 4.583 6.86 5.686 8 6.41 8.86 7.55 9.6 8.7c.74-1.15 1.6-2.29 2.74-3.014 1.77-1.103 4.124-.546 5.48 1.184 1.59 2.03.98 4.822-1.192 7.078C18.716 16.65 12 21 12 21z"/></svg><span class="docsmith-badge-text">Built with</span><span class="docsmith-badge-brand">DocSmith</span></a>
             </div>
         </aside>
@@ -223,7 +223,7 @@
 </ul>
 <p>The overlay searches the same <code>search-index.json</code> as the sidebar search.</p>
 <h2 id="versioned-docs">Versioned Docs</h2>
-<p>Docsmith supports building multiple documentation versions with a version switcher.</p>
+<p>Docsmith supports building multiple documentation versions with pill buttons on every page.</p>
 <pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">use</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token">;</span><span class="token">
 </span></span><span class="line"><span class="token">
 </span></span><span class="line"><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">make</span><span class="token">(</span><span class="token">)</span><span class="token">
@@ -242,7 +242,8 @@
 <li>The default version writes pages to the root (e.g., <code>installation/index.html</code>).</li>
 <li>Non-default versions are namespaced under <code>{slug}/</code> (e.g., <code>v2/installation/index.html</code>).</li>
 <li>Pages that exist only in a non-default version are not duplicated to the root.</li>
-<li>A version switcher dropdown appears in the site header.</li>
+<li>Pill buttons on each page link to the same page in another version when it exists there, otherwise to that version's home.</li>
+<li>No docs dropdown appears in this mode.</li>
 </ul>
 <h3 id="version-directory-structure">Version directory structure</h3>
 <pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">md/

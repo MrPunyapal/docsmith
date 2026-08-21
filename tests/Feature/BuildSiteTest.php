@@ -435,54 +435,221 @@ MD);
     expect($visiblePage)->not->toContain('Next');
 });
 
-it('builds multiple versions with version switcher', function (): void {
-    $projectPath = sys_get_temp_dir() . '/docsmith-versions-' . uniqid();
-    $outputPath = sys_get_temp_dir() . '/docsmith-versions-dist-' . uniqid();
+it('builds a docs entry with internal versions using the classic versioned layout', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-vers-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-vers-dist-' . uniqid();
 
-    mkdir($projectPath . '/v1', 0777, true);
-    mkdir($projectPath . '/v2', 0777, true);
+    mkdir($projectPath . '/v2src', 0777, true);
+    mkdir($projectPath . '/v1src', 0777, true);
 
-    file_put_contents($projectPath . '/v1/index.md', "# V1 Home\n\nVersion 1 docs.\n");
-    file_put_contents($projectPath . '/v1/usage.md', "# V1 Usage\n\nUsing version 1.\n");
-    file_put_contents($projectPath . '/v2/index.md', "# V2 Home\n\nVersion 2 docs.\n");
-    file_put_contents($projectPath . '/v2/usage.md', "# V2 Usage\n\nUsing version 2.\n");
+    file_put_contents($projectPath . '/v2src/index.md', "# V2 Home\n\nVersion 2 docs.\n");
+    file_put_contents($projectPath . '/v2src/usage.md', "# V2 Usage\n");
+    file_put_contents($projectPath . '/v1src/index.md', "# V1 Home\n\nVersion 1 docs.\n");
+    file_put_contents($projectPath . '/v1src/usage.md', "# V1 Usage\n");
 
     Docsmith::make()
-        ->versions([
-            'v1' => ['label' => '1.x', 'source' => $projectPath . '/v1'],
-            'v2' => ['label' => '2.x', 'source' => $projectPath . '/v2', 'default' => true],
-        ])
         ->output($outputPath)
-        ->title('Versioned Docs')
-        ->description('Docs with versions.')
+        ->hub([
+            'kd' => [
+                'label' => 'Versioned Docs',
+                'versions' => [
+                    '2.x' => ['label' => '2.x', 'source' => $projectPath . '/v2src'],
+                    '1.x' => ['label' => '1.x', 'source' => $projectPath . '/v1src'],
+                ],
+            ],
+        ])
         ->build();
 
-    // Non-default version built to its slug directory
-    expect($outputPath . '/v1/index.html')->toBeFile()
-        ->and($outputPath . '/v1/usage/index.html')->toBeFile()
-        ->and($outputPath . '/assets/app.css')->toBeFile();
+    // Primary version mounts at the docs root, sibling under its segment.
+    expect(file_get_contents($outputPath . '/kd/index.html'))->toContain('V2 Home')
+        ->and(file_get_contents($outputPath . '/kd/1.x/index.html'))->toContain('V1 Home');
 
-    // Default version at root (no duplication)
-    expect($outputPath . '/index.html')->toBeFile()
-        ->and($outputPath . '/usage/index.html')->toBeFile();
+    // Version pills do the switching; the active pill points at its home.
+    $usage = (string) file_get_contents($outputPath . '/kd/usage/index.html');
+    expect($usage)->toContain('version-pills')
+        ->toContain('<a class="version-link version-link-current" href="/kd/">2.x</a>')
+        ->toContain('href="/kd/1.x/usage/">1.x</a>');
+});
 
-    // Default version (v2) content is at root
-    $rootPage = file_get_contents($outputPath . '/index.html');
-    expect($rootPage)->toContain('V2 Home');
+it('builds a standalone versions() set with pill buttons and no docs dropdown', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-vers-standalone-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-vers-standalone-dist-' . uniqid();
 
-    // Version switcher present on all pages
-    $rootUsage = file_get_contents($outputPath . '/usage/index.html');
-    expect($rootUsage)
-        ->toContain('version-switcher')
-        ->toContain('1.x')
-        ->toContain('2.x')
-        ->toContain('version-link-current');
+    mkdir($projectPath . '/v2', 0777, true);
+    mkdir($projectPath . '/v1', 0777, true);
 
-    // Default version links point to root (no slug prefix)
-    expect($rootUsage)->toContain('href="/usage/"');
+    file_put_contents($projectPath . '/v2/index.md', "# V2 Home\n");
+    file_put_contents($projectPath . '/v2/usage.md', "# V2 Usage\n");
+    file_put_contents($projectPath . '/v1/index.md', "# V1 Home\n");
+    file_put_contents($projectPath . '/v1/usage.md', "# V1 Usage\n");
 
-    // Non-default version links are slug-prefixed
-    expect($rootUsage)->toContain('href="/v1/usage/"');
+    Docsmith::make()
+        ->source($projectPath)
+        ->output($outputPath)
+        ->versions([
+            ['slug' => 'v2', 'label' => 'v2.0', 'default' => true],
+            ['slug' => 'v1', 'label' => 'v1.0'],
+        ])
+        ->build();
+
+    // Default version mounts at the root, siblings under their slug.
+    // Sources were implied from {source}/{slug}.
+    expect(file_get_contents($outputPath . '/index.html'))->toContain('V2 Home')
+        ->and(file_get_contents($outputPath . '/v1/index.html'))->toContain('V1 Home')
+        ->and(file_exists($outputPath . '/v2/index.html'))->toBeFalse();
+
+    // Pills switch versions; there is no docs dropdown in this mode.
+    $usage = (string) file_get_contents($outputPath . '/usage/index.html');
+    expect($usage)->toContain('version-pills')
+        ->toContain('<a class="version-link version-link-current" href="/">v2.0</a>')
+        ->toContain('href="/v1/usage/">v1.0</a>');
+    expect(str_contains($usage, 'data-docsmith-hub-switcher'))->toBeFalse();
+
+    // The first version is the default when none is flagged.
+    $outputPathAuto = sys_get_temp_dir() . '/docsmith-vers-auto-' . uniqid();
+
+    Docsmith::make()
+        ->source($projectPath)
+        ->output($outputPathAuto)
+        ->versions([
+            ['slug' => 'v2', 'label' => 'v2.0'],
+            ['slug' => 'v1', 'label' => 'v1.0'],
+        ])
+        ->build();
+
+    expect(file_get_contents($outputPathAuto . '/index.html'))->toContain('V2 Home')
+        ->and(file_exists($outputPathAuto . '/v1/index.html'))->toBeTrue();
+});
+
+it('builds every version under its slug and redirects the root to the first one when no default is set', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-hub-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-hub-dist-' . uniqid();
+
+    mkdir($projectPath . '/pkg-one', 0777, true);
+    mkdir($projectPath . '/pkg-two', 0777, true);
+
+    file_put_contents($projectPath . '/pkg-one/index.md', "# Package One\n\nFirst package.\n");
+    file_put_contents($projectPath . '/pkg-two/index.md', "# Package Two\n\nSecond package.\n");
+
+    Docsmith::make()
+        ->output($outputPath)
+        ->title('Hub')
+        ->description('All packages.')
+        ->hub([
+            'pkg-one' => ['label' => 'Package One', 'source' => $projectPath . '/pkg-one'],
+            'pkg-two' => ['label' => 'Package Two', 'source' => $projectPath . '/pkg-two'],
+        ])
+        ->build();
+
+    // Every version lives under its own slug, none at the root.
+    expect(is_file($outputPath . '/pkg-one/index.html'))->toBeTrue()
+        ->and(is_file($outputPath . '/pkg-two/index.html'))->toBeTrue()
+        ->and(file_exists($outputPath . '/installation/index.html'))->toBeFalse();
+
+    // The root only forwards to the first version; no generated content page.
+    $root = (string) file_get_contents($outputPath . '/index.html');
+    expect($root)->toContain('url=/pkg-one/');
+    expect(str_contains($root, 'Package One</h1>'))->toBeFalse()
+        ->and(str_contains($root, 'versions-landing'))->toBeFalse();
+
+    // Switcher options are all slug-prefixed, no root option anywhere.
+    $page = (string) file_get_contents($outputPath . '/pkg-one/index.html');
+    expect($page)
+        ->toContain('<option value="/pkg-one/" selected>Package One</option>')
+        ->toContain('<option value="/pkg-two/">Package Two</option>');
+});
+
+it('applies navigation order per version instead of globally', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-nav-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-nav-dist-' . uniqid();
+
+    mkdir($projectPath . '/one', 0777, true);
+    mkdir($projectPath . '/two', 0777, true);
+
+    foreach (['one' => 'One', 'two' => 'Two'] as $dir => $name) {
+        file_put_contents($projectPath . '/' . $dir . '/index.md', "# {$name} Home\n");
+        file_put_contents($projectPath . '/' . $dir . '/alpha.md', "# {$name} Alpha\n");
+        file_put_contents($projectPath . '/' . $dir . '/beta.md', "# {$name} Beta\n");
+    }
+
+    Docsmith::make()
+        ->output($outputPath)
+        ->navigationOrder(['index.md', 'beta.md', 'alpha.md'])   // global: beta first
+        ->versions([
+            'one' => ['label' => 'One', 'source' => $projectPath . '/one', 'default' => true],
+            'two' => [
+                'label' => 'Two',
+                'source' => $projectPath . '/two',
+                'navigation' => ['index.md', 'alpha.md', 'beta.md'],   // per version: alpha first
+            ],
+        ])
+        ->build();
+
+    // The default version mounts at the root, siblings under their slug.
+    $globalNav = (string) file_get_contents($outputPath . '/alpha/index.html');
+    $perVersionNav = (string) file_get_contents($outputPath . '/two/alpha/index.html');
+
+    $navOnly = function (string $html): string {
+        $start = strpos($html, '<nav class="nav"');
+
+        return $start === false ? '' : substr($html, $start);
+    };
+
+    $globalNav = $navOnly($globalNav);
+    $perVersionNav = $navOnly($perVersionNav);
+
+    $orderOf = (fn (string $html, string $needle): int => (int) strpos($html, $needle));
+
+    // Global list applies to version one: beta sits before alpha.
+    expect($orderOf($globalNav, 'Beta') < $orderOf($globalNav, 'Alpha'))->toBeTrue()
+        // Version two overrides it: alpha sits before beta.
+        ->and($orderOf($perVersionNav, 'Alpha') < $orderOf($perVersionNav, 'Beta'))->toBeTrue();
+});
+
+it('groups related versions under one dropdown entry with pill buttons on the page', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-group-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-group-dist-' . uniqid();
+
+    mkdir($projectPath . '/pkg-v2', 0777, true);
+    mkdir($projectPath . '/pkg-v1', 0777, true);
+
+    file_put_contents($projectPath . '/pkg-v2/index.md', "# Pkg v2\n");
+    file_put_contents($projectPath . '/pkg-v2/shared.md', "# Shared Page\n");
+    file_put_contents($projectPath . '/pkg-v2/extra.md', "# Only In V2\n");
+    file_put_contents($projectPath . '/pkg-v1/index.md', "# Pkg v1\n");
+    file_put_contents($projectPath . '/pkg-v1/shared.md', "# Shared Page\n");
+
+    Docsmith::make()
+        ->output($outputPath)
+        ->hub([
+            'pkg' => [
+                'label' => 'My Package',
+                'versions' => [
+                    'pkg-v2' => ['label' => 'v2', 'source' => $projectPath . '/pkg-v2'],
+                    'pkg-v1' => ['label' => 'v1', 'source' => $projectPath . '/pkg-v1'],
+                ],
+            ],
+        ])
+        ->build();
+
+    // Primary mounts at the docs root; the sibling nests under its segment.
+    expect(is_file($outputPath . '/pkg/index.html'))->toBeTrue()
+        ->and(is_file($outputPath . '/pkg/pkg-v1/index.html'))->toBeTrue();
+
+    // Single group: no dropdown, but pills on every page of the group.
+    $shared = (string) file_get_contents($outputPath . '/pkg/shared/index.html');
+    expect($shared)->toContain('version-pills')
+        ->toContain('>v2</a>')
+        ->toContain('>v1</a>')
+        // Same page exists in v1, so the pill mirrors the path.
+        ->toContain('href="/pkg/pkg-v1/shared/"');
+
+    // A page missing in v1 falls back to the v1 home.
+    $extra = (string) file_get_contents($outputPath . '/pkg/extra/index.html');
+    expect($extra)->toContain('href="/pkg/pkg-v1/"');
+
+    // Current version pill is highlighted and points at its home.
+    expect($shared)->toContain('<a class="version-link version-link-current" href="/pkg/">v2</a>');
 });
 
 it('renders a kb search overlay with keyboard shortcut hint', function (): void {

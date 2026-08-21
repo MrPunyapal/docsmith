@@ -282,6 +282,62 @@ Supported list styles include patterns used by:
 - laravel-undocumented
 - laravel-attributes-list
 
+## Versioned Docs
+
+Multiple versions of one documentation set. Pages get v1/v2/v3 pill buttons; no dropdown.
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/dist')
+    ->versions([
+        ['slug' => 'v1', 'label' => 'v1.0', 'default' => true],
+        ['slug' => 'v2', 'label' => 'v2.0'],
+    ])
+    ->build();
+```
+
+Each version reads `md/{slug}/`; the default version mounts at the site root, siblings under `/{slug}/`. See [Versioned Docs](md/versioned-docs.md).
+
+## Docs Hub
+
+Several independent documentation sets in one site, one sidebar dropdown to switch between them.
+
+```php
+Docsmith::make()
+    ->output(__DIR__ . '/dist')
+    ->hub([
+        'package-a' => ['label' => 'Package A', 'source' => __DIR__ . '/md/a'],
+        'package-b' => ['label' => 'Package B', 'source' => __DIR__ . '/md/b'],
+    ])
+    ->build();
+```
+
+Each entry gets one dropdown option mounted at `/{slug}/`; a hub entry may embed its own `versions` list for pills on its pages. See [Docs Hub](md/docs-hub.md).
+
+## Remote Sources
+
+Pull Markdown from other Git repositories into your build — no `git` binary, no provider APIs, no clones. DocSmith speaks standard Git smart-HTTPS directly and works with any host.
+
+```php
+// docsmith.sources.php
+return [
+    [
+        'repository' => 'https://github.com/laravel/framework.git',
+        'ref' => '12.x',
+        'path' => 'docs',
+        'target' => 'laravel',   // materialized to md/laravel
+    ],
+];
+```
+
+```bash
+php bin/docsmith sync          # fetch remote sources
+php bin/docsmith build --sync  # or fetch + build in one step
+```
+
+Plain builds never touch the network; without a `docsmith.sources.php`, nothing changes. Synced sources are plain local directories afterward — they work with a normal build, a versioned build, or a hub equally. See [Remote Sources](md/remote-sources.md) for caching, safety limits, and programmatic usage.
+
 ## Output Model
 
 - md/index.md -> index.html
