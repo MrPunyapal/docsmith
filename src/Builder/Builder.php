@@ -93,15 +93,6 @@ final class Builder
             $this->versions[] = VersionConfig::fromArray((string) $slug, $config);
         }
 
-        if ($this->versions !== [] && $defaults === []) {
-            $this->versions[0] = new VersionConfig(
-                slug: $this->versions[0]->slug,
-                label: $this->versions[0]->label,
-                sourcePath: $this->versions[0]->sourcePath,
-                isDefault: true,
-            );
-        }
-
         return $this;
     }
 
@@ -485,9 +476,12 @@ final class Builder
             $this->versions,
         );
 
+        $hasDefault = (bool) array_filter($this->versions, fn (VersionConfig $v): bool => $v->isDefault);
+
         foreach ($this->versions as $version) {
             $versionDocPath = rtrim($outputPath, '/') . '/' . $version->slug;
             $isDefault = $version->isDefault;
+            $navigationOrder = $version->navigationOrder ?? $this->navigationOrder;
 
             $config = BuildConfig::fromInput(
                 sourcePath: $version->sourcePath,
@@ -507,7 +501,7 @@ final class Builder
                     llmsExport: $this->llmsExport,
                     favicon: $this->favicon,
                     showDocsmithBadge: $this->showDocsmithBadge,
-                    navigationOrder: $this->navigationOrder,
+                    navigationOrder: $navigationOrder,
                 ),
                 baseUrl: $this->baseUrl,
                 rightSidebar: $this->rightSidebar,
@@ -525,6 +519,15 @@ final class Builder
             );
 
             $this->generateOgImages($config, null, $writeTarget);
+        }
+
+        if (! $hasDefault) {
+            (new SiteBuilder())->buildVersionsLanding(
+                $outputPath,
+                $versionsData,
+                $this->title,
+                $this->description,
+            );
         }
 
         $this->writeAssetsToRoot($outputPath);

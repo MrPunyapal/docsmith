@@ -300,6 +300,67 @@ a {
     mask-size: contain;
 }
 
+.versions-landing {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.versions-landing-title {
+    margin: 0;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    letter-spacing: -0.02em;
+}
+
+.versions-landing-description {
+    margin: 0;
+    color: var(--muted);
+    max-width: 42rem;
+}
+
+.versions-landing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem;
+    width: 100%;
+    max-width: 56rem;
+    margin-top: 1.25rem;
+}
+
+.versions-landing-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.25rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    background: var(--panel);
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.versions-landing-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.versions-landing-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.versions-landing-hint {
+    color: var(--accent);
+    font-size: 0.85rem;
+}
+
 .search input {
     width: 100%;
     border: 1px solid var(--border);

@@ -106,6 +106,12 @@ final readonly class SiteBuilder
             throw new RuntimeException('The source directory does not contain any markdown files.');
         }
 
+        $visibleDocuments = array_values(array_filter(
+            $documents,
+            fn (Document $document): bool => ! $document->hidden,
+        ));
+        $visibleDocuments = $this->sortNavigationDocuments($visibleDocuments, $config->metadata->navigationOrder);
+
         $writeTarget = $isDefault ? $rootOutput : $config->outputPath;
 
         if (! is_dir($writeTarget)) {
@@ -127,7 +133,7 @@ final readonly class SiteBuilder
 
             file_put_contents(
                 $absoluteOutputPath,
-                $this->page($config, $document, $documents, $versionSwitcher),
+                $this->page($config, $document, $visibleDocuments, $versionSwitcher),
             );
         }
 
@@ -139,7 +145,7 @@ final readonly class SiteBuilder
                 title: $config->metadata->title,
                 markdown: '',
             );
-            $landing = $this->landingPage($config, $documents, $this->versionSwitcherHtml($versions, $currentSlug, $rootDoc, $config->baseUrl));
+            $landing = $this->landingPage($config, $visibleDocuments, $this->versionSwitcherHtml($versions, $currentSlug, $rootDoc, $config->baseUrl));
             file_put_contents(rtrim($writeTarget, '/') . '/index.html', $landing);
         }
 
@@ -156,6 +162,51 @@ final readonly class SiteBuilder
         if ($config->metadata->llmsExport) {
             $this->writeLlmExport($config, $documents, ! $hasRootIndex, $writeTarget);
         }
+    }
+
+    /**
+     * Write a root landing page that links to every version when no version
+     * is marked as default. Every version then lives under its own slug.
+     *
+     * @param  list<array{slug: string, label: string, default: bool}>  $versions
+     */
+    public function buildVersionsLanding(string $rootOutput, array $versions, string $title, string $description): void
+    {
+        if (! is_dir($rootOutput)) {
+            mkdir($rootOutput, 0777, true);
+        }
+
+        $cards = implode('', array_map(
+            fn (array $version): string => sprintf(
+                '<a class="versions-landing-card" href="%s/"><span class="versions-landing-name">%s</span><span class="versions-landing-hint">Open documentation</span></a>',
+                htmlspecialchars($version['slug'], ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8'),
+            ),
+            $versions,
+        ));
+
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{$title}</title>
+    <meta name="description" content="{$description}">
+    <link rel="stylesheet" href="assets/app.css">
+    <script src="assets/app.js" defer></script>
+</head>
+<body data-docsmith-root="">
+    <main class="versions-landing">
+        <h1 class="versions-landing-title">{$title}</h1>
+        <p class="versions-landing-description">{$description}</p>
+        <div class="versions-landing-grid">{$cards}</div>
+    </main>
+</body>
+</html>
+HTML;
+
+        file_put_contents(rtrim($rootOutput, '/') . '/index.html', $html);
     }
 
     /** @param list<Document> $documents */

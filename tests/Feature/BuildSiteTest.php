@@ -485,6 +485,95 @@ it('builds multiple versions with version switcher', function (): void {
     expect($rootUsage)->toContain('<option value="/v1/usage/">1.x</option>');
 });
 
+it('builds every version under its slug with a landing page when no default is set', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-hub-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-hub-dist-' . uniqid();
+
+    mkdir($projectPath . '/pkg-one', 0777, true);
+    mkdir($projectPath . '/pkg-two', 0777, true);
+
+    file_put_contents($projectPath . '/pkg-one/index.md', "# Package One\n\nFirst package.\n");
+    file_put_contents($projectPath . '/pkg-two/index.md', "# Package Two\n\nSecond package.\n");
+
+    Docsmith::make()
+        ->output($outputPath)
+        ->title('Hub')
+        ->description('All packages.')
+        ->versions([
+            'pkg-one' => ['label' => 'Package One', 'source' => $projectPath . '/pkg-one'],
+            'pkg-two' => ['label' => 'Package Two', 'source' => $projectPath . '/pkg-two'],
+        ])
+        ->build();
+
+    // Every version lives under its own slug, none at the root.
+    expect(is_file($outputPath . '/pkg-one/index.html'))->toBeTrue()
+        ->and(is_file($outputPath . '/pkg-two/index.html'))->toBeTrue()
+        ->and(file_exists($outputPath . '/installation/index.html'))->toBeFalse();
+
+    // The root is a landing page linking to each package.
+    $landing = (string) file_get_contents($outputPath . '/index.html');
+    expect($landing)
+        ->toContain('versions-landing-card')
+        ->toContain('href="pkg-one/"')
+        ->toContain('href="pkg-two/"');
+
+    expect(str_contains($landing, 'Package One</h1>'))->toBeFalse();
+
+    // Switcher options are all slug-prefixed, no root option anywhere.
+    $page = (string) file_get_contents($outputPath . '/pkg-one/index.html');
+    expect($page)
+        ->toContain('<option value="/pkg-one/" selected>Package One</option>')
+        ->toContain('<option value="/pkg-two/">Package Two</option>');
+});
+
+it('applies navigation order per version instead of globally', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-nav-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-nav-dist-' . uniqid();
+
+    mkdir($projectPath . '/one', 0777, true);
+    mkdir($projectPath . '/two', 0777, true);
+
+    foreach (['one' => 'One', 'two' => 'Two'] as $dir => $name) {
+        file_put_contents($projectPath . '/' . $dir . '/index.md', "# {$name} Home\n");
+        file_put_contents($projectPath . '/' . $dir . '/alpha.md', "# {$name} Alpha\n");
+        file_put_contents($projectPath . '/' . $dir . '/beta.md', "# {$name} Beta\n");
+    }
+
+    Docsmith::make()
+        ->output($outputPath)
+        ->navigationOrder(['index.md', 'beta.md', 'alpha.md'])   // global: beta first
+        ->versions([
+            'one' => ['label' => 'One', 'source' => $projectPath . '/one'],
+            'two' => [
+                'label' => 'Two',
+                'source' => $projectPath . '/two',
+                'navigation' => ['index.md', 'alpha.md', 'beta.md'],   // per version: alpha first
+            ],
+        ])
+        ->build();
+
+    $globalNav = (string) file_get_contents($outputPath . '/one/alpha/index.html');
+    $perVersionNav = (string) file_get_contents($outputPath . '/two/alpha/index.html');
+
+    $navOnly = function (string $html): string {
+        $start = strpos($html, '<nav class="nav"');
+
+        return $start === false ? '' : substr($html, $start);
+    };
+
+    $globalNav = $navOnly($globalNav);
+    $perVersionNav = $navOnly($perVersionNav);
+
+    $orderOf = function (string $html, string $needle): int {
+        return (int) strpos($html, $needle);
+    };
+
+    // Global list applies to version one: beta sits before alpha.
+    expect($orderOf($globalNav, 'Beta') < $orderOf($globalNav, 'Alpha'))->toBeTrue()
+        // Version two overrides it: alpha sits before beta.
+        ->and($orderOf($perVersionNav, 'Alpha') < $orderOf($perVersionNav, 'Beta'))->toBeTrue();
+});
+
 it('renders a kb search overlay with keyboard shortcut hint', function (): void {
     $sourcePath = __DIR__ . '/../Fixtures/Content';
     $outputPath = sys_get_temp_dir() . '/docsmith-search-overlay-' . uniqid();
