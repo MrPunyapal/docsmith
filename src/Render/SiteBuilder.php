@@ -1065,24 +1065,20 @@ HTML;
 
         $options = array_map(
             function (array $version) use ($currentSlug, $pagePath, $basePath): string {
-                $selected = $version['slug'] === $currentSlug;
+                $selected = $version['slug'] === $currentSlug ? ' selected' : '';
                 $label = htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8');
-                $slug = htmlspecialchars($version['slug'], ENT_QUOTES, 'UTF-8');
-                $href = $version['default']
-                    ? $basePath . '/' . $pagePath
-                    : $basePath . '/' . $slug . '/' . $pagePath;
-
-                return sprintf(
-                    '<a class="version-link%s" href="%s">%s</a>',
-                    $selected ? ' version-link-current' : '',
-                    $href,
-                    $label,
+                $href = htmlspecialchars(
+                    ($version['default'] ? $basePath : $basePath . '/' . $version['slug']) . '/' . $pagePath,
+                    ENT_QUOTES,
+                    'UTF-8',
                 );
+
+                return sprintf('<option value="%s"%s>%s</option>', $href, $selected, $label);
             },
             $versions,
         );
 
-        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version">' . implode('', $options) . '</nav>';
+        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version"><select class="version-select" data-docsmith-version-select aria-label="Select version">' . implode('', $options) . '</select></nav>';
     }
 
     private function searchOverlay(): string

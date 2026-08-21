@@ -251,38 +251,53 @@ a {
 }
 
 .version-switcher {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.3rem;
     margin-bottom: 0.75rem;
-    padding: 0.35rem 0.5rem;
+}
+
+.version-select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 0.52rem 2.1rem 0.52rem 0.75rem;
     border: 1px solid var(--border);
     border-radius: 0.65rem;
     background: var(--panel);
-    font-size: 0.85rem;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.version-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.45rem;
-    text-decoration: none;
-    color: var(--muted);
-    font-size: 0.82rem;
-    transition: background-color 0.15s ease, color 0.15s ease;
+.version-select:hover {
+    border-color: var(--accent);
 }
 
-.version-link:hover {
-    background: var(--accent-soft);
-    color: var(--accent);
+.version-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.version-link-current {
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 700;
+.version-switcher::after {
+    content: '';
+    position: absolute;
+    right: 0.7rem;
+    width: 0.65rem;
+    height: 0.65rem;
+    pointer-events: none;
+    background-color: var(--muted);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
 }
 
 .search input {
@@ -1296,6 +1311,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.documentElement.setAttribute('data-docsmith-theme', theme);
     };
+
+    var versionSelect = document.querySelector('[data-docsmith-version-select]');
+
+    if (versionSelect) {
+        versionSelect.addEventListener('change', function () {
+            if (this.value !== '') {
+                window.location.href = this.value;
+            }
+        });
+    }
 
     var savedTheme = null;
 

@@ -474,15 +474,15 @@ it('builds multiple versions with version switcher', function (): void {
     $rootUsage = file_get_contents($outputPath . '/usage/index.html');
     expect($rootUsage)
         ->toContain('version-switcher')
+        ->toContain('version-select')
         ->toContain('1.x')
-        ->toContain('2.x')
-        ->toContain('version-link-current');
+        ->toContain('2.x');
 
-    // Default version links point to root (no slug prefix)
-    expect($rootUsage)->toContain('href="/usage/"');
+    // Default version option points to root (no slug prefix)
+    expect($rootUsage)->toContain('<option value="/usage/" selected>2.x</option>');
 
-    // Non-default version links are slug-prefixed
-    expect($rootUsage)->toContain('href="/v1/usage/"');
+    // Non-default version options are slug-prefixed
+    expect($rootUsage)->toContain('<option value="/v1/usage/">1.x</option>');
 });
 
 it('renders a kb search overlay with keyboard shortcut hint', function (): void {
