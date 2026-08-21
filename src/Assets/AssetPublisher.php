@@ -361,6 +361,41 @@ a {
     font-size: 0.85rem;
 }
 
+.version-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    background: var(--panel);
+    font-size: 0.85rem;
+}
+
+.version-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.45rem;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 0.82rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.version-link:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.version-link-current {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+}
+
 .search input {
     width: 100%;
     border: 1px solid var(--border);

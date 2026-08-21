@@ -87,10 +87,33 @@ final readonly class SiteBuilder
         }
     }
 
-    /** @param list<array{slug: string, label: string, default: bool}> $versions */
+    /**
+     * Pre-scan a version source so cross-version links can fall back to the
+     * member home when a page does not exist in that version.
+     *
+     * @return array<string, true>
+     */
+    public function scanDocumentPaths(string $sourcePath): array
+    {
+        $paths = [];
+
+        foreach ($this->scanner->scan($sourcePath) as $document) {
+            $paths[$document->outputPath] = true;
+        }
+
+        return $paths;
+    }
+
+    /**
+     * @param  list<array{label: string, hrefSlug: string, slugs: list<string>}>  $dropdownGroups
+     * @param  array<string, list<array{slug: string, label: string, isDefault: bool}>>  $pillGroups
+     * @param  array<string, array<string, true>>  $pageSets
+     */
     public function buildVersion(
         BuildConfig $config,
-        array $versions,
+        array $dropdownGroups,
+        array $pillGroups,
+        array $pageSets,
         string $currentSlug,
         bool $isDefault,
         string $rootOutput,
@@ -122,7 +145,14 @@ final readonly class SiteBuilder
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
-            $versionSwitcher = $this->versionSwitcherHtml($versions, $currentSlug, $config->baseUrl);
+            $versionSwitcher = $this->versionSwitcherHtml($dropdownGroups, $currentSlug, $config->baseUrl)
+                . $this->versionPillsHtml(
+                    $pillGroups[$currentSlug] ?? [],
+                    $currentSlug,
+                    $document->outputPath,
+                    $pageSets,
+                    $config->baseUrl,
+                );
 
             $absoluteOutputPath = rtrim($writeTarget, '/') . '/' . $document->outputPath;
             $directory = dirname($absoluteOutputPath);
@@ -138,7 +168,12 @@ final readonly class SiteBuilder
         }
 
         if (! $hasRootIndex) {
-            $landing = $this->landingPage($config, $visibleDocuments, $this->versionSwitcherHtml($versions, $currentSlug, $config->baseUrl));
+            $landing = $this->landingPage(
+                $config,
+                $visibleDocuments,
+                $this->versionSwitcherHtml($dropdownGroups, $currentSlug, $config->baseUrl)
+                . $this->versionPillsHtml($pillGroups[$currentSlug] ?? [], $currentSlug, 'index.html', $pageSets, $config->baseUrl),
+            );
             file_put_contents(rtrim($writeTarget, '/') . '/index.html', $landing);
         }
 
@@ -1095,31 +1130,70 @@ HTML;
         return '<aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links">' . implode('', $links) . '</nav></aside>';
     }
 
-    /** @param list<array{slug: string, label: string, default: bool}> $versions */
-    private function versionSwitcherHtml(array $versions, string $currentSlug, string $baseUrl = '/'): string
+    /**
+     * Dropdown with one entry per top-level group.
+     *
+     * @param  list<array{label: string, hrefSlug: string, slugs: list<string>}>  $groups
+     */
+    private function versionSwitcherHtml(array $groups, string $currentSlug, string $baseUrl): string
     {
-        if (count($versions) < 2) {
+        if (count($groups) < 2) {
             return '';
         }
 
         $basePath = rtrim($baseUrl, '/');
+        $options = '';
 
-        $options = array_map(
-            function (array $version) use ($currentSlug, $basePath): string {
-                $selected = $version['slug'] === $currentSlug ? ' selected' : '';
-                $label = htmlspecialchars($version['label'], ENT_QUOTES, 'UTF-8');
-                $href = htmlspecialchars(
-                    ($version['default'] ? $basePath : $basePath . '/' . $version['slug']) . '/',
-                    ENT_QUOTES,
-                    'UTF-8',
-                );
+        foreach ($groups as $group) {
+            $selected = in_array($currentSlug, $group['slugs'], true) ? ' selected' : '';
+            $href = htmlspecialchars(
+                ($group['hrefSlug'] === '' ? $basePath : $basePath . '/' . $group['hrefSlug']) . '/',
+                ENT_QUOTES,
+                'UTF-8',
+            );
+            $label = htmlspecialchars($group['label'], ENT_QUOTES, 'UTF-8');
 
-                return sprintf('<option value="%s"%s>%s</option>', $href, $selected, $label);
-            },
-            $versions,
-        );
+            $options .= sprintf('<option value="%s"%s>%s</option>', $href, $selected, $label);
+        }
 
-        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version"><select class="version-select" data-docsmith-version-select aria-label="Select version">' . implode('', $options) . '</select></nav>';
+        return '<nav class="version-switcher" data-docsmith-version-switcher aria-label="Version"><select class="version-select" data-docsmith-version-select aria-label="Select version">' . $options . '</select></nav>';
+    }
+
+    /**
+     * Pill buttons for switching between the versions of the current package.
+     * A pill links to the same page in that version when it exists there,
+     * otherwise to the version home.
+     *
+     * @param  list<array{slug: string, label: string, isDefault: bool}>  $members
+     * @param  array<string, array<string, true>>  $pageSets
+     */
+    private function versionPillsHtml(array $members, string $currentSlug, string $currentOutputPath, array $pageSets, string $baseUrl): string
+    {
+        if (count($members) < 2) {
+            return '';
+        }
+
+        $basePath = rtrim($baseUrl, '/');
+        $pagePath = str_replace(['/index.html', 'index.html'], '/', $currentOutputPath);
+        $links = '';
+
+        foreach ($members as $member) {
+            $base = $member['isDefault'] ? $basePath : $basePath . '/' . $member['slug'];
+            $samePage = isset($pageSets[$member['slug']][$currentOutputPath]);
+
+            if ($samePage && $pagePath !== '/') {
+                $href = rtrim($base . '/' . ltrim($pagePath, '/'), '/') . '/';
+            } else {
+                $href = $base . '/';
+            }
+
+            $current = $member['slug'] === $currentSlug ? ' version-link-current' : '';
+            $label = htmlspecialchars($member['label'], ENT_QUOTES, 'UTF-8');
+
+            $links .= sprintf('<a class="version-link%s" href="%s">%s</a>', $current, $href, $label);
+        }
+
+        return '<nav class="version-pills" data-docsmith-version-pills aria-label="Versions">' . $links . '</nav>';
     }
 
     private function searchOverlay(): string

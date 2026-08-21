@@ -574,6 +574,52 @@ it('applies navigation order per version instead of globally', function (): void
         ->and($orderOf($perVersionNav, 'Alpha') < $orderOf($perVersionNav, 'Beta'))->toBeTrue();
 });
 
+it('groups related versions under one dropdown entry with pill buttons on the page', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-group-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-group-dist-' . uniqid();
+
+    mkdir($projectPath . '/pkg-v2', 0777, true);
+    mkdir($projectPath . '/pkg-v1', 0777, true);
+
+    file_put_contents($projectPath . '/pkg-v2/index.md', "# Pkg v2\n");
+    file_put_contents($projectPath . '/pkg-v2/shared.md', "# Shared Page\n");
+    file_put_contents($projectPath . '/pkg-v2/extra.md', "# Only In V2\n");
+    file_put_contents($projectPath . '/pkg-v1/index.md', "# Pkg v1\n");
+    file_put_contents($projectPath . '/pkg-v1/shared.md', "# Shared Page\n");
+
+    Docsmith::make()
+        ->output($outputPath)
+        ->versions([
+            'pkg' => [
+                'label' => 'My Package',
+                'versions' => [
+                    'pkg-v2' => ['label' => 'v2', 'source' => $projectPath . '/pkg-v2'],
+                    'pkg-v1' => ['label' => 'v1', 'source' => $projectPath . '/pkg-v1'],
+                ],
+            ],
+        ])
+        ->build();
+
+    // Both members build under their own slugs.
+    expect(is_file($outputPath . '/pkg-v2/index.html'))->toBeTrue()
+        ->and(is_file($outputPath . '/pkg-v1/index.html'))->toBeTrue();
+
+    // Single group: no dropdown, but pills on every page of the group.
+    $shared = (string) file_get_contents($outputPath . '/pkg-v2/shared/index.html');
+    expect($shared)->toContain('version-pills')
+        ->toContain('>v2</a>')
+        ->toContain('>v1</a>')
+        // Same page exists in v1, so the pill mirrors the path.
+        ->toContain('href="/pkg-v1/shared/"');
+
+    // A page missing in v1 falls back to the v1 home.
+    $extra = (string) file_get_contents($outputPath . '/pkg-v2/extra/index.html');
+    expect($extra)->toContain('href="/pkg-v1/"');
+
+    // Current version pill is highlighted and mirrors the shared path.
+    expect($shared)->toContain('<a class="version-link version-link-current" href="/pkg-v2/shared/">v2</a>');
+});
+
 it('renders a kb search overlay with keyboard shortcut hint', function (): void {
     $sourcePath = __DIR__ . '/../Fixtures/Content';
     $outputPath = sys_get_temp_dir() . '/docsmith-search-overlay-' . uniqid();

@@ -79,18 +79,97 @@ final class Builder
     /** @var list<VersionConfig> */
     private array $versions = [];
 
-    /** @param array<string, array{label: string, source: string, default?: bool}> $versions */
+    /** @var list<array{label: string|null, members: list<VersionConfig>}> */
+    private array $versionGroups = [];
+
+    /**
+     * Define versioned builds. Each entry is either a plain version config or
+     * a group of related versions that share one dropdown entry and expose
+     * pill buttons for switching between each other on the page.
+     *
+     * @param  array<string, mixed>  $versions
+     */
     public function versions(array $versions): self
     {
-        $defaults = array_filter($versions, fn (array $v): bool => (bool) ($v['default'] ?? false));
+        $this->versions = [];
+        $this->versionGroups = [];
+        $seenSlugs = [];
+        $defaults = 0;
 
-        if (count($defaults) > 1) {
-            throw new LogicException('Only one version can be marked as default.');
+        foreach ($versions as $key => $config) {
+            if (! is_array($config)) {
+                throw new LogicException(sprintf('Version [%s] must be defined as an array.', (string) $key));
+            }
+
+            if (isset($config['versions'])) {
+                if (! is_array($config['versions']) || ! is_string($config['label'] ?? null)) {
+                    throw new LogicException(sprintf(
+                        'Grouped version [%s] must define a string label and a versions map.',
+                        (string) $key,
+                    ));
+                }
+
+                $members = [];
+
+                foreach ($config['versions'] as $memberSlug => $memberConfig) {
+                    $memberConfig = (array) $memberConfig;
+
+                    if (! isset($memberConfig['source'], $memberConfig['label']) || ! is_string($memberConfig['source']) || ! is_string($memberConfig['label'])) {
+                        throw new LogicException(sprintf(
+                            'Version [%s] inside group [%s] must define a string label and source.',
+                            (string) $memberSlug,
+                            (string) $key,
+                        ));
+                    }
+
+                    /** @var array{label: string, source: string, default?: bool, navigation?: list<string>} $memberConfig */
+                    $member = VersionConfig::fromArray((string) $memberSlug, $memberConfig);
+
+                    if (isset($seenSlugs[$member->slug])) {
+                        throw new LogicException(sprintf('Duplicate version slug [%s].', $member->slug));
+                    }
+
+                    $seenSlugs[$member->slug] = true;
+                    $defaults += (int) $member->isDefault;
+                    $members[] = $member;
+                    $this->versions[] = $member;
+                }
+
+                $this->versionGroups[] = [
+                    'label' => $config['label'],
+                    'members' => $members,
+                ];
+
+                continue;
+            }
+
+            unset($config['versions']);
+
+            if (! isset($config['source'], $config['label']) || ! is_string($config['source']) || ! is_string($config['label'])) {
+                throw new LogicException(sprintf(
+                    'Version [%s] must define a string label and source.',
+                    (string) $key,
+                ));
+            }
+
+            /** @var array{label: string, source: string, default?: bool, navigation?: list<string>} $config */
+            $version = VersionConfig::fromArray((string) $key, $config);
+
+            if (isset($seenSlugs[$version->slug])) {
+                throw new LogicException(sprintf('Duplicate version slug [%s].', $version->slug));
+            }
+
+            $seenSlugs[$version->slug] = true;
+            $defaults += (int) $version->isDefault;
+            $this->versions[] = $version;
+            $this->versionGroups[] = [
+                'label' => null,
+                'members' => [$version],
+            ];
         }
 
-        $this->versions = [];
-        foreach ($versions as $slug => $config) {
-            $this->versions[] = VersionConfig::fromArray((string) $slug, $config);
+        if ($defaults > 1) {
+            throw new LogicException('Only one version can be marked as default.');
         }
 
         return $this;
@@ -470,6 +549,45 @@ final class Builder
     private function buildVersions(): void
     {
         $outputPath = $this->requireOutputPath();
+        $siteBuilder = new SiteBuilder();
+
+        $pageSets = [];
+
+        foreach ($this->versions as $version) {
+            $pageSets[$version->slug] = $siteBuilder->scanDocumentPaths($version->sourcePath);
+        }
+
+        $dropdownGroups = [];
+        $pillGroups = [];
+
+        foreach ($this->versionGroups as $group) {
+            $primary = $group['members'][0];
+
+            foreach ($group['members'] as $member) {
+                if ($member->isDefault) {
+                    $primary = $member;
+
+                    break;
+                }
+            }
+
+            $dropdownGroups[] = [
+                'label' => $group['label'] ?? $primary->label,
+                'hrefSlug' => $primary->isDefault ? '' : $primary->slug,
+                'slugs' => array_map(fn (VersionConfig $m): string => $m->slug, $group['members']),
+            ];
+
+            if (count($group['members']) > 1) {
+                $pillList = array_map(
+                    fn (VersionConfig $m): array => ['slug' => $m->slug, 'label' => $m->label, 'isDefault' => $m->isDefault],
+                    $group['members'],
+                );
+
+                foreach ($group['members'] as $member) {
+                    $pillGroups[$member->slug] = $pillList;
+                }
+            }
+        }
 
         $versionsData = array_map(
             fn (VersionConfig $v): array => ['slug' => $v->slug, 'label' => $v->label, 'default' => $v->isDefault],
@@ -510,9 +628,11 @@ final class Builder
 
             $writeTarget = $isDefault ? $outputPath : $versionDocPath;
 
-            (new SiteBuilder())->buildVersion(
+            $siteBuilder->buildVersion(
                 config: $config,
-                versions: $versionsData,
+                dropdownGroups: $dropdownGroups,
+                pillGroups: $pillGroups,
+                pageSets: $pageSets,
                 currentSlug: $version->slug,
                 isDefault: $isDefault,
                 rootOutput: $outputPath,
