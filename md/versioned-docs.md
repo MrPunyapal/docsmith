@@ -1,10 +1,10 @@
 # Versioned Docs
 
-Docsmith can build multiple versions of one documentation set. Every page shows v1/v2/v3 pill buttons for switching between them.
+Docsmith can build multiple versions of one documentation set. Every page shows pill buttons for switching between versions.
 
 ## Setup
 
-Pass a list of versions to `->versions()`:
+Pass a list of versions to `versions()`:
 
 ```php
 use Docsmith\Docsmith;
@@ -22,29 +22,32 @@ Docsmith::make()
 
 ## Directory structure
 
+Each version reads Markdown from `{source}/{slug}`:
+
 ```
 md/
-├── v1/               # default version — pages at root
+├── v1/               # default version, pages written to the site root
 │   ├── index.md
 │   └── installation.md
-└── v2/               # non-default — pages under /v2/
+└── v2/               # non-default version, pages written under /v2/
     ├── index.md
     └── installation.md
 ```
 
+Set a per-version `source` to read from anywhere instead.
+
 ## How it works
 
-- Each version reads Markdown from `{source}/{slug}` — the config above reads `md/v1/` and `md/v2/`. You can also set `source` per version to point anywhere.
 - Keyed maps work too: `'v1' => ['label' => 'v1.0']`.
 - The version marked `default: true` writes pages to the site root (`installation/index.html`). If none is marked, the first listed version is used.
 - Other versions are namespaced under their slug (`v2/installation/index.html`).
-- Pages that exist only in a non-default version are **not** duplicated to the root.
+- Pages that exist only in a non-default version are not duplicated to the root.
 - Pill buttons on every page switch versions. They link to the same page in another version when it exists there, otherwise to that version's home.
-- `navigation` can be set per version; frontmatter `order:` still applies per page.
+- No docs dropdown appears in this mode.
 
 ## Default version
 
-The version flagged `default: true` owns the site root. If no version is flagged, the **first listed** version is the default — flag a later one to override:
+The version flagged `default: true` owns the site root. If no version is flagged, the first listed version is the default. Flag a later one to override:
 
 ```php
 ->versions([
@@ -57,7 +60,7 @@ Here `/` serves v1 and `/v2/` holds the other version.
 
 ## Navigation order
 
-Set `navigation` on a version to control its sidebar order. Entries are matched by title, sidebar label, or file path; pages not listed keep their natural order after the listed ones. Frontmatter `order:` still applies per page.
+Set `navigation` on a version to control its sidebar order. Entries are matched by title, sidebar label, or file path. Pages not listed keep their natural order after the listed ones, and frontmatter `order:` still applies per page:
 
 ```php
 ->versions([
@@ -71,4 +74,4 @@ Set `navigation` on a version to control its sidebar order. Entries are matched 
 ])
 ```
 
-Versions without their own `navigation` fall back to the global `->navigationOrder([...])`.
+Versions without their own `navigation` fall back to the global `navigationOrder([...])`.

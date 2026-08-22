@@ -31,10 +31,9 @@ Docsmith::make()
     ->editBranch('main')
     ->rightSidebar()
     ->build();
-
 ```
 
-## Command Line
+## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
 
@@ -50,22 +49,24 @@ php bin/docsmith build --source=md --output=docs --title="Project Docs"
 
 | Option | Description | Default |
 |---|---|---|
-| `--source=DIR` | Directory with Markdown sources (required) | — |
+| `--source=DIR` | Directory with Markdown sources (required) | none |
 | `--output=DIR` | Output directory | `docs` |
 | `--title=TITLE` | Site title | `Documentation` |
 | `--description=DESC` | Site description | `Project documentation.` |
 | `--accent-color=HEX` | Accent color | `#ff2d20` |
-| `--accent-color-dark=HEX` | Dark-mode accent color | — |
-| `--custom-css=FILE` | Path to a custom CSS file | — |
+| `--accent-color-dark=HEX` | Dark-mode accent color | derived from accent |
+| `--custom-css=FILE` | Path to a custom CSS file | none |
 | `--base-url=URL` | Base URL | `/` |
-| `--right-sidebar` | Enable the right sidebar | off |
-| `--repository-url=URL` | Repository URL for edit links | — |
-| `--site-url=URL` | Canonical site URL | — |
+| `--right-sidebar` | Enable the right sidebar table of contents | off |
+| `--repository-url=URL` | Repository URL for edit links | none |
+| `--site-url=URL` | Canonical site URL | none |
 | `--edit-branch=BRANCH` | Branch used for edit links | `main` |
+| `--edit-prefix=PREFIX` | Path prefix prepended to the file path in edit links, for example `md/` | none |
+| `--favicon=FILE` | Favicon URL, data URI, or local file path | generated default |
 | `--no-docsmith-badge` | Hide the "Built with DocSmith" sidebar badge | shown |
-| `--help` | Show usage | — |
+| `--help` | Show usage | |
 
-Example with edit links, right sidebar, and search-ready output:
+Example with edit links and a right sidebar:
 
 ```bash
 vendor/bin/docsmith build \
@@ -80,9 +81,9 @@ vendor/bin/docsmith build \
     --right-sidebar
 ```
 
-The binary is a thin wrapper around `Docsmith::build()` — every option maps to the static API parameter of the same name.
+The binary is a wrapper around `Docsmith::build()`. Every option maps to the static API parameter or fluent method of the same name.
 
-## Theme Color
+## Theme color
 
 Docsmith defaults to a Laravel red accent. Override it when building docs:
 
@@ -95,11 +96,11 @@ Docsmith::make()
     ->build();
 ```
 
-Use hex colors for the best results because Docsmith derives the hover, focus, and dark-mode variants from the accent.
+Use hex colors for the best results because Docsmith derives hover, focus, and dark-mode variants from the accent.
 
 ### Custom CSS
 
-If you need to apply project-specific tweaks, you can append raw CSS or a CSS file during the build:
+Append raw CSS during the build:
 
 ```php
 Docsmith::make()
@@ -109,25 +110,31 @@ Docsmith::make()
     ->build();
 ```
 
-Or:
+Or append a CSS file by passing a path instead:
 
 ```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/dist')
     ->customCss(__DIR__ . '/overrides.css')
+    ->build();
 ```
+
+Either way the rules are appended to the published `assets/app.css`.
 
 ## Search
 
-Docsmith generates `search-index.json` and uses it for global result search in the sidebar.
+Docsmith generates `search-index.json` at build time and uses it for global search.
 
-- Type at least 2 characters to see global matches.
-- Results include title, description, headings, and page content text.
+- Type at least 2 characters in the sidebar search box to see global matches.
+- Results include title, description, headings, and page content.
 - Selecting a result navigates to that page.
 
-The existing sidebar filter search still works for quick navigation filtering.
+The sidebar filter still narrows the visible navigation links as you type.
 
 ### Choosing navigation order
 
-Use `navigationOrder()` to place pages in a custom sidebar sequence. Entries can match a page title, `sidebar_label`, relative Markdown path, or output path. Pages not listed keep their existing order:
+Use `navigationOrder()` to place pages in a custom sidebar sequence. Entries can match a page title, `sidebar_label`, relative Markdown path, or output path. Pages not listed keep their existing order after the listed ones:
 
 ```php
 Docsmith::make()
@@ -136,20 +143,20 @@ Docsmith::make()
     ->build();
 ```
 
-## Search Overlay (Cmd+K)
+## Search overlay (Cmd+K)
 
-Docsmith includes a modal search overlay accessible via keyboard shortcut or click.
+Docsmith includes a modal search overlay.
 
-- Press `Cmd+K` (macOS) or `Ctrl+K` (Windows/Linux) to open the overlay.
-- Press `Esc` or click the backdrop to close.
+- Press `Cmd+K` (macOS) or `Ctrl+K` (Windows/Linux) to open it.
+- Press `Esc` or click the backdrop to close it.
 - Results appear after typing at least 1 character.
-- The search input in the header also opens the overlay on click.
+- Clicking the search input in the header also opens it.
 
 The overlay searches the same `search-index.json` as the sidebar search.
 
-## Versioned Docs
+## Versioned docs
 
-Docsmith supports building multiple documentation versions with pill buttons on every page.
+Docsmith can build multiple versions of one documentation set with pill buttons on every page. See [Versioned Docs](versioned-docs.md) for details.
 
 ```php
 use Docsmith\Docsmith;
@@ -157,8 +164,6 @@ use Docsmith\Docsmith;
 Docsmith::make()
     ->source(__DIR__ . '/md')
     ->output(__DIR__ . '/dist')
-    ->title('Project Docs')
-    ->description('Internal package documentation.')
     ->versions([
         ['slug' => 'v1', 'label' => 'v1.0', 'default' => true],
         ['slug' => 'v2', 'label' => 'v2.0'],
@@ -166,28 +171,21 @@ Docsmith::make()
     ->build();
 ```
 
-- Each version reads Markdown from `md/{slug}/`.
-- The default version writes pages to the root (e.g., `installation/index.html`).
-- Non-default versions are namespaced under `{slug}/` (e.g., `v2/installation/index.html`).
-- Pages that exist only in a non-default version are not duplicated to the root.
-- Pill buttons on each page link to the same page in another version when it exists there, otherwise to that version's home.
-- No docs dropdown appears in this mode.
+## Frontmatter
 
-### Version directory structure
+Every page accepts these frontmatter keys:
 
-```
-md/
-├── v1/          # default version — pages at root
-│   ├── index.md
-│   └── installation.md
-└── v2/          # non-default — pages under /v2/
-    ├── index.md
-    └── installation.md
-```
+| Key | Effect |
+|---|---|
+| `title` | Page title, falling back to the first heading or filename |
+| `description` | Page description used in meta tags and search results |
+| `slug` | Custom output path instead of the file path |
+| `order` | Sort position in the sidebar (default `999`) |
+| `sidebar_label` | Shorter label shown in the sidebar |
+| `hidden` | Set to `true` to exclude the page from navigation, search, and pagination |
+| `og_image`, `og_title`, `og_description` | Per-page Open Graph overrides |
 
-## Frontmatter `hidden`
-
-Any page can be hidden from navigation, search results, and pagination by setting `hidden: true` in its frontmatter:
+A hidden page is still rendered to HTML and reachable by URL, but it does not appear in the sidebar, the search index, or previous/next links:
 
 ```markdown
 ---
@@ -196,49 +194,19 @@ hidden: true
 ---
 ```
 
-Hidden pages are still rendered to HTML and directly accessible via URL, but they do not appear in:
+## LLM export
 
-- Sidebar navigation
-- Search index
-- Previous / next page links
+Docsmith generates three text files for LLM consumption: `llms.txt`, `llms-full.txt`, and `export/docs.md`. This is enabled by default; see [LLM Export](llm-export.md).
 
-## AI / LLM Export
+## Attribution badge
 
-Docsmith can generate AI-consumable exports of your documentation:
+Docsmith adds a small "Built with DocSmith" link at the bottom of the sidebar. It is shown by default and can be disabled per build:
 
 ```php
 Docsmith::make()
     ->source(__DIR__ . '/md')
     ->output(__DIR__ . '/dist')
-    ->title('Project Docs')
-    ->siteUrl('https://acme.github.io/project')
-    ->llmsExport(true)
-    ->build();
-```
-
-Enabled by default. Set `->llmsExport(false)` to disable.
-
-Three files are generated in the output directory:
-
-| File | Contents |
-|---|---|
-| `llms.txt` | Directory listing with URLs and descriptions (per the llms.txt standard) |
-| `llms-full.txt` | Full plain-text rendering of every page |
-| `export/docs.md` | Merged Markdown of all pages with frontmatter metadata |
-
-If the source directory does not contain `index.md`, Docsmith includes a generated landing page in the export files.
-
-`siteUrl` is required for correct URL generation in `llms.txt`.
-
-## Docsmith attribution badge
-
-Docsmith adds a small **"Built with DocSmith"** link at the bottom of the sidebar that credits the generator and points back to the project. It's shown by default and can be disabled per site:
-
-```php
-Docsmith::make()
-    ->source(__DIR__ . '/md')
-    ->output(__DIR__ . '/dist')
-    ->showDocsmithBadge(false) // hide the sidebar credit
+    ->showDocsmithBadge(false)
     ->build();
 ```
 
@@ -254,25 +222,28 @@ Docsmith::build(
 
 Via the CLI, pass `--no-docsmith-badge`.
 
-## Current output model
+## Output structure
 
-Each Markdown file becomes an HTML page.
+Each Markdown file becomes an HTML page:
 
 - `md/index.md` becomes `index.html`
 - `md/installation.md` becomes `installation/index.html`
 - `md/guides/configuration.md` becomes `guides/configuration/index.html`
 
-If the source directory does not contain an `index.md`, Docsmith generates a landing page automatically.
+If the source directory has no `index.md`, Docsmith generates a landing page automatically.
+
+Every build also writes `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files into the output directory.
 
 ## README index compatibility mode
 
-Docsmith can import README index formats used by existing projects like `laravel-undocumented` and `laravel-attributes-list`.
+Docsmith can import README index formats used by projects like `laravel-undocumented` and `laravel-attributes-list`:
 
 ```php
 use Docsmith\Docsmith;
 
 Docsmith::make()
     ->readmeIndex(__DIR__ . '/README.md')
+    ->readmeSkipSections(['Contributing', 'Author', 'Notes'])
     ->output(__DIR__ . '/dist')
     ->title('Project Docs')
     ->description('Generated from README index.')
@@ -281,5 +252,5 @@ Docsmith::make()
 
 Supported README item styles:
 
-- `- [withAggregate()](features/eloquent/withAggregate.md) — description`
-- `* [`#[Table]`](attributes/eloquent/Table.md) — description`
+- `- [withAggregate()](features/eloquent/withAggregate.md) - description`
+- `* [`#[Table]`](attributes/eloquent/Table.md) - description`

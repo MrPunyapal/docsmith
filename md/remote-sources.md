@@ -1,6 +1,6 @@
 # Remote Sources
 
-Pull Markdown documentation from other Git repositories into your DocSmith project — without cloning, without provider APIs, and without a system `git` executable.
+Pull Markdown documentation from other Git repositories into your Docsmith project. No cloning, no provider APIs, no system `git` executable.
 
 ```php
 // docsmith.sources.php
@@ -14,29 +14,29 @@ return [
 ];
 ```
 
-Running `docsmith sync` materializes the remote `docs/` directory to `md/laravel/`. After that, `docsmith build` works exactly as it always has.
+Running `docsmith sync` writes the remote `docs/` directory to `md/laravel/`. After that, `docsmith build` works exactly as it always has.
 
 ## Works with any build
 
-Remote sources only materialize local folders under your markdown root — nothing more. What you build from those folders is entirely up to you: a plain single-docs site, a [versioned](versioned-docs.md) build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.
+Remote sources only write local folders under your markdown root. What you build from those folders is up to you: a plain single-docs site, a [versioned](versioned-docs.md) build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.
 
 ## How it works
 
-DocSmith speaks the standard Git **smart HTTP** protocol directly over HTTPS:
+Docsmith speaks the standard Git smart HTTP protocol directly over HTTPS:
 
 ```
-GET  {repo}/info/refs?service=git-upload-pack   → ref advertisement
-POST {repo}/git-upload-pack                     → want <sha> + deepen 1 + done
-                                                ← packfile (depth-1 snapshot)
-parse packfile → walk trees → write files
+GET  {repo}/info/refs?service=git-upload-pack   -> ref advertisement
+POST {repo}/git-upload-pack                     -> want <sha> + deepen 1 + done
+                                                <- packfile (depth-1 snapshot)
+parse packfile -> walk trees -> write files
 ```
 
 Because it is plain Git protocol:
 
-- **Any host works** — GitHub, GitLab, Bitbucket, Gitea, self-hosted Git over HTTPS. DocSmith never knows (or cares) who hosts the repository.
-- **No `git` binary required** — pure PHP using only bundled extensions (`zlib`, streams).
-- **No full clone** — a single depth-1 fetch downloads one compressed snapshot of the requested ref.
-- **No provider APIs or rate limits** — the same transport `git clone` uses.
+- **Any host works.** GitHub, GitLab, Bitbucket, Gitea, self-hosted Git over HTTPS. Docsmith never knows or cares who hosts the repository.
+- **No `git` binary required.** Pure PHP using only bundled extensions (`zlib`, streams).
+- **No full clone.** A single depth-1 fetch downloads one compressed snapshot of the requested ref.
+- **No provider APIs or rate limits.** The same transport `git clone` uses.
 
 ## Commands
 
@@ -48,7 +48,7 @@ docsmith build --sync      # synchronize, then build in one step
 docsmith build             # unchanged: never touches the network
 ```
 
-Plain builds remain fully deterministic and offline. If no `docsmith.sources.php` exists, everything behaves exactly as before.
+Plain builds stay deterministic and offline. If no `docsmith.sources.php` exists, everything behaves exactly as before.
 
 ## Source options
 
@@ -63,22 +63,22 @@ Plain builds remain fully deterministic and offline. If no `docsmith.sources.php
 
 ### Caching and determinism
 
-Each run first resolves the configured ref with a single cheap HTTPS request. If it still points at the recorded commit **and** the materialized files are intact, nothing is downloaded. The resolved state lives in `docsmith.sources.lock.json`, which is safe to commit for reproducible CI builds.
+Each run first resolves the configured ref with a single cheap HTTPS request. If it still points at the recorded commit and the local files are intact, nothing is downloaded. The resolved state lives in `docsmith.sources.lock.json`, which is safe to commit for reproducible CI builds.
 
-Delete the lock file (or pass `--force`) to re-sync from scratch; `--verify` additionally re-hashes every local file against its recorded blob SHA before declaring it up-to-date.
+Delete the lock file (or pass `--force`) to re-sync from scratch. `--verify` additionally re-hashes every local file against its recorded blob SHA before declaring it up-to-date.
 
 ## Safety
 
-Materialization is hardened by default:
+Syncing is restricted by default:
 
-- Path segments are strictly validated (`..`, absolute paths, `.git`, Windows device names, trailing dots/spaces are refused).
-- Symlink and submodule entries are skipped with warnings — never followed.
-- Per-file (20 MB), total-size (200 MB), and file-count (20 000) budgets guard against oversized or hostile repositories.
-- Extraction writes to a staging directory and swaps atomically, so failures never leave half-updated targets.
+- Path segments are strictly validated. `..`, absolute paths, `.git`, Windows device names, and trailing dots or spaces are refused.
+- Symlink and submodule entries are skipped with warnings, never followed.
+- Per-file (20 MB), total-size (200 MB), and file-count (20,000) budgets guard against oversized or hostile repositories.
+- Extraction writes to a staging directory and swaps atomically, so a failure never leaves a half-updated target.
 
 ## Private repositories
 
-Private repositories are supported — pass a token in `docsmith.sources.php`:
+Pass a token in `docsmith.sources.php`:
 
 ```php
 return [
@@ -93,22 +93,22 @@ return [
 ];
 ```
 
-- **`'token' => '${ENV_VAR_NAME}'`** is the recommended form: DocSmith reads the variable from the environment at sync time and fails with a clear message if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
-- **Automatic fallbacks** — if no `token` key is present, DocSmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
-- **`.env` files** — tokens may also live in a `.env` file next to `docsmith.sources.php`; real environment variables always take precedence.
+- **`'token' => '${ENV_VAR_NAME}'`** is the recommended form. Docsmith reads the variable from the environment at sync time and fails with a clear message naming the variable if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
+- **Automatic fallbacks.** If no `token` key is present, Docsmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
+- **`.env` files.** Tokens may also live in a `.env` file next to `docsmith.sources.php`. Real environment variables always take precedence.
 - **Never commit tokens.** Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
-
 
 ## Programmatic use
 
 ```php
 use Docsmith\RemoteSources\RemoteSources;
 
-$report = RemoteSources::sync('docsmith.sources.php');       // or pass an inline array
+$report = RemoteSources::sync('docsmith.sources.php');  // or pass an inline array
 
-$report->isSuccessful();                           // false if any source failed
-$report->summary();                                // "2 synced, 1 up-to-date, 0 failed"
+$report->isSuccessful();  // false if any source failed
+$report->summary();       // "2 synced, 1 up-to-date, 0 failed"
+
 RemoteSources::sync('docsmith.sources.php', force: true);
 ```
 
-The compiler itself is untouched: synchronization simply prepares the input tree beforehand.
+Syncing only prepares the input tree. The build itself is unchanged.

@@ -8,12 +8,12 @@
 ## Install the package
 
 ```bash
-composer require mrpunyapal/docsmith
+composer require --dev mrpunyapal/docsmith
 ```
 
 ## Install the AI agent skill
 
-Docsmith ships an [Agent Skills](https://agentskills.io)-compatible skill (`docsmith-development`) that teaches AI agents — Claude Code, Cursor, Codex, OpenCode, and others — how to use the package correctly: build options, frontmatter keys, versioned docs, docs hubs, and remote source syncing.
+Docsmith ships an [Agent Skills](https://agentskills.io) compatible skill called `docsmith-development`. It teaches coding agents such as Claude Code, Cursor, Codex, and OpenCode how to use the package: build options, frontmatter keys, versioned docs, docs hubs, and remote source syncing.
 
 ### Via Laravel Boost
 
@@ -23,7 +23,7 @@ If your Laravel project uses [Boost](https://laravel.com/docs/boost), the skill 
 php artisan boost:install
 ```
 
-You can also fetch it directly from this repository:
+You can also add it directly from this repository:
 
 ```bash
 php artisan boost:add-skill MrPunyapal/docsmith/resources/boost/skills
@@ -37,11 +37,11 @@ Any agent supported by the [skills CLI](https://skills.sh) can install it too:
 npx skills add MrPunyapal/docsmith/resources/boost/skills
 ```
 
-After installing, ask your agent to activate the `docsmith-development` skill when working on documentation builds.
+After installing, ask your agent to activate the `docsmith-development` skill when it works on documentation builds.
 
 ## Build documentation
 
-Docsmith can build a static site from any Markdown directory, either from PHP or from the command line.
+Docsmith builds a static site from any Markdown directory, either from PHP or from the command line.
 
 ### Command line
 
@@ -66,4 +66,4 @@ Docsmith::build(
 );
 ```
 
-That setup keeps the Markdown source in `md/` and writes the generated site into `docs/`. The main entry page is written to `docs/index.html`.
+This setup keeps the Markdown source in `md/` and writes the generated site into `docs/`. The entry page is written to `docs/index.html`.

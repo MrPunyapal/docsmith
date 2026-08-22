@@ -1,10 +1,10 @@
 # LLM Export
 
-Docsmith can generate AI-consumable exports of your documentation for use with LLMs and AI agents.
+Docsmith can export your documentation as plain text files for use with LLMs and AI agents.
 
 ## Enabling the export
 
-Export is **enabled by default**. Disable it with:
+The export is enabled by default. To turn it off, pass `false`:
 
 ```php
 Docsmith::make()
@@ -36,7 +36,7 @@ A directory listing per the [llms.txt](https://llmstxt.org/) standard:
 
 ### `llms-full.txt`
 
-Every page rendered as plain text, concatenated:
+Every page rendered as plain text and concatenated:
 
 ```
 # Installation
@@ -52,20 +52,10 @@ Set environment variables...
 
 ### `export/docs.md`
 
-Every page's raw Markdown merged into a single file with frontmatter metadata:
-
-```
-# Installation
-
-> Install the package with composer...
-
-## Requirements
-
-...
-```
+Every page's raw Markdown merged into a single file with frontmatter metadata.
 
 ## Requirements
 
 `siteUrl` must be set for correct URL generation in `llms.txt`.
 
-If no `index.md` exists in the source directory, a generated landing page is included in the export.
+If no `index.md` exists in the source directory, the generated landing page is included in the export.

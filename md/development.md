@@ -3,10 +3,10 @@
 ## Quality commands
 
 ```bash
-composer test:lint
-composer test:types
-composer test:unit
-composer test
+composer test:lint     # rector --dry-run && pint --test
+composer test:types    # phpstan
+composer test:unit     # pest --parallel
+composer test          # all of the above
 ```
 
 ## Tooling
@@ -28,7 +28,7 @@ That command uses Docsmith itself to read Markdown from `md/` and regenerate the
 
 ## CI / GitHub Actions
 
-The repository includes a workflow at `.github/workflows/docs.yml` that builds and commits `docs/` on every push that changes the source markdown or build script.
+The repository includes a workflow at `.github/workflows/docs.yml` that builds and commits `docs/` on every push that changes the source Markdown or the build script.
 
 If you enable generated Open Graph images, install Node, Playwright, and Chromium in CI as well:
 
@@ -85,4 +85,4 @@ jobs:
           fi
 ```
 
-Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node/Playwright steps.
+Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node and Playwright steps.

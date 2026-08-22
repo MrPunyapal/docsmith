@@ -1,48 +1,60 @@
 # Docsmith
 
-Docsmith is a small PHP package for turning Markdown files into a static documentation site.
+Docsmith is a PHP package that turns a directory of Markdown files into a static documentation site.
 
-## Current capabilities
+## Features
 
-- Build a multi-page documentation site from a Markdown directory.
-- Generate one HTML page per Markdown file.
-- Publish local CSS assets into the output directory.
-- Publish local JS assets for search, theme toggle, and code-copy UX.
-- Support both a static entry point and a fluent builder API.
-- Build sites from the command line via the bundled `bin/docsmith` binary.
-- Render Markdown through League CommonMark with GitHub-flavored extensions.
-- Parse frontmatter metadata (`title`, `description`, `slug`, `order`, `sidebar_label`, `hidden`).
-- Hide pages from navigation, search, and pagination via frontmatter `hidden: true`.
-- Generate `search-index.json`, `sitemap.xml`, and `.nojekyll`.
-- Support repository/edit links and previous/next page navigation.
-- Build multiple versions of one documentation set with pill buttons on every page.
-- Assemble a docs hub of independent documentation sets with a sidebar dropdown.
-- Sync Markdown from remote Git repositories via smart HTTPS (no git binary, no clones).
-- Search overlay with `Cmd+K` / `Ctrl+K` keyboard shortcut.
-- AI-consumable export: `llms.txt`, `llms-full.txt`, `export/docs.md`.
-- Open Graph / Twitter card tags and generated social preview images.
-- Sidebar "Built with DocSmith" attribution that can be disabled per build.
-- Validate the package with Pest, PHPStan, Rector, and Pint.
+- Builds one HTML page per Markdown file into a self-contained output directory.
+- Sidebar navigation with grouping, active page highlighting, and a filter box.
+- Global search backed by a generated `search-index.json`, plus a `Cmd+K` / `Ctrl+K` search overlay.
+- Dark mode, syntax-highlighted code blocks, and a copy button on snippets.
+- Frontmatter support for `title`, `description`, `slug`, `order`, `sidebar_label`, and `hidden`.
+- Versioned docs with pill buttons to switch versions.
+- Docs hub that combines several independent documentation sets under one sidebar dropdown.
+- Remote source syncing that pulls Markdown from any Git host over plain HTTPS, no `git` binary needed.
+- Generated `search-index.json`, `sitemap.xml`, `.nojekyll`, and favicon on every build.
+- Text exports for LLMs: `llms.txt`, `llms-full.txt`, and `export/docs.md`.
+- Open Graph and Twitter card tags with optional generated preview images.
+- Edit links, previous/next navigation, and a right sidebar table of contents.
+- Three ways to run it: a static API, a fluent builder, and a `vendor/bin/docsmith` CLI.
 
-## Current status
+## Requirements
 
-Docsmith is actively used to generate documentation for multiple packages and supports static-hosting workflows out of the box.
+- PHP 8.3 or newer
+- Composer
 
-Search includes both:
+No framework is required. Docsmith has no Laravel or Illuminate dependency.
 
-- sidebar link filtering
-- global index search powered by generated `search-index.json`
-- overlay modal with keyboard shortcut
+## Quick start
 
-## Documentation pages
+```bash
+composer require --dev mrpunyapal/docsmith
+```
 
-- Installation
-- Usage
-- Architecture
-- Development
-- Versioned Docs
-- Docs Hub
-- Remote Sources
-- Workflows
-- LLM Export
-- Open Graph
+```php
+use Docsmith\Docsmith;
+
+Docsmith::build(
+    source: __DIR__ . '/md',
+    title: 'Project Docs',
+);
+```
+
+This reads Markdown from `md/` and writes the site to `docs/` by default, which works directly with GitHub Pages.
+
+## Documentation
+
+- [Installation](installation.md)
+- [Usage](usage.md)
+- [Versioned Docs](versioned-docs.md)
+- [Docs Hub](docs-hub.md)
+- [Remote Sources](remote-sources.md)
+- [Workflows](workflows.md)
+- [LLM Export](llm-export.md)
+- [Open Graph Images](open-graph.md)
+- [Architecture](architecture.md)
+- [Development](development.md)
+
+## License
+
+MIT. See [LICENSE](https://github.com/MrPunyapal/docsmith/blob/main/LICENSE) for details.

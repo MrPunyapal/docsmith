@@ -1,20 +1,20 @@
 # Architecture
 
-## Current pipeline
+## Build pipeline
 
-The current implementation is intentionally small.
+1. `Docsmith` exposes the static and fluent API.
+2. `Builder` collects configuration: versions, hub entries, LLM export, theme, Open Graph, and more.
+3. `BuildConfig` validates the source and output paths.
+4. `SourceScanner` discovers Markdown files and reads frontmatter. Versioned builds scan one source directory per version.
+5. `CommonMarkRenderer` converts Markdown to HTML through League CommonMark with GitHub-flavored Markdown extensions.
+6. `SiteBuilder` renders pages with sidebar navigation, version pills, and the hub dropdown, and writes them to the output directory.
+7. `AssetPublisher` publishes CSS and JS assets and generates `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files.
 
-1. `Docsmith` exposes the public API.
-2. `Builder` collects configuration (versions, llms-export, readme-index, theme, etc.).
-3. `BuildConfig` validates source and output paths.
-4. `SourceScanner` discovers Markdown files (respects per-version source directories).
-5. `CommonMarkRenderer` converts Markdown into HTML.
-6. `SiteBuilder` writes HTML pages, hub dropdown and version pills, search overlay, and publishes CSS/JS assets.
-7. `AssetPublisher` generates `search-index.json`, `sitemap.xml`, `.nojekyll`, `llms.txt`, `llms-full.txt`, and `export/docs.md`.
+Remote source syncing lives in `src/RemoteSources/` and runs before a build. It only writes local directories; the pipeline above never talks to the network.
 
-## Current source model
+## Document model
 
-Every discovered Markdown file is normalized into a `Document` object containing:
+Every discovered Markdown file becomes a `Document` object containing:
 
 - source path
 - relative path
@@ -22,14 +22,3 @@ Every discovered Markdown file is normalized into a `Document` object containing
 - title
 - raw Markdown
 - rendered HTML
-
-## Current renderer
-
-The current renderer produces:
-
-- a sidebar navigation
-- a main content area
-- a generated landing page when needed
-- local CSS under `assets/app.css`
-
-This is the minimal implementation baseline, not the final architecture.
