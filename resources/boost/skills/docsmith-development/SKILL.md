@@ -73,7 +73,7 @@ php bin/docsmith build --sync      # or sync+build in one step
 
 Commit `docsmith.sources.lock.json` so repeat syncs are incremental; delete it to force a full refresh. Sync failures exit non-zero (CI-safe).
 
-Private repositories: add `'token' => '${ACME_PAT}'` (resolved from the environment; a missing variable is a config error naming it) and optional `'username'`. Without a token key, fallbacks apply: `DOCSMITH_TOKEN` works for any host; `GITHUB_TOKEN` / `GH_TOKEN` are used only for github.com hosts and never sent elsewhere. Never commit real tokens.
+Private repositories: add `'token' => '${ACME_PAT}'` (resolved from the environment; a missing variable is a config error naming it) and optional `'username'`. Without a token key, fallbacks apply: `DOCSMITH_TOKEN` works for any host; `GITHUB_TOKEN` / `GH_TOKEN` are used only for github.com hosts and never sent elsewhere. Tokens may also live in a `.env` file next to `docsmith.sources.php`; real environment variables always take precedence. Never commit real tokens.
 
 ## Open Graph images
 
