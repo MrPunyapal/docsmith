@@ -6,3 +6,6 @@ parameters:
 
     excludePaths:
         - tests/Fixtures/Expected (?)
+
+    bootstrapFiles:
+        - tests/stubs/git-reader-compat.php

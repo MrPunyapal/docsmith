@@ -169,6 +169,8 @@ jobs:
       # Syncs remote sources (incremental when docsmith.sources.lock.json
       # matches) and builds in one step.
       - run: php bin/docsmith build --sync
+        env:
+          ACME_PAT: ${{ secrets.ACME_PAT }}   # only needed for private sources
 
       - uses: actions/upload-pages-artifact@v3
         with:

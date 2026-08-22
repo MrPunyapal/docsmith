@@ -596,6 +596,8 @@ Plain builds remain fully deterministic and offline. If no `docsmith.sources.php
 | `ref` | yes | Branch name, tag name, or an advertised tip SHA. Annotated tags resolve to their commit. |
 | `path` | no | Subdirectory to extract. Empty or `/` means the whole tree. `..` is rejected. |
 | `target` | yes | Directory name under the markdown root (`[A-Za-z0-9._-]+`). Must be unique across sources. |
+| `token` | no | Access token for private repositories. `'${ENV_VAR}'` reads the named environment variable (recommended). |
+| `username` | no | Username used with the token. Defaults to `x-access-token`. |
 
 ### Caching and determinism
 
@@ -612,7 +614,27 @@ Materialization is hardened by default:
 - Per-file (20 MB), total-size (200 MB), and file-count (20 000) budgets guard against oversized or hostile repositories.
 - Extraction writes to a staging directory and swaps atomically, so failures never leave half-updated targets.
 
-Private repositories are **not** supported yet; authentication attempts fail with a clear message.
+## Private repositories
+
+Private repositories are supported — pass a token in `docsmith.sources.php`:
+
+```php
+return [
+    [
+        'repository' => 'https://github.com/acme/private-docs.git',
+        'ref' => 'main',
+        'path' => 'docs',
+        'target' => 'private-docs',
+        'token' => '${ACME_PAT}',   // read from the ACME_PAT environment variable
+        'username' => 'doc-bot',    // optional; defaults to x-access-token
+    ],
+];
+```
+
+- **`'token' => '${ENV_VAR_NAME}'`** is the recommended form: DocSmith reads the variable from the environment at sync time and fails with a clear message if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
+- **Automatic fallbacks** — if no `token` key is present, DocSmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
+- **Never commit tokens.** Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
+
 
 ## Programmatic use
 
@@ -1175,6 +1197,8 @@ jobs:
       # Syncs remote sources (incremental when docsmith.sources.lock.json
       # matches) and builds in one step.
       - run: php bin/docsmith build --sync
+        env:
+          ACME_PAT: ${{ secrets.ACME_PAT }}   # only needed for private sources
 
       - uses: actions/upload-pages-artifact@v3
         with:
