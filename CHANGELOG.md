@@ -3,7 +3,7 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
-## Unreleased
+## 0.3.0 � 2026-08-22
 
 ### Features
 - **Private remote sources** — sync from private Git repositories by adding `'token' => '${ENV_VAR}'` (and optionally `'username'`) to a `docsmith.sources.php` entry. Tokens resolve from the environment at sync time; without an explicit token, `DOCSMITH_TOKEN` is used for any host and `GITHUB_TOKEN` / `GH_TOKEN` only for github.com hosts (never sent to third-party hosts). Requires [mrpunyapal/git-reader](https://github.com/MrPunyapal/git-reader) 0.2.0.
