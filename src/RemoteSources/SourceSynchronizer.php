@@ -45,14 +45,8 @@ final readonly class SourceSynchronizer
 
                 $remote = new RemoteRepository($source->repository, $transport);
 
-                // Compatibility guard: git-reader < 0.2 has no auth support.
-                // @phpstan-ignore function.impossibleType (remove once git-reader ^0.2 is installed)
-                if ($credentials !== null && method_exists($remote, 'withCredentials')) {
-                    $authenticated = $remote->withCredentials($credentials);
-
-                    if ($authenticated instanceof RemoteRepository) {
-                        $remote = $authenticated;
-                    }
+                if ($credentials !== null) {
+                    $remote = $remote->withCredentials($credentials);
                 }
 
                 $log = function (string $line) use ($output): void {
