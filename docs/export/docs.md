@@ -1211,8 +1211,10 @@ Add a deploy job with `actions/deploy-pages@v4` (enable GitHub Pages → Source:
 Notes:
 
 - Commit `docsmith.sources.lock.json` so repeat runs sync incrementally; delete it to force a full refresh.
+- Locally, tokens may also live in a `.env` file next to `docsmith.sources.php` — real environment variables always take precedence.
 - Sync failures fail the workflow — errors exit non-zero.
-- Private repositories are not supported yet; keep synced sources public.
+- Private repositories are supported with a token; see [Remote Sources](remote-sources.md).
+- Keep synced sources public or provide a token via repository secrets.
 
 ## Rebuild automatically when a source repository updates
 

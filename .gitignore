@@ -10,3 +10,5 @@
 /package-lock.json
 Thumbs.db
 .DS_Store
+
+test-private/

@@ -346,7 +346,7 @@ php bin/docsmith sync          # fetch remote sources
 php bin/docsmith build --sync  # or fetch + build in one step
 ```
 
-Plain builds never touch the network; without a `docsmith.sources.php`, nothing changes. Synced sources are plain local directories afterward — they work with a normal build, a versioned build, or a hub equally. See [Remote Sources](md/remote-sources.md) for caching, safety limits, and programmatic usage, and [Workflows](md/workflows.md) for end-to-end recipes (hub from several repos, branch-based versions, CI).
+Plain builds never touch the network; without a `docsmith.sources.php`, nothing changes. Synced sources are plain local directories afterward — they work with a normal build, a versioned build, or a hub equally. Private repositories are supported: add `'token' => '${ACME_PAT}'` to an entry (or set `DOCSMITH_TOKEN` / `GITHUB_TOKEN`), and a `.env` next to the manifest is loaded automatically. See [Remote Sources](md/remote-sources.md) for caching, safety limits, and programmatic usage, and [Workflows](md/workflows.md) for end-to-end recipes (hub from several repos, branch-based versions, CI).
 
 ## Output Model
 

@@ -195,8 +195,10 @@
 <p>Notes:</p>
 <ul>
 <li>Commit <code>docsmith.sources.lock.json</code> so repeat runs sync incrementally; delete it to force a full refresh.</li>
+<li>Locally, tokens may also live in a <code>.env</code> file next to <code>docsmith.sources.php</code> — real environment variables always take precedence.</li>
 <li>Sync failures fail the workflow — errors exit non-zero.</li>
-<li>Private repositories are not supported yet; keep synced sources public.</li>
+<li>Private repositories are supported with a token; see <a href="remote-sources.md">Remote Sources</a>.</li>
+<li>Keep synced sources public or provide a token via repository secrets.</li>
 </ul>
 <h2 id="rebuild-automatically-when-a-source-repository-updates">Rebuild automatically when a source repository updates</h2>
 <p>The workflow above only runs when the docs repository itself changes. When a synced package updates its docs, nothing tells your site to rebuild. Close that gap with GitHub's cross-repository <code>repository_dispatch</code>: each source repository notifies the docs repository after a push, which then syncs and rebuilds.</p>
