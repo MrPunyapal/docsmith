@@ -82,3 +82,34 @@ it('rejects unsafe target names', function (): void {
         'target' => '../escape',
     ], 0);
 })->throws(InvalidSourcesConfiguration::class);
+
+it('accepts optional token and username keys', function (): void {
+    $source = DocumentationSource::fromArray([
+        'repository' => 'https://github.com/acme/docs.git',
+        'ref' => 'main',
+        'target' => 'acme',
+        'token' => '${ACME_PAT}',
+        'username' => 'doc-bot',
+    ], 0);
+
+    expect($source->token)->toBe('${ACME_PAT}')
+        ->and($source->username)->toBe('doc-bot');
+});
+
+it('rejects empty or non-string token and username values', function (): void {
+    DocumentationSource::fromArray([
+        'repository' => 'https://a.test/x.git',
+        'ref' => 'main',
+        'target' => 'x',
+        'token' => '   ',
+    ], 0);
+})->throws(InvalidSourcesConfiguration::class, '[token]');
+
+it('rejects non-string username values', function (): void {
+    DocumentationSource::fromArray([
+        'repository' => 'https://a.test/x.git',
+        'ref' => 'main',
+        'target' => 'x',
+        'username' => 42,
+    ], 0);
+})->throws(InvalidSourcesConfiguration::class, '[username]');

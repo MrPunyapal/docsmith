@@ -6,7 +6,7 @@
     "require": {
         "php": "^8.3",
         "league/commonmark": "^2.7",
-        "mrpunyapal/git-reader": "^0.1",
+        "mrpunyapal/git-reader": "^0.2",
         "phiki/phiki": "^2.2"
     },
     "require-dev": {

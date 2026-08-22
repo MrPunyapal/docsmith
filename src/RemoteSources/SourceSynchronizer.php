@@ -6,6 +6,7 @@ namespace Docsmith\RemoteSources;
 
 use GitReader\GitException;
 use GitReader\RemoteRepository;
+use GitReader\RepositoryNotFoundException;
 use GitReader\SmartHttpTransport;
 use Throwable;
 
@@ -37,9 +38,23 @@ final readonly class SourceSynchronizer
         foreach ($sources as $source) {
             $targetDir = rtrim($markdownRoot, '/\\') . DIRECTORY_SEPARATOR . $source->target;
             $label = sprintf('%s (%s)', $source->repository, $source->ref);
+            $credentials = null;
 
             try {
+                $credentials = SourceCredentials::resolve($source);
+
                 $remote = new RemoteRepository($source->repository, $transport);
+
+                // Compatibility guard: git-reader < 0.2 has no auth support.
+                // @phpstan-ignore function.impossibleType (remove once git-reader ^0.2 is installed)
+                if ($credentials !== null && method_exists($remote, 'withCredentials')) {
+                    $authenticated = $remote->withCredentials($credentials);
+
+                    if ($authenticated instanceof RemoteRepository) {
+                        $remote = $authenticated;
+                    }
+                }
+
                 $log = function (string $line) use ($output): void {
                     $output('[Docsmith] ' . $line);
                 };
@@ -96,7 +111,14 @@ final readonly class SourceSynchronizer
                     $log('  ⚠ ' . $warning);
                 }
             } catch (Throwable $error) {
-                $message = sprintf('%s failed: %s', $source->describe(), $error->getMessage());
+                $hint = '';
+
+                if ($error instanceof RepositoryNotFoundException && $credentials === null) {
+                    $hint = " (is the repository private? Provide a token via 'token' => '\${ENV_VAR}' in"
+                        . ' docsmith.sources.php, or set the DOCSMITH_TOKEN / GITHUB_TOKEN environment variables.)';
+                }
+
+                $message = sprintf('%s failed: %s%s', $source->describe(), $error->getMessage(), $hint);
                 $report = $report->add($source->target, SyncReport::FAILED, $message);
                 $output('[Docsmith] ERROR ' . $message);
 

@@ -14,6 +14,8 @@ final readonly class DocumentationSource
         public string $ref,
         public string $path,
         public string $target,
+        public ?string $token = null,
+        public ?string $username = null,
     ) {
     }
 
@@ -31,9 +33,9 @@ final readonly class DocumentationSource
         }
 
         foreach (array_keys($source) as $key) {
-            if (! in_array($key, ['repository', 'ref', 'path', 'target'], true)) {
+            if (! in_array($key, ['repository', 'ref', 'path', 'target', 'token', 'username'], true)) {
                 throw new InvalidSourcesConfiguration(sprintf(
-                    '%s: unknown key [%s]. Supported keys: repository, ref, path, target.',
+                    '%s: unknown key [%s]. Supported keys: repository, ref, path, target, token, username.',
                     $prefix,
                     (string) $key,
                 ));
@@ -71,12 +73,34 @@ final readonly class DocumentationSource
             ref: trim((string) $source['ref']),
             path: self::normalizePath(is_string($source['path'] ?? null) ? $source['path'] : '', $prefix),
             target: $target,
+            token: self::optionalString($source, 'token', $prefix),
+            username: self::optionalString($source, 'username', $prefix),
         );
     }
 
     public function describe(): string
     {
         return sprintf('%s@%s:%s → %s', $this->repository, $this->ref, $this->path === '' ? '/' : $this->path, $this->target);
+    }
+
+    /**
+     * @param  array<string, mixed>  $source
+     */
+    private static function optionalString(array $source, string $key, string $prefix): ?string
+    {
+        if (! array_key_exists($key, $source) || $source[$key] === null) {
+            return null;
+        }
+
+        if (! is_string($source[$key]) || trim($source[$key]) === '') {
+            throw new InvalidSourcesConfiguration(sprintf(
+                '%s: [%s] must be a non-empty string.',
+                $prefix,
+                $key,
+            ));
+        }
+
+        return trim($source[$key]);
     }
 
     private static function normalizePath(string $path, string $prefix): string
