@@ -49,50 +49,55 @@
                     
                 </header>
                 <div class="doc-body">
-                    <p>Docsmith is a small PHP package for turning Markdown files into a static documentation site.</p>
-<h2 id="current-capabilities">Current capabilities</h2>
+                    <p>Docsmith is a PHP package that turns a directory of Markdown files into a static documentation site.</p>
+<h2 id="features">Features</h2>
 <ul>
-<li>Build a multi-page documentation site from a Markdown directory.</li>
-<li>Generate one HTML page per Markdown file.</li>
-<li>Publish local CSS assets into the output directory.</li>
-<li>Publish local JS assets for search, theme toggle, and code-copy UX.</li>
-<li>Support both a static entry point and a fluent builder API.</li>
-<li>Build sites from the command line via the bundled <code>bin/docsmith</code> binary.</li>
-<li>Render Markdown through League CommonMark with GitHub-flavored extensions.</li>
-<li>Parse frontmatter metadata (<code>title</code>, <code>description</code>, <code>slug</code>, <code>order</code>, <code>sidebar_label</code>, <code>hidden</code>).</li>
-<li>Hide pages from navigation, search, and pagination via frontmatter <code>hidden: true</code>.</li>
-<li>Generate <code>search-index.json</code>, <code>sitemap.xml</code>, and <code>.nojekyll</code>.</li>
-<li>Support repository/edit links and previous/next page navigation.</li>
-<li>Build multiple versions of one documentation set with pill buttons on every page.</li>
-<li>Assemble a docs hub of independent documentation sets with a sidebar dropdown.</li>
-<li>Sync Markdown from remote Git repositories via smart HTTPS (no git binary, no clones).</li>
-<li>Search overlay with <code>Cmd+K</code> / <code>Ctrl+K</code> keyboard shortcut.</li>
-<li>AI-consumable export: <code>llms.txt</code>, <code>llms-full.txt</code>, <code>export/docs.md</code>.</li>
-<li>Open Graph / Twitter card tags and generated social preview images.</li>
-<li>Sidebar "Built with DocSmith" attribution that can be disabled per build.</li>
-<li>Validate the package with Pest, PHPStan, Rector, and Pint.</li>
+<li>Builds one HTML page per Markdown file into a self-contained output directory.</li>
+<li>Sidebar navigation with grouping, active page highlighting, and a filter box.</li>
+<li>Global search backed by a generated <code>search-index.json</code>, plus a <code>Cmd+K</code> / <code>Ctrl+K</code> search overlay.</li>
+<li>Dark mode, syntax-highlighted code blocks, and a copy button on snippets.</li>
+<li>Frontmatter support for <code>title</code>, <code>description</code>, <code>slug</code>, <code>order</code>, <code>sidebar_label</code>, and <code>hidden</code>.</li>
+<li>Versioned docs with pill buttons to switch versions.</li>
+<li>Docs hub that combines several independent documentation sets under one sidebar dropdown.</li>
+<li>Remote source syncing that pulls Markdown from any Git host over plain HTTPS, no <code>git</code> binary needed.</li>
+<li>Generated <code>search-index.json</code>, <code>sitemap.xml</code>, <code>.nojekyll</code>, and favicon on every build.</li>
+<li>Text exports for LLMs: <code>llms.txt</code>, <code>llms-full.txt</code>, and <code>export/docs.md</code>.</li>
+<li>Open Graph and Twitter card tags with optional generated preview images.</li>
+<li>Edit links, previous/next navigation, and a right sidebar table of contents.</li>
+<li>Three ways to run it: a static API, a fluent builder, and a <code>vendor/bin/docsmith</code> CLI.</li>
 </ul>
-<h2 id="current-status">Current status</h2>
-<p>Docsmith is actively used to generate documentation for multiple packages and supports static-hosting workflows out of the box.</p>
-<p>Search includes both:</p>
+<h2 id="requirements">Requirements</h2>
 <ul>
-<li>sidebar link filtering</li>
-<li>global index search powered by generated <code>search-index.json</code></li>
-<li>overlay modal with keyboard shortcut</li>
+<li>PHP 8.3 or newer</li>
+<li>Composer</li>
 </ul>
-<h2 id="documentation-pages">Documentation pages</h2>
+<p>No framework is required. Docsmith has no Laravel or Illuminate dependency.</p>
+<h2 id="quick-start">Quick start</h2>
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">require</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-dev</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">mrpunyapal/docsmith</span><span class="token">
+</span></span></code></pre>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">use</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">build</span><span class="token">(</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">source</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/md</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">title</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">Project Docs</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span></code></pre>
+<p>This reads Markdown from <code>md/</code> and writes the site to <code>docs/</code> by default, which works directly with GitHub Pages.</p>
+<h2 id="documentation">Documentation</h2>
 <ul>
-<li>Installation</li>
-<li>Usage</li>
-<li>Architecture</li>
-<li>Development</li>
-<li>Versioned Docs</li>
-<li>Docs Hub</li>
-<li>Remote Sources</li>
-<li>Workflows</li>
-<li>LLM Export</li>
-<li>Open Graph</li>
+<li><a href="installation.md">Installation</a></li>
+<li><a href="usage.md">Usage</a></li>
+<li><a href="versioned-docs.md">Versioned Docs</a></li>
+<li><a href="docs-hub.md">Docs Hub</a></li>
+<li><a href="remote-sources.md">Remote Sources</a></li>
+<li><a href="workflows.md">Workflows</a></li>
+<li><a href="llm-export.md">LLM Export</a></li>
+<li><a href="open-graph.md">Open Graph Images</a></li>
+<li><a href="architecture.md">Architecture</a></li>
+<li><a href="development.md">Development</a></li>
 </ul>
+<h2 id="license">License</h2>
+<p>MIT. See <a href="https://github.com/MrPunyapal/docsmith/blob/main/LICENSE">LICENSE</a> for details.</p>
 
                 </div>
                 <footer class="doc-meta">
@@ -101,7 +106,7 @@
             </article>
             <nav class="pager" aria-label="Page navigation"><a class="pager-link pager-link-next" href="installation/"><span>Next</span><strong>Installation</strong></a></nav>
         </main>
-        <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#current-capabilities" data-docsmith-toc-link="current-capabilities">Current capabilities</a><a class="toc-link toc-link-level-2" href="#current-status" data-docsmith-toc-link="current-status">Current status</a><a class="toc-link toc-link-level-2" href="#documentation-pages" data-docsmith-toc-link="documentation-pages">Documentation pages</a></nav></aside>
+        <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#features" data-docsmith-toc-link="features">Features</a><a class="toc-link toc-link-level-2" href="#requirements" data-docsmith-toc-link="requirements">Requirements</a><a class="toc-link toc-link-level-2" href="#quick-start" data-docsmith-toc-link="quick-start">Quick start</a><a class="toc-link toc-link-level-2" href="#documentation" data-docsmith-toc-link="documentation">Documentation</a><a class="toc-link toc-link-level-2" href="#license" data-docsmith-toc-link="license">License</a></nav></aside>
     </div>
     <div class="search-overlay" data-docsmith-search-overlay hidden role="dialog" aria-label="Search documentation">
     <div class="search-overlay-backdrop" data-docsmith-search-overlay-close></div>

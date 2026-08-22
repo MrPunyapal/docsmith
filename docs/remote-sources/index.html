@@ -49,7 +49,7 @@
                     
                 </header>
                 <div class="doc-body">
-                    <p>Pull Markdown documentation from other Git repositories into your DocSmith project — without cloning, without provider APIs, and without a system <code>git</code> executable.</p>
+                    <p>Pull Markdown documentation from other Git repositories into your Docsmith project. No cloning, no provider APIs, no system <code>git</code> executable.</p>
 <pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> docsmith.sources.php</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
 </span></span><span class="line"><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">return</span><span class="token"> </span><span class="token">[</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token">[</span><span class="token">
@@ -60,22 +60,22 @@
 </span></span><span class="line"><span class="token">    </span><span class="token">]</span><span class="token">,</span><span class="token">
 </span></span><span class="line"><span class="token">]</span><span class="token">;</span><span class="token">
 </span></span></code></pre>
-<p>Running <code>docsmith sync</code> materializes the remote <code>docs/</code> directory to <code>md/laravel/</code>. After that, <code>docsmith build</code> works exactly as it always has.</p>
+<p>Running <code>docsmith sync</code> writes the remote <code>docs/</code> directory to <code>md/laravel/</code>. After that, <code>docsmith build</code> works exactly as it always has.</p>
 <h2 id="works-with-any-build">Works with any build</h2>
-<p>Remote sources only materialize local folders under your markdown root — nothing more. What you build from those folders is entirely up to you: a plain single-docs site, a <a href="versioned-docs.md">versioned</a> build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.</p>
+<p>Remote sources only write local folders under your markdown root. What you build from those folders is up to you: a plain single-docs site, a <a href="versioned-docs.md">versioned</a> build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.</p>
 <h2 id="how-it-works">How it works</h2>
-<p>DocSmith speaks the standard Git <strong>smart HTTP</strong> protocol directly over HTTPS:</p>
-<pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">GET  {repo}/info/refs?service=git-upload-pack   → ref advertisement
-</span></span><span class="line"><span class="token">POST {repo}/git-upload-pack                     → want &lt;sha&gt; + deepen 1 + done
-</span></span><span class="line"><span class="token">                                                ← packfile (depth-1 snapshot)
-</span></span><span class="line"><span class="token">parse packfile → walk trees → write files
+<p>Docsmith speaks the standard Git smart HTTP protocol directly over HTTPS:</p>
+<pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">GET  {repo}/info/refs?service=git-upload-pack   -&gt; ref advertisement
+</span></span><span class="line"><span class="token">POST {repo}/git-upload-pack                     -&gt; want &lt;sha&gt; + deepen 1 + done
+</span></span><span class="line"><span class="token">                                                &lt;- packfile (depth-1 snapshot)
+</span></span><span class="line"><span class="token">parse packfile -&gt; walk trees -&gt; write files
 </span></span></code></pre>
 <p>Because it is plain Git protocol:</p>
 <ul>
-<li><strong>Any host works</strong> — GitHub, GitLab, Bitbucket, Gitea, self-hosted Git over HTTPS. DocSmith never knows (or cares) who hosts the repository.</li>
-<li><strong>No <code>git</code> binary required</strong> — pure PHP using only bundled extensions (<code>zlib</code>, streams).</li>
-<li><strong>No full clone</strong> — a single depth-1 fetch downloads one compressed snapshot of the requested ref.</li>
-<li><strong>No provider APIs or rate limits</strong> — the same transport <code>git clone</code> uses.</li>
+<li><strong>Any host works.</strong> GitHub, GitLab, Bitbucket, Gitea, self-hosted Git over HTTPS. Docsmith never knows or cares who hosts the repository.</li>
+<li><strong>No <code>git</code> binary required.</strong> Pure PHP using only bundled extensions (<code>zlib</code>, streams).</li>
+<li><strong>No full clone.</strong> A single depth-1 fetch downloads one compressed snapshot of the requested ref.</li>
+<li><strong>No provider APIs or rate limits.</strong> The same transport <code>git clone</code> uses.</li>
 </ul>
 <h2 id="commands">Commands</h2>
 <pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsmith</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">sync</span><span class="token">              </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">#</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> fetch/update all sources from docsmith.sources.php
@@ -84,7 +84,7 @@
 </span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsmith</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">build</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-sync</span><span class="token">      </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">#</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> synchronize, then build in one step
 </span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsmith</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">build</span><span class="token">             </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">#</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> unchanged: never touches the network
 </span></span></code></pre>
-<p>Plain builds remain fully deterministic and offline. If no <code>docsmith.sources.php</code> exists, everything behaves exactly as before.</p>
+<p>Plain builds stay deterministic and offline. If no <code>docsmith.sources.php</code> exists, everything behaves exactly as before.</p>
 <h2 id="source-options">Source options</h2>
 <div class="table-scroll"><table>
 <thead>
@@ -128,18 +128,18 @@
 </tbody>
 </table></div>
 <h3 id="caching-and-determinism">Caching and determinism</h3>
-<p>Each run first resolves the configured ref with a single cheap HTTPS request. If it still points at the recorded commit <strong>and</strong> the materialized files are intact, nothing is downloaded. The resolved state lives in <code>docsmith.sources.lock.json</code>, which is safe to commit for reproducible CI builds.</p>
-<p>Delete the lock file (or pass <code>--force</code>) to re-sync from scratch; <code>--verify</code> additionally re-hashes every local file against its recorded blob SHA before declaring it up-to-date.</p>
+<p>Each run first resolves the configured ref with a single cheap HTTPS request. If it still points at the recorded commit and the local files are intact, nothing is downloaded. The resolved state lives in <code>docsmith.sources.lock.json</code>, which is safe to commit for reproducible CI builds.</p>
+<p>Delete the lock file (or pass <code>--force</code>) to re-sync from scratch. <code>--verify</code> additionally re-hashes every local file against its recorded blob SHA before declaring it up-to-date.</p>
 <h2 id="safety">Safety</h2>
-<p>Materialization is hardened by default:</p>
+<p>Syncing is restricted by default:</p>
 <ul>
-<li>Path segments are strictly validated (<code>..</code>, absolute paths, <code>.git</code>, Windows device names, trailing dots/spaces are refused).</li>
-<li>Symlink and submodule entries are skipped with warnings — never followed.</li>
-<li>Per-file (20 MB), total-size (200 MB), and file-count (20 000) budgets guard against oversized or hostile repositories.</li>
-<li>Extraction writes to a staging directory and swaps atomically, so failures never leave half-updated targets.</li>
+<li>Path segments are strictly validated. <code>..</code>, absolute paths, <code>.git</code>, Windows device names, and trailing dots or spaces are refused.</li>
+<li>Symlink and submodule entries are skipped with warnings, never followed.</li>
+<li>Per-file (20 MB), total-size (200 MB), and file-count (20,000) budgets guard against oversized or hostile repositories.</li>
+<li>Extraction writes to a staging directory and swaps atomically, so a failure never leaves a half-updated target.</li>
 </ul>
 <h2 id="private-repositories">Private repositories</h2>
-<p>Private repositories are supported — pass a token in <code>docsmith.sources.php</code>:</p>
+<p>Pass a token in <code>docsmith.sources.php</code>:</p>
 <pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">return</span><span class="token"> </span><span class="token">[</span><span class="token">
 </span></span><span class="line"><span class="token">    </span><span class="token">[</span><span class="token">
 </span></span><span class="line"><span class="token">        </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">repository</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">=&gt;</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">https://github.com/acme/private-docs.git</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
@@ -152,21 +152,22 @@
 </span></span><span class="line"><span class="token">]</span><span class="token">;</span><span class="token">
 </span></span></code></pre>
 <ul>
-<li><strong><code>'token' =&gt; '${ENV_VAR_NAME}'</code></strong> is the recommended form: DocSmith reads the variable from the environment at sync time and fails with a clear message if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.</li>
-<li><strong>Automatic fallbacks</strong> — if no <code>token</code> key is present, DocSmith uses <code>DOCSMITH_TOKEN</code> for any HTTPS host, and <code>GITHUB_TOKEN</code> / <code>GH_TOKEN</code> only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.</li>
-<li><strong><code>.env</code> files</strong> — tokens may also live in a <code>.env</code> file next to <code>docsmith.sources.php</code>; real environment variables always take precedence.</li>
+<li><strong><code>'token' =&gt; '${ENV_VAR_NAME}'</code></strong> is the recommended form. Docsmith reads the variable from the environment at sync time and fails with a clear message naming the variable if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.</li>
+<li><strong>Automatic fallbacks.</strong> If no <code>token</code> key is present, Docsmith uses <code>DOCSMITH_TOKEN</code> for any HTTPS host, and <code>GITHUB_TOKEN</code> / <code>GH_TOKEN</code> only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.</li>
+<li><strong><code>.env</code> files.</strong> Tokens may also live in a <code>.env</code> file next to <code>docsmith.sources.php</code>. Real environment variables always take precedence.</li>
 <li><strong>Never commit tokens.</strong> Keep them in your shell profile or <code>.env</code>, and let CI inject them via repository secrets.</li>
 </ul>
 <h2 id="programmatic-use">Programmatic use</h2>
 <pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">use</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">RemoteSources</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">RemoteSources</span><span class="token">;</span><span class="token">
 </span></span><span class="line"><span class="token">
-</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">$</span><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">report</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">=</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">RemoteSources</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">sync</span><span class="token">(</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">docsmith.sources.php</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">;</span><span class="token">       </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> or pass an inline array</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
+</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">$</span><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">report</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">=</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">RemoteSources</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">sync</span><span class="token">(</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">docsmith.sources.php</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">)</span><span class="token">;</span><span class="token">  </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> or pass an inline array</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
 </span></span><span class="line"><span class="token">
-</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">$</span><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">report</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">isSuccessful</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">                           </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> false if any source failed</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
-</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">$</span><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">report</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">summary</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">                                </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> "2 synced, 1 up-to-date, 0 failed"</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
+</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">$</span><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">report</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">isSuccessful</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">  </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> false if any source failed</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
+</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">$</span><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">report</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">-&gt;</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">summary</span><span class="token">(</span><span class="token">)</span><span class="token">;</span><span class="token">       </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> "2 synced, 1 up-to-date, 0 failed"</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
+</span></span><span class="line"><span class="token">
 </span></span><span class="line"><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">RemoteSources</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">sync</span><span class="token">(</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">docsmith.sources.php</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">force</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">true</span><span class="token">)</span><span class="token">;</span><span class="token">
 </span></span></code></pre>
-<p>The compiler itself is untouched: synchronization simply prepares the input tree beforehand.</p>
+<p>Syncing only prepares the input tree. The build itself is unchanged.</p>
 
                 </div>
                 <footer class="doc-meta">
