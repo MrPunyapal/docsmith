@@ -3,6 +3,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/mrpunyapal/docsmith.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/docsmith)
 [![Total Downloads on Packagist](https://img.shields.io/packagist/dt/mrpunyapal/docsmith.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/docsmith)
 [![CI](https://github.com/MrPunyapal/docsmith/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MrPunyapal/docsmith/actions/workflows/ci.yml)
+[![PHP Version Compatibility](https://badge.laravel.cloud/php-badge/mrpunyapal/docsmith?style=flat-square)](https://packagist.org/packages/mrpunyapal/docsmith)
 
 Craft static documentation sites from Markdown with minimal setup.
 
