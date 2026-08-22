@@ -7,7 +7,8 @@
         "php": "^8.3",
         "league/commonmark": "^2.7",
         "mrpunyapal/git-reader": "^0.2",
-        "phiki/phiki": "^2.2"
+        "phiki/phiki": "^2.2",
+        "vlucas/phpdotenv": "^5.6"
     },
     "require-dev": {
         "laravel/pao": "^1.1",
