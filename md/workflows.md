@@ -182,3 +182,74 @@ Notes:
 - Commit `docsmith.sources.lock.json` so repeat runs sync incrementally; delete it to force a full refresh.
 - Sync failures fail the workflow — errors exit non-zero.
 - Private repositories are not supported yet; keep synced sources public.
+
+## Rebuild automatically when a source repository updates
+
+The workflow above only runs when the docs repository itself changes. When a synced package updates its docs, nothing tells your site to rebuild. Close that gap with GitHub's cross-repository `repository_dispatch`: each source repository notifies the docs repository after a push, which then syncs and rebuilds.
+
+### 1. Listen for the event (docs repository)
+
+Extend the `on` block of `.github/workflows/docs.yml`:
+
+```yaml
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [content-updated]
+  workflow_dispatch:
+```
+
+The existing `php bin/docsmith build --sync` step needs no changes — a dispatched run simply fetches the updated sources before building.
+
+### 2. Notify the docs repository (each source repository)
+
+`.github/workflows/notify-docs.yml` in every synced package:
+
+```yaml
+name: Notify docs site
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger docs rebuild
+        env:
+          TOKEN: ${{ secrets.DOCS_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "DOCS_DISPATCH_TOKEN is not set"
+            exit 1
+          fi
+          curl --fail --show-error -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/acme/acme-docs/dispatches \
+            -d '{"event_type": "content-updated"}'
+```
+
+Replace `acme/acme-docs` with your docs repository. Keep `--fail --show-error` so HTTP errors fail the step instead of passing silently.
+
+### 3. Create the access token
+
+1. Create a **fine-grained personal access token** (GitHub Developer Settings).
+2. Under Repository Access, select only the docs repository.
+3. Set the **Contents** permission to **Read and write**.
+4. Save it as `DOCS_DISPATCH_TOKEN` in each source repository's Actions secrets.
+
+Fine-grained tokens keep dispatch access limited to exactly the target repository.
+
+### How it fits together
+
+```text
+auth-jobs repo: push docs → notify workflow → repository_dispatch
+                                                    │
+acme-docs repo: build --sync  ←  content-updated  ──┘
+```
+
+A merged PR in any synced package now ends with an up-to-date hub — no manual rebuilds, no scheduled polling.
