@@ -7,6 +7,7 @@
 
 ### Features
 - **Private remote sources** — sync from private Git repositories by adding `'token' => '${ENV_VAR}'` (and optionally `'username'`) to a `docsmith.sources.php` entry. Tokens resolve from the environment at sync time; without an explicit token, `DOCSMITH_TOKEN` is used for any host and `GITHUB_TOKEN` / `GH_TOKEN` only for github.com hosts (never sent to third-party hosts). Requires [mrpunyapal/git-reader](https://github.com/MrPunyapal/git-reader) 0.2.0.
+- **.env support** — a `.env` file next to `docsmith.sources.php` is loaded Laravel-style (immutable); real environment variables always win.
 
 ## 0.3.0-beta.1 — 2026-08-22
 

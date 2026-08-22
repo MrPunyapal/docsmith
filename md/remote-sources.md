@@ -95,6 +95,7 @@ return [
 
 - **`'token' => '${ENV_VAR_NAME}'`** is the recommended form: DocSmith reads the variable from the environment at sync time and fails with a clear message if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
 - **Automatic fallbacks** — if no `token` key is present, DocSmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
+- **`.env` files** — tokens may also live in a `.env` file next to `docsmith.sources.php`; real environment variables always take precedence.
 - **Never commit tokens.** Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
 
 
