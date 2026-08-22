@@ -13,3 +13,4 @@
 - https://mrpunyapal.github.io/docsmith/remote-sources: Remote Sources
 - https://mrpunyapal.github.io/docsmith/usage: Usage
 - https://mrpunyapal.github.io/docsmith/versioned-docs: Versioned Docs
+- https://mrpunyapal.github.io/docsmith/workflows: Workflows

@@ -43,5 +43,6 @@ Search includes both:
 - Versioned Docs
 - Docs Hub
 - Remote Sources
+- Workflows
 - LLM Export
 - Open Graph
