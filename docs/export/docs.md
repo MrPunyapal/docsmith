@@ -13,9 +13,9 @@ npm install -D playwright capturist@^0.1.3
 npx playwright install chromium
 ```
 
-You do not write a capturist config — Docsmith generates it.
+You do not write a capturist config. Docsmith generates it during the build.
 
-## Single image for every page
+## One image for every page
 
 ```php
 Docsmith::make()
@@ -27,13 +27,13 @@ Docsmith::make()
     ->build();
 ```
 
-Writes `docs/og/cover.png` and points every page at it.
+This writes `docs/og/cover.png` and points every page at it.
 
 Always set `siteUrl()` so crawlers get absolute `og:image` URLs:
 
 - With `siteUrl()`: `og:image` is an absolute URL, which every crawler resolves correctly.
-- Without `siteUrl()` but with a subpath `baseUrl()` (e.g. `/docs`): Docsmith emits a root-relative path (`/docs/og/cover.png`) so crawlers resolve it against the host root instead of the broken page-relative default.
-- Without either: `og:image` is page-relative and may break scrapers on subpath hosts (they resolve against the domain root and drop the subpath).
+- Without `siteUrl()` but with a subpath `baseUrl()` (for example `/docs`): Docsmith emits a root-relative path (`/docs/og/cover.png`) so crawlers resolve it against the host root instead of the page.
+- With neither: `og:image` is page-relative and may break scrapers on subpath hosts because they resolve against the domain root and drop the subpath.
 
 ## One image per page
 
@@ -45,6 +45,8 @@ Docsmith::make()
     ->build();
 ```
 
+Each page gets its own preview at `og/<page>.png`.
+
 ## Link an existing image
 
 ```php
@@ -54,9 +56,11 @@ Docsmith::make()
     ->build();
 ```
 
+The URL can be absolute or root-relative.
+
 ## Custom card template
 
-Tokens: `{site_title}`, `{title}`, `{description}`, `{accent_color}`.
+Pass a file path or raw HTML. Tokens `{site_title}`, `{title}`, `{description}`, and `{accent_color}` are replaced per page. The template renders inside a 1200x630 shell, so you only write the card markup:
 
 ```php
 Docsmith::make()
@@ -66,7 +70,24 @@ Docsmith::make()
     ->build();
 ```
 
+For full control, `ogImage(...)` exposes every option directly:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->ogImage(
+        type: 'generated',
+        scope: 'per-page',
+        template: __DIR__ . '/og-card.html',
+        scale: 2,
+        viewport: ['width' => 1200, 'height' => 630],
+    )
+    ->build();
+```
+
 ## Frontmatter overrides
+
+Individual pages can override the image, title, or description used in their tags:
 
 ```md
 ---
@@ -78,17 +99,21 @@ og_description: Custom social description.
 
 ## Capture control
 
+Capture runs during `build()` when a generated mode is enabled. It is incremental through the capturist cache: unchanged cards are skipped, and rebuilds print `Open Graph images up to date`.
+
 | Method | Purpose |
 |--------|---------|
-| `captureOg(false)` | Write previews + config only; skip screenshots |
-| `forceOg()` | Recapture everything (ignore capturist cache) |
+| `captureOg(false)` | Write previews and `capturist.config.json` only; skip screenshots |
+| `forceOg()` | Recapture everything, ignoring the capturist cache |
 | `runCapturist(false)` | Deprecated alias of `captureOg(false)` |
 
-Capture is incremental via capturist. Unchanged cards are skipped; force regen with `forceOg()` or by deleting `og/.capturist-cache.json`.
+To force a full regeneration without the method, delete `og/.capturist-cache.json`.
+
+If capture is enabled but Node, capturist, or Chromium is missing, the build fails with install instructions.
 
 ## CI
 
-Install Node deps and Chromium before a docs build that runs capture:
+Install Node dependencies and Chromium before a docs build that runs capture:
 
 ```yaml
 - uses: actions/setup-node@v4
@@ -101,21 +126,7 @@ Install Node deps and Chromium before a docs build that runs capture:
 - run: php build-docs.php
 ```
 
-Split builds: `->captureOg(false)` in the HTML job, capture later with `npx capturist --cwd docs --config capturist.config.json`.
-
-## Future scope
-
-Shipped today: generated cards, meta tags, frontmatter overrides, capturist incremental cache, install/CI guidance.
-
-Possible later work (not committed to a timeline):
-
-- CI smoke job that runs a real Playwright capture once
-- Stronger tests for versioned docs + OG paths
-- Optional hard-fail when `siteUrl` is missing for generated OG
-- Default-card logo / simple layout presets
-- Cleaner published output (e.g. ignore `og/preview/` HTML, keep PNGs)
-
-Non-goals for now: mid-build auto-install of Node tools, PHP-side cache, or requiring consumers to hand-write capturist config.
+To split the steps, call `captureOg(false)` in the HTML job, then capture later with `npx capturist --cwd docs --config capturist.config.json`.
 
 
 ---
@@ -124,21 +135,21 @@ Non-goals for now: mid-build auto-install of Node tools, PHP-side cache, or requ
 
 # Architecture
 
-## Current pipeline
+## Build pipeline
 
-The current implementation is intentionally small.
+1. `Docsmith` exposes the static and fluent API.
+2. `Builder` collects configuration: versions, hub entries, LLM export, theme, Open Graph, and more.
+3. `BuildConfig` validates the source and output paths.
+4. `SourceScanner` discovers Markdown files and reads frontmatter. Versioned builds scan one source directory per version.
+5. `CommonMarkRenderer` converts Markdown to HTML through League CommonMark with GitHub-flavored Markdown extensions.
+6. `SiteBuilder` renders pages with sidebar navigation, version pills, and the hub dropdown, and writes them to the output directory.
+7. `AssetPublisher` publishes CSS and JS assets and generates `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files.
 
-1. `Docsmith` exposes the public API.
-2. `Builder` collects configuration (versions, llms-export, readme-index, theme, etc.).
-3. `BuildConfig` validates source and output paths.
-4. `SourceScanner` discovers Markdown files (respects per-version source directories).
-5. `CommonMarkRenderer` converts Markdown into HTML.
-6. `SiteBuilder` writes HTML pages, hub dropdown and version pills, search overlay, and publishes CSS/JS assets.
-7. `AssetPublisher` generates `search-index.json`, `sitemap.xml`, `.nojekyll`, `llms.txt`, `llms-full.txt`, and `export/docs.md`.
+Remote source syncing lives in `src/RemoteSources/` and runs before a build. It only writes local directories; the pipeline above never talks to the network.
 
-## Current source model
+## Document model
 
-Every discovered Markdown file is normalized into a `Document` object containing:
+Every discovered Markdown file becomes a `Document` object containing:
 
 - source path
 - relative path
@@ -146,17 +157,6 @@ Every discovered Markdown file is normalized into a `Document` object containing
 - title
 - raw Markdown
 - rendered HTML
-
-## Current renderer
-
-The current renderer produces:
-
-- a sidebar navigation
-- a main content area
-- a generated landing page when needed
-- local CSS under `assets/app.css`
-
-This is the minimal implementation baseline, not the final architecture.
 
 
 ---
@@ -168,10 +168,10 @@ This is the minimal implementation baseline, not the final architecture.
 ## Quality commands
 
 ```bash
-composer test:lint
-composer test:types
-composer test:unit
-composer test
+composer test:lint     # rector --dry-run && pint --test
+composer test:types    # phpstan
+composer test:unit     # pest --parallel
+composer test          # all of the above
 ```
 
 ## Tooling
@@ -193,7 +193,7 @@ That command uses Docsmith itself to read Markdown from `md/` and regenerate the
 
 ## CI / GitHub Actions
 
-The repository includes a workflow at `.github/workflows/docs.yml` that builds and commits `docs/` on every push that changes the source markdown or build script.
+The repository includes a workflow at `.github/workflows/docs.yml` that builds and commits `docs/` on every push that changes the source Markdown or the build script.
 
 If you enable generated Open Graph images, install Node, Playwright, and Chromium in CI as well:
 
@@ -250,7 +250,7 @@ jobs:
           fi
 ```
 
-Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node/Playwright steps.
+Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node and Playwright steps.
 
 
 ---
@@ -259,11 +259,11 @@ Adjust the PHP version, source paths, and build command to match your project. W
 
 # Docs Hub
 
-The docs hub builds several **independent** documentation sets into one site. A dropdown in the sidebar switches between them.
+The docs hub builds several independent documentation sets into one site. A dropdown in the sidebar switches between them.
 
 ## Setup
 
-Pass one entry per documentation set to `->hub()`:
+Pass one entry per documentation set to `hub()`:
 
 ```php
 use Docsmith\Docsmith;
@@ -280,13 +280,13 @@ Docsmith::make()
 
 ## How it works
 
-- Each entry gets one dropdown option and mounts under its slug (`/package-a/…`, `/package-b/…`).
-- Nothing is generated at the root: `/` simply forwards to the first entry.
+- Each entry gets one dropdown option and mounts under its slug (`/package-a/...`, `/package-b/...`).
+- Nothing is generated at the root. `/` forwards to the first entry.
 - Frontmatter `order:` still applies per page.
 
 ## Navigation order
 
-Set `navigation` on an entry to control its sidebar order. Entries are matched by title, sidebar label, or file path; pages not listed keep their natural order after the listed ones.
+Set `navigation` on an entry to control its sidebar order. Entries are matched by title, sidebar label, or file path. Pages not listed keep their natural order after the listed ones:
 
 ```php
 ->hub([
@@ -299,18 +299,18 @@ Set `navigation` on an entry to control its sidebar order. Entries are matched b
 ])
 ```
 
-Entries without `navigation` fall back to the global `->navigationOrder([...])`.
+Entries without `navigation` fall back to the global `navigationOrder([...])`.
 
 ## Hub entries with versions
 
-An entry can embed a `versions` list. The entry stays a **single** dropdown item, and its pages get version pill buttons:
+An entry can embed a `versions` list. The entry stays a single dropdown item, and its pages get version pill buttons:
 
 ```php
 ->hub([
     'auth-jobs' => [
         'label' => 'Auth Jobs',
         'source' => __DIR__ . '/md/auth-jobs',          // backs the default version
-        'navigation' => ['index.md', 'usage.md', ...],  // optional, per entry
+        'navigation' => ['index.md', 'usage.md'],       // optional, per entry
         'versions' => [
             ['slug' => 'v2', 'label' => 'v2', 'default' => true],
             ['slug' => 'v1', 'label' => 'v1', 'source' => __DIR__ . '/md/auth-jobs-1x'],
@@ -320,10 +320,10 @@ An entry can embed a `versions` list. The entry stays a **single** dropdown item
 ```
 
 - The `versions` list describes all versions of that entry.
-- The primary version — flagged `default`, else the first listed — mounts at the entry root (`/auth-jobs/…`); siblings nest under it (`/auth-jobs/v1/…`).
-- The entry-level `source` may stand in for the primary version's source (as above). Other versions need their own `source`, or resolve to `{source}/{entry-slug}/{version-slug}` when `->source()` is set.
+- The primary version (flagged `default`, otherwise the first listed) mounts at the entry root (`/auth-jobs/...`). Siblings nest under it (`/auth-jobs/v1/...`).
+- The entry-level `source` can stand in for the primary version's source, as above. Other versions need their own `source`, or they resolve to `{source}/{entry-slug}/{version-slug}` when `source()` is set.
 
-So in the built site the dropdown shows only "Auth Jobs" — never "Auth Jobs v1" — while Auth Jobs pages carry v1/v2 pills.
+In the built site the dropdown shows only "Auth Jobs", never "Auth Jobs v1", while Auth Jobs pages carry v1/v2 pills.
 
 
 ---
@@ -332,52 +332,64 @@ So in the built site the dropdown shows only "Auth Jobs" — never "Auth Jobs v1
 
 # Docsmith
 
-Docsmith is a small PHP package for turning Markdown files into a static documentation site.
+Docsmith is a PHP package that turns a directory of Markdown files into a static documentation site.
 
-## Current capabilities
+## Features
 
-- Build a multi-page documentation site from a Markdown directory.
-- Generate one HTML page per Markdown file.
-- Publish local CSS assets into the output directory.
-- Publish local JS assets for search, theme toggle, and code-copy UX.
-- Support both a static entry point and a fluent builder API.
-- Build sites from the command line via the bundled `bin/docsmith` binary.
-- Render Markdown through League CommonMark with GitHub-flavored extensions.
-- Parse frontmatter metadata (`title`, `description`, `slug`, `order`, `sidebar_label`, `hidden`).
-- Hide pages from navigation, search, and pagination via frontmatter `hidden: true`.
-- Generate `search-index.json`, `sitemap.xml`, and `.nojekyll`.
-- Support repository/edit links and previous/next page navigation.
-- Build multiple versions of one documentation set with pill buttons on every page.
-- Assemble a docs hub of independent documentation sets with a sidebar dropdown.
-- Sync Markdown from remote Git repositories via smart HTTPS (no git binary, no clones).
-- Search overlay with `Cmd+K` / `Ctrl+K` keyboard shortcut.
-- AI-consumable export: `llms.txt`, `llms-full.txt`, `export/docs.md`.
-- Open Graph / Twitter card tags and generated social preview images.
-- Sidebar "Built with DocSmith" attribution that can be disabled per build.
-- Validate the package with Pest, PHPStan, Rector, and Pint.
+- Builds one HTML page per Markdown file into a self-contained output directory.
+- Sidebar navigation with grouping, active page highlighting, and a filter box.
+- Global search backed by a generated `search-index.json`, plus a `Cmd+K` / `Ctrl+K` search overlay.
+- Dark mode, syntax-highlighted code blocks, and a copy button on snippets.
+- Frontmatter support for `title`, `description`, `slug`, `order`, `sidebar_label`, and `hidden`.
+- Versioned docs with pill buttons to switch versions.
+- Docs hub that combines several independent documentation sets under one sidebar dropdown.
+- Remote source syncing that pulls Markdown from any Git host over plain HTTPS, no `git` binary needed.
+- Generated `search-index.json`, `sitemap.xml`, `.nojekyll`, and favicon on every build.
+- Text exports for LLMs: `llms.txt`, `llms-full.txt`, and `export/docs.md`.
+- Open Graph and Twitter card tags with optional generated preview images.
+- Edit links, previous/next navigation, and a right sidebar table of contents.
+- Three ways to run it: a static API, a fluent builder, and a `vendor/bin/docsmith` CLI.
 
-## Current status
+## Requirements
 
-Docsmith is actively used to generate documentation for multiple packages and supports static-hosting workflows out of the box.
+- PHP 8.3 or newer
+- Composer
 
-Search includes both:
+No framework is required. Docsmith has no Laravel or Illuminate dependency.
 
-- sidebar link filtering
-- global index search powered by generated `search-index.json`
-- overlay modal with keyboard shortcut
+## Quick start
 
-## Documentation pages
+```bash
+composer require --dev mrpunyapal/docsmith
+```
 
-- Installation
-- Usage
-- Architecture
-- Development
-- Versioned Docs
-- Docs Hub
-- Remote Sources
-- Workflows
-- LLM Export
-- Open Graph
+```php
+use Docsmith\Docsmith;
+
+Docsmith::build(
+    source: __DIR__ . '/md',
+    title: 'Project Docs',
+);
+```
+
+This reads Markdown from `md/` and writes the site to `docs/` by default, which works directly with GitHub Pages.
+
+## Documentation
+
+- [Installation](installation.md)
+- [Usage](usage.md)
+- [Versioned Docs](versioned-docs.md)
+- [Docs Hub](docs-hub.md)
+- [Remote Sources](remote-sources.md)
+- [Workflows](workflows.md)
+- [LLM Export](llm-export.md)
+- [Open Graph Images](open-graph.md)
+- [Architecture](architecture.md)
+- [Development](development.md)
+
+## License
+
+MIT. See [LICENSE](https://github.com/MrPunyapal/docsmith/blob/main/LICENSE) for details.
 
 
 ---
@@ -394,12 +406,12 @@ Search includes both:
 ## Install the package
 
 ```bash
-composer require mrpunyapal/docsmith
+composer require --dev mrpunyapal/docsmith
 ```
 
 ## Install the AI agent skill
 
-Docsmith ships an [Agent Skills](https://agentskills.io)-compatible skill (`docsmith-development`) that teaches AI agents — Claude Code, Cursor, Codex, OpenCode, and others — how to use the package correctly: build options, frontmatter keys, versioned docs, docs hubs, and remote source syncing.
+Docsmith ships an [Agent Skills](https://agentskills.io) compatible skill called `docsmith-development`. It teaches coding agents such as Claude Code, Cursor, Codex, and OpenCode how to use the package: build options, frontmatter keys, versioned docs, docs hubs, and remote source syncing.
 
 ### Via Laravel Boost
 
@@ -409,7 +421,7 @@ If your Laravel project uses [Boost](https://laravel.com/docs/boost), the skill 
 php artisan boost:install
 ```
 
-You can also fetch it directly from this repository:
+You can also add it directly from this repository:
 
 ```bash
 php artisan boost:add-skill MrPunyapal/docsmith/resources/boost/skills
@@ -423,11 +435,11 @@ Any agent supported by the [skills CLI](https://skills.sh) can install it too:
 npx skills add MrPunyapal/docsmith/resources/boost/skills
 ```
 
-After installing, ask your agent to activate the `docsmith-development` skill when working on documentation builds.
+After installing, ask your agent to activate the `docsmith-development` skill when it works on documentation builds.
 
 ## Build documentation
 
-Docsmith can build a static site from any Markdown directory, either from PHP or from the command line.
+Docsmith builds a static site from any Markdown directory, either from PHP or from the command line.
 
 ### Command line
 
@@ -452,7 +464,7 @@ Docsmith::build(
 );
 ```
 
-That setup keeps the Markdown source in `md/` and writes the generated site into `docs/`. The main entry page is written to `docs/index.html`.
+This setup keeps the Markdown source in `md/` and writes the generated site into `docs/`. The entry page is written to `docs/index.html`.
 
 
 ---
@@ -461,11 +473,11 @@ That setup keeps the Markdown source in `md/` and writes the generated site into
 
 # LLM Export
 
-Docsmith can generate AI-consumable exports of your documentation for use with LLMs and AI agents.
+Docsmith can export your documentation as plain text files for use with LLMs and AI agents.
 
 ## Enabling the export
 
-Export is **enabled by default**. Disable it with:
+The export is enabled by default. To turn it off, pass `false`:
 
 ```php
 Docsmith::make()
@@ -497,7 +509,7 @@ A directory listing per the [llms.txt](https://llmstxt.org/) standard:
 
 ### `llms-full.txt`
 
-Every page rendered as plain text, concatenated:
+Every page rendered as plain text and concatenated:
 
 ```
 # Installation
@@ -513,23 +525,13 @@ Set environment variables...
 
 ### `export/docs.md`
 
-Every page's raw Markdown merged into a single file with frontmatter metadata:
-
-```
-# Installation
-
-> Install the package with composer...
-
-## Requirements
-
-...
-```
+Every page's raw Markdown merged into a single file with frontmatter metadata.
 
 ## Requirements
 
 `siteUrl` must be set for correct URL generation in `llms.txt`.
 
-If no `index.md` exists in the source directory, a generated landing page is included in the export.
+If no `index.md` exists in the source directory, the generated landing page is included in the export.
 
 
 ---
@@ -538,7 +540,7 @@ If no `index.md` exists in the source directory, a generated landing page is inc
 
 # Remote Sources
 
-Pull Markdown documentation from other Git repositories into your DocSmith project — without cloning, without provider APIs, and without a system `git` executable.
+Pull Markdown documentation from other Git repositories into your Docsmith project. No cloning, no provider APIs, no system `git` executable.
 
 ```php
 // docsmith.sources.php
@@ -552,29 +554,29 @@ return [
 ];
 ```
 
-Running `docsmith sync` materializes the remote `docs/` directory to `md/laravel/`. After that, `docsmith build` works exactly as it always has.
+Running `docsmith sync` writes the remote `docs/` directory to `md/laravel/`. After that, `docsmith build` works exactly as it always has.
 
 ## Works with any build
 
-Remote sources only materialize local folders under your markdown root — nothing more. What you build from those folders is entirely up to you: a plain single-docs site, a [versioned](versioned-docs.md) build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.
+Remote sources only write local folders under your markdown root. What you build from those folders is up to you: a plain single-docs site, a [versioned](versioned-docs.md) build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.
 
 ## How it works
 
-DocSmith speaks the standard Git **smart HTTP** protocol directly over HTTPS:
+Docsmith speaks the standard Git smart HTTP protocol directly over HTTPS:
 
 ```
-GET  {repo}/info/refs?service=git-upload-pack   → ref advertisement
-POST {repo}/git-upload-pack                     → want <sha> + deepen 1 + done
-                                                ← packfile (depth-1 snapshot)
-parse packfile → walk trees → write files
+GET  {repo}/info/refs?service=git-upload-pack   -> ref advertisement
+POST {repo}/git-upload-pack                     -> want <sha> + deepen 1 + done
+                                                <- packfile (depth-1 snapshot)
+parse packfile -> walk trees -> write files
 ```
 
 Because it is plain Git protocol:
 
-- **Any host works** — GitHub, GitLab, Bitbucket, Gitea, self-hosted Git over HTTPS. DocSmith never knows (or cares) who hosts the repository.
-- **No `git` binary required** — pure PHP using only bundled extensions (`zlib`, streams).
-- **No full clone** — a single depth-1 fetch downloads one compressed snapshot of the requested ref.
-- **No provider APIs or rate limits** — the same transport `git clone` uses.
+- **Any host works.** GitHub, GitLab, Bitbucket, Gitea, self-hosted Git over HTTPS. Docsmith never knows or cares who hosts the repository.
+- **No `git` binary required.** Pure PHP using only bundled extensions (`zlib`, streams).
+- **No full clone.** A single depth-1 fetch downloads one compressed snapshot of the requested ref.
+- **No provider APIs or rate limits.** The same transport `git clone` uses.
 
 ## Commands
 
@@ -586,7 +588,7 @@ docsmith build --sync      # synchronize, then build in one step
 docsmith build             # unchanged: never touches the network
 ```
 
-Plain builds remain fully deterministic and offline. If no `docsmith.sources.php` exists, everything behaves exactly as before.
+Plain builds stay deterministic and offline. If no `docsmith.sources.php` exists, everything behaves exactly as before.
 
 ## Source options
 
@@ -601,22 +603,22 @@ Plain builds remain fully deterministic and offline. If no `docsmith.sources.php
 
 ### Caching and determinism
 
-Each run first resolves the configured ref with a single cheap HTTPS request. If it still points at the recorded commit **and** the materialized files are intact, nothing is downloaded. The resolved state lives in `docsmith.sources.lock.json`, which is safe to commit for reproducible CI builds.
+Each run first resolves the configured ref with a single cheap HTTPS request. If it still points at the recorded commit and the local files are intact, nothing is downloaded. The resolved state lives in `docsmith.sources.lock.json`, which is safe to commit for reproducible CI builds.
 
-Delete the lock file (or pass `--force`) to re-sync from scratch; `--verify` additionally re-hashes every local file against its recorded blob SHA before declaring it up-to-date.
+Delete the lock file (or pass `--force`) to re-sync from scratch. `--verify` additionally re-hashes every local file against its recorded blob SHA before declaring it up-to-date.
 
 ## Safety
 
-Materialization is hardened by default:
+Syncing is restricted by default:
 
-- Path segments are strictly validated (`..`, absolute paths, `.git`, Windows device names, trailing dots/spaces are refused).
-- Symlink and submodule entries are skipped with warnings — never followed.
-- Per-file (20 MB), total-size (200 MB), and file-count (20 000) budgets guard against oversized or hostile repositories.
-- Extraction writes to a staging directory and swaps atomically, so failures never leave half-updated targets.
+- Path segments are strictly validated. `..`, absolute paths, `.git`, Windows device names, and trailing dots or spaces are refused.
+- Symlink and submodule entries are skipped with warnings, never followed.
+- Per-file (20 MB), total-size (200 MB), and file-count (20,000) budgets guard against oversized or hostile repositories.
+- Extraction writes to a staging directory and swaps atomically, so a failure never leaves a half-updated target.
 
 ## Private repositories
 
-Private repositories are supported — pass a token in `docsmith.sources.php`:
+Pass a token in `docsmith.sources.php`:
 
 ```php
 return [
@@ -631,25 +633,25 @@ return [
 ];
 ```
 
-- **`'token' => '${ENV_VAR_NAME}'`** is the recommended form: DocSmith reads the variable from the environment at sync time and fails with a clear message if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
-- **Automatic fallbacks** — if no `token` key is present, DocSmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
-- **`.env` files** — tokens may also live in a `.env` file next to `docsmith.sources.php`; real environment variables always take precedence.
+- **`'token' => '${ENV_VAR_NAME}'`** is the recommended form. Docsmith reads the variable from the environment at sync time and fails with a clear message naming the variable if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
+- **Automatic fallbacks.** If no `token` key is present, Docsmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
+- **`.env` files.** Tokens may also live in a `.env` file next to `docsmith.sources.php`. Real environment variables always take precedence.
 - **Never commit tokens.** Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
-
 
 ## Programmatic use
 
 ```php
 use Docsmith\RemoteSources\RemoteSources;
 
-$report = RemoteSources::sync('docsmith.sources.php');       // or pass an inline array
+$report = RemoteSources::sync('docsmith.sources.php');  // or pass an inline array
 
-$report->isSuccessful();                           // false if any source failed
-$report->summary();                                // "2 synced, 1 up-to-date, 0 failed"
+$report->isSuccessful();  // false if any source failed
+$report->summary();       // "2 synced, 1 up-to-date, 0 failed"
+
 RemoteSources::sync('docsmith.sources.php', force: true);
 ```
 
-The compiler itself is untouched: synchronization simply prepares the input tree beforehand.
+Syncing only prepares the input tree. The build itself is unchanged.
 
 
 ---
@@ -689,10 +691,9 @@ Docsmith::make()
     ->editBranch('main')
     ->rightSidebar()
     ->build();
-
 ```
 
-## Command Line
+## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
 
@@ -708,22 +709,24 @@ php bin/docsmith build --source=md --output=docs --title="Project Docs"
 
 | Option | Description | Default |
 |---|---|---|
-| `--source=DIR` | Directory with Markdown sources (required) | — |
+| `--source=DIR` | Directory with Markdown sources (required) | none |
 | `--output=DIR` | Output directory | `docs` |
 | `--title=TITLE` | Site title | `Documentation` |
 | `--description=DESC` | Site description | `Project documentation.` |
 | `--accent-color=HEX` | Accent color | `#ff2d20` |
-| `--accent-color-dark=HEX` | Dark-mode accent color | — |
-| `--custom-css=FILE` | Path to a custom CSS file | — |
+| `--accent-color-dark=HEX` | Dark-mode accent color | derived from accent |
+| `--custom-css=FILE` | Path to a custom CSS file | none |
 | `--base-url=URL` | Base URL | `/` |
-| `--right-sidebar` | Enable the right sidebar | off |
-| `--repository-url=URL` | Repository URL for edit links | — |
-| `--site-url=URL` | Canonical site URL | — |
+| `--right-sidebar` | Enable the right sidebar table of contents | off |
+| `--repository-url=URL` | Repository URL for edit links | none |
+| `--site-url=URL` | Canonical site URL | none |
 | `--edit-branch=BRANCH` | Branch used for edit links | `main` |
+| `--edit-prefix=PREFIX` | Path prefix prepended to the file path in edit links, for example `md/` | none |
+| `--favicon=FILE` | Favicon URL, data URI, or local file path | generated default |
 | `--no-docsmith-badge` | Hide the "Built with DocSmith" sidebar badge | shown |
-| `--help` | Show usage | — |
+| `--help` | Show usage | |
 
-Example with edit links, right sidebar, and search-ready output:
+Example with edit links and a right sidebar:
 
 ```bash
 vendor/bin/docsmith build \
@@ -738,9 +741,9 @@ vendor/bin/docsmith build \
     --right-sidebar
 ```
 
-The binary is a thin wrapper around `Docsmith::build()` — every option maps to the static API parameter of the same name.
+The binary is a wrapper around `Docsmith::build()`. Every option maps to the static API parameter or fluent method of the same name.
 
-## Theme Color
+## Theme color
 
 Docsmith defaults to a Laravel red accent. Override it when building docs:
 
@@ -753,11 +756,11 @@ Docsmith::make()
     ->build();
 ```
 
-Use hex colors for the best results because Docsmith derives the hover, focus, and dark-mode variants from the accent.
+Use hex colors for the best results because Docsmith derives hover, focus, and dark-mode variants from the accent.
 
 ### Custom CSS
 
-If you need to apply project-specific tweaks, you can append raw CSS or a CSS file during the build:
+Append raw CSS during the build:
 
 ```php
 Docsmith::make()
@@ -767,25 +770,31 @@ Docsmith::make()
     ->build();
 ```
 
-Or:
+Or append a CSS file by passing a path instead:
 
 ```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/dist')
     ->customCss(__DIR__ . '/overrides.css')
+    ->build();
 ```
+
+Either way the rules are appended to the published `assets/app.css`.
 
 ## Search
 
-Docsmith generates `search-index.json` and uses it for global result search in the sidebar.
+Docsmith generates `search-index.json` at build time and uses it for global search.
 
-- Type at least 2 characters to see global matches.
-- Results include title, description, headings, and page content text.
+- Type at least 2 characters in the sidebar search box to see global matches.
+- Results include title, description, headings, and page content.
 - Selecting a result navigates to that page.
 
-The existing sidebar filter search still works for quick navigation filtering.
+The sidebar filter still narrows the visible navigation links as you type.
 
 ### Choosing navigation order
 
-Use `navigationOrder()` to place pages in a custom sidebar sequence. Entries can match a page title, `sidebar_label`, relative Markdown path, or output path. Pages not listed keep their existing order:
+Use `navigationOrder()` to place pages in a custom sidebar sequence. Entries can match a page title, `sidebar_label`, relative Markdown path, or output path. Pages not listed keep their existing order after the listed ones:
 
 ```php
 Docsmith::make()
@@ -794,20 +803,20 @@ Docsmith::make()
     ->build();
 ```
 
-## Search Overlay (Cmd+K)
+## Search overlay (Cmd+K)
 
-Docsmith includes a modal search overlay accessible via keyboard shortcut or click.
+Docsmith includes a modal search overlay.
 
-- Press `Cmd+K` (macOS) or `Ctrl+K` (Windows/Linux) to open the overlay.
-- Press `Esc` or click the backdrop to close.
+- Press `Cmd+K` (macOS) or `Ctrl+K` (Windows/Linux) to open it.
+- Press `Esc` or click the backdrop to close it.
 - Results appear after typing at least 1 character.
-- The search input in the header also opens the overlay on click.
+- Clicking the search input in the header also opens it.
 
 The overlay searches the same `search-index.json` as the sidebar search.
 
-## Versioned Docs
+## Versioned docs
 
-Docsmith supports building multiple documentation versions with pill buttons on every page.
+Docsmith can build multiple versions of one documentation set with pill buttons on every page. See [Versioned Docs](versioned-docs.md) for details.
 
 ```php
 use Docsmith\Docsmith;
@@ -815,8 +824,6 @@ use Docsmith\Docsmith;
 Docsmith::make()
     ->source(__DIR__ . '/md')
     ->output(__DIR__ . '/dist')
-    ->title('Project Docs')
-    ->description('Internal package documentation.')
     ->versions([
         ['slug' => 'v1', 'label' => 'v1.0', 'default' => true],
         ['slug' => 'v2', 'label' => 'v2.0'],
@@ -824,28 +831,21 @@ Docsmith::make()
     ->build();
 ```
 
-- Each version reads Markdown from `md/{slug}/`.
-- The default version writes pages to the root (e.g., `installation/index.html`).
-- Non-default versions are namespaced under `{slug}/` (e.g., `v2/installation/index.html`).
-- Pages that exist only in a non-default version are not duplicated to the root.
-- Pill buttons on each page link to the same page in another version when it exists there, otherwise to that version's home.
-- No docs dropdown appears in this mode.
+## Frontmatter
 
-### Version directory structure
+Every page accepts these frontmatter keys:
 
-```
-md/
-├── v1/          # default version — pages at root
-│   ├── index.md
-│   └── installation.md
-└── v2/          # non-default — pages under /v2/
-    ├── index.md
-    └── installation.md
-```
+| Key | Effect |
+|---|---|
+| `title` | Page title, falling back to the first heading or filename |
+| `description` | Page description used in meta tags and search results |
+| `slug` | Custom output path instead of the file path |
+| `order` | Sort position in the sidebar (default `999`) |
+| `sidebar_label` | Shorter label shown in the sidebar |
+| `hidden` | Set to `true` to exclude the page from navigation, search, and pagination |
+| `og_image`, `og_title`, `og_description` | Per-page Open Graph overrides |
 
-## Frontmatter `hidden`
-
-Any page can be hidden from navigation, search results, and pagination by setting `hidden: true` in its frontmatter:
+A hidden page is still rendered to HTML and reachable by URL, but it does not appear in the sidebar, the search index, or previous/next links:
 
 ```markdown
 ---
@@ -854,49 +854,19 @@ hidden: true
 ---
 ```
 
-Hidden pages are still rendered to HTML and directly accessible via URL, but they do not appear in:
+## LLM export
 
-- Sidebar navigation
-- Search index
-- Previous / next page links
+Docsmith generates three text files for LLM consumption: `llms.txt`, `llms-full.txt`, and `export/docs.md`. This is enabled by default; see [LLM Export](llm-export.md).
 
-## AI / LLM Export
+## Attribution badge
 
-Docsmith can generate AI-consumable exports of your documentation:
+Docsmith adds a small "Built with DocSmith" link at the bottom of the sidebar. It is shown by default and can be disabled per build:
 
 ```php
 Docsmith::make()
     ->source(__DIR__ . '/md')
     ->output(__DIR__ . '/dist')
-    ->title('Project Docs')
-    ->siteUrl('https://acme.github.io/project')
-    ->llmsExport(true)
-    ->build();
-```
-
-Enabled by default. Set `->llmsExport(false)` to disable.
-
-Three files are generated in the output directory:
-
-| File | Contents |
-|---|---|
-| `llms.txt` | Directory listing with URLs and descriptions (per the llms.txt standard) |
-| `llms-full.txt` | Full plain-text rendering of every page |
-| `export/docs.md` | Merged Markdown of all pages with frontmatter metadata |
-
-If the source directory does not contain `index.md`, Docsmith includes a generated landing page in the export files.
-
-`siteUrl` is required for correct URL generation in `llms.txt`.
-
-## Docsmith attribution badge
-
-Docsmith adds a small **"Built with DocSmith"** link at the bottom of the sidebar that credits the generator and points back to the project. It's shown by default and can be disabled per site:
-
-```php
-Docsmith::make()
-    ->source(__DIR__ . '/md')
-    ->output(__DIR__ . '/dist')
-    ->showDocsmithBadge(false) // hide the sidebar credit
+    ->showDocsmithBadge(false)
     ->build();
 ```
 
@@ -912,25 +882,28 @@ Docsmith::build(
 
 Via the CLI, pass `--no-docsmith-badge`.
 
-## Current output model
+## Output structure
 
-Each Markdown file becomes an HTML page.
+Each Markdown file becomes an HTML page:
 
 - `md/index.md` becomes `index.html`
 - `md/installation.md` becomes `installation/index.html`
 - `md/guides/configuration.md` becomes `guides/configuration/index.html`
 
-If the source directory does not contain an `index.md`, Docsmith generates a landing page automatically.
+If the source directory has no `index.md`, Docsmith generates a landing page automatically.
+
+Every build also writes `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files into the output directory.
 
 ## README index compatibility mode
 
-Docsmith can import README index formats used by existing projects like `laravel-undocumented` and `laravel-attributes-list`.
+Docsmith can import README index formats used by projects like `laravel-undocumented` and `laravel-attributes-list`:
 
 ```php
 use Docsmith\Docsmith;
 
 Docsmith::make()
     ->readmeIndex(__DIR__ . '/README.md')
+    ->readmeSkipSections(['Contributing', 'Author', 'Notes'])
     ->output(__DIR__ . '/dist')
     ->title('Project Docs')
     ->description('Generated from README index.')
@@ -939,8 +912,8 @@ Docsmith::make()
 
 Supported README item styles:
 
-- `- [withAggregate()](features/eloquent/withAggregate.md) — description`
-- `* [`#[Table]`](attributes/eloquent/Table.md) — description`
+- `- [withAggregate()](features/eloquent/withAggregate.md) - description`
+- `* [`#[Table]`](attributes/eloquent/Table.md) - description`
 
 
 ---
@@ -949,11 +922,11 @@ Supported README item styles:
 
 # Versioned Docs
 
-Docsmith can build multiple versions of one documentation set. Every page shows v1/v2/v3 pill buttons for switching between them.
+Docsmith can build multiple versions of one documentation set. Every page shows pill buttons for switching between versions.
 
 ## Setup
 
-Pass a list of versions to `->versions()`:
+Pass a list of versions to `versions()`:
 
 ```php
 use Docsmith\Docsmith;
@@ -971,29 +944,32 @@ Docsmith::make()
 
 ## Directory structure
 
+Each version reads Markdown from `{source}/{slug}`:
+
 ```
 md/
-├── v1/               # default version — pages at root
+├── v1/               # default version, pages written to the site root
 │   ├── index.md
 │   └── installation.md
-└── v2/               # non-default — pages under /v2/
+└── v2/               # non-default version, pages written under /v2/
     ├── index.md
     └── installation.md
 ```
 
+Set a per-version `source` to read from anywhere instead.
+
 ## How it works
 
-- Each version reads Markdown from `{source}/{slug}` — the config above reads `md/v1/` and `md/v2/`. You can also set `source` per version to point anywhere.
 - Keyed maps work too: `'v1' => ['label' => 'v1.0']`.
 - The version marked `default: true` writes pages to the site root (`installation/index.html`). If none is marked, the first listed version is used.
 - Other versions are namespaced under their slug (`v2/installation/index.html`).
-- Pages that exist only in a non-default version are **not** duplicated to the root.
+- Pages that exist only in a non-default version are not duplicated to the root.
 - Pill buttons on every page switch versions. They link to the same page in another version when it exists there, otherwise to that version's home.
-- `navigation` can be set per version; frontmatter `order:` still applies per page.
+- No docs dropdown appears in this mode.
 
 ## Default version
 
-The version flagged `default: true` owns the site root. If no version is flagged, the **first listed** version is the default — flag a later one to override:
+The version flagged `default: true` owns the site root. If no version is flagged, the first listed version is the default. Flag a later one to override:
 
 ```php
 ->versions([
@@ -1006,7 +982,7 @@ Here `/` serves v1 and `/v2/` holds the other version.
 
 ## Navigation order
 
-Set `navigation` on a version to control its sidebar order. Entries are matched by title, sidebar label, or file path; pages not listed keep their natural order after the listed ones. Frontmatter `order:` still applies per page.
+Set `navigation` on a version to control its sidebar order. Entries are matched by title, sidebar label, or file path. Pages not listed keep their natural order after the listed ones, and frontmatter `order:` still applies per page:
 
 ```php
 ->versions([
@@ -1020,7 +996,7 @@ Set `navigation` on a version to control its sidebar order. Entries are matched 
 ])
 ```
 
-Versions without their own `navigation` fall back to the global `->navigationOrder([...])`.
+Versions without their own `navigation` fall back to the global `navigationOrder([...])`.
 
 
 ---
@@ -1029,7 +1005,7 @@ Versions without their own `navigation` fall back to the global `->navigationOrd
 
 # Workflows
 
-Remote sources only materialize local folders under your markdown root — every recipe below just points a normal build at those folders. Pick the recipe that matches your setup; all of them use the same two commands:
+Remote sources only write local folders under your markdown root. Every recipe below just points a normal build at those folders, using the same two commands:
 
 ```bash
 php bin/docsmith sync          # fetch/update remote sources
@@ -1079,11 +1055,11 @@ Docsmith::make()
     ->build();
 ```
 
-The dropdown lists Laravel Docs, Auth Jobs, and Blog Kit — each mounted at its own slug.
+The dropdown lists Laravel Docs, Auth Jobs, and Blog Kit, each mounted at its own slug.
 
-## Recipe 2: One repository, two branches = versions
+## Recipe 2: One repository, two branches as versions
 
-Sync the same repository twice with different refs, then build a versioned single-docs site:
+Sync the same repository twice with different refs. Name the targets after your version slugs so a single `source()` covers both:
 
 ```php
 // docsmith.sources.php
@@ -1092,35 +1068,40 @@ return [
         'repository' => 'https://github.com/acme/auth-jobs.git',
         'ref' => 'main',
         'path' => 'docs',
-        'target' => 'auth-jobs-2x',
+        'target' => 'v2',
     ],
     [
         'repository' => 'https://github.com/acme/auth-jobs.git',
         'ref' => '1.x',
         'path' => 'docs',
-        'target' => 'auth-jobs-1x',
+        'target' => 'v1',
     ],
 ];
 ```
 
 ```php
+use Docsmith\Docsmith;
+
 Docsmith::make()
+    ->source(__DIR__ . '/md')
     ->output(__DIR__ . '/docs')
     ->versions([
         ['slug' => 'v2', 'label' => 'v2.0', 'default' => true],
-        ['slug' => 'v1', 'label' => 'v1.0', 'source' => __DIR__ . '/md/auth-jobs-1x'],
+        ['slug' => 'v1', 'label' => 'v1.0'],
     ])
     ->build();
 ```
 
-`versions()` reads `md/{slug}` by default — here the first target is named `auth-jobs-2x`, so we point v2's implied source at it by naming the slug `v2` and overriding v1 explicitly. The flagged `default` version owns the site root.
+Each version reads `{source}/{slug}`, so v2 reads `md/v2` and v1 reads `md/v1`. If you prefer target names like `auth-jobs-2x`, set a `source` on each version explicitly instead of relying on the slug.
+
+The flagged `default` version owns the site root.
 
 ## Recipe 3: Hub entry with versions from synced branches
 
-Combine both: other packages in the dropdown, plus one package that has two synced branches as embedded versions:
+Combine both: other packages in the dropdown, plus one package with two synced branches as embedded versions:
 
 ```php
-// docsmith.sources.php — Recipe 1 manifest plus:
+// docsmith.sources.php - Recipe 1 manifest plus:
 [
     'repository' => 'https://github.com/acme/auth-jobs.git',
     'ref' => '1.x',
@@ -1143,11 +1124,11 @@ Combine both: other packages in the dropdown, plus one package that has two sync
 ])
 ```
 
-In the built site the dropdown shows only "Auth Jobs" — never "Auth Jobs v1" — while its pages carry v1/v2 pills.
+In the built site the dropdown shows only "Auth Jobs", never "Auth Jobs v1", while its pages carry v1/v2 pills.
 
 ## Recipe 4: Plain single site from one repository
 
-No hub, no versions — sync one repo and build it directly:
+No hub, no versions. Sync one repo and build it directly:
 
 ```php
 // docsmith.sources.php
@@ -1165,11 +1146,11 @@ return [
 php bin/docsmith build --sync --source=md/my-package --output=docs
 ```
 
-Nothing is fetched at build time unless `--sync` asks for it; without `docsmith.sources.lock.json` changes, repeat syncs are no-ops.
+Nothing is fetched at build time unless `--sync` asks for it. When the lock file already matches the remote refs, repeat syncs do nothing.
 
 ## GitHub Actions workflow
 
-`.github/workflows/docs.yml` for any of the recipes above:
+This `.github/workflows/docs.yml` works for any of the recipes above:
 
 ```yaml
 name: Build docs
@@ -1206,14 +1187,14 @@ jobs:
           path: docs
 ```
 
-Add a deploy job with `actions/deploy-pages@v4` (enable GitHub Pages → Source: GitHub Actions), or upload to any static host.
+Add a deploy job with `actions/deploy-pages@v4` (enable GitHub Pages with Source: GitHub Actions), or upload to any static host.
 
 Notes:
 
-- Commit `docsmith.sources.lock.json` so repeat runs sync incrementally; delete it to force a full refresh.
-- Locally, tokens may also live in a `.env` file next to `docsmith.sources.php` — real environment variables always take precedence.
-- Sync failures fail the workflow — errors exit non-zero.
-- Private repositories are supported with a token; see [Remote Sources](remote-sources.md).
+- Commit `docsmith.sources.lock.json` so repeat runs sync incrementally. Delete it to force a full refresh.
+- Locally, tokens may also live in a `.env` file next to `docsmith.sources.php`. Real environment variables always take precedence.
+- Sync failures exit non-zero and fail the workflow.
+- Private repositories need a token; see [Remote Sources](remote-sources.md).
 - Keep synced sources public or provide a token via repository secrets.
 
 ## Rebuild automatically when a source repository updates
@@ -1233,11 +1214,11 @@ on:
   workflow_dispatch:
 ```
 
-The existing `php bin/docsmith build --sync` step needs no changes — a dispatched run simply fetches the updated sources before building.
+The existing `php bin/docsmith build --sync` step needs no changes. A dispatched run simply fetches the updated sources before building.
 
 ### 2. Notify the docs repository (each source repository)
 
-`.github/workflows/notify-docs.yml` in every synced package:
+Add this `.github/workflows/notify-docs.yml` to every synced package:
 
 ```yaml
 name: Notify docs site
@@ -1270,9 +1251,9 @@ Replace `acme/acme-docs` with your docs repository. Keep `--fail --show-error` s
 
 ### 3. Create the access token
 
-1. Create a **fine-grained personal access token** (GitHub Developer Settings).
+1. Create a fine-grained personal access token in GitHub Developer Settings.
 2. Under Repository Access, select only the docs repository.
-3. Set the **Contents** permission to **Read and write**.
+3. Set the Contents permission to Read and write.
 4. Save it as `DOCS_DISPATCH_TOKEN` in each source repository's Actions secrets.
 
 Fine-grained tokens keep dispatch access limited to exactly the target repository.
@@ -1280,10 +1261,10 @@ Fine-grained tokens keep dispatch access limited to exactly the target repositor
 ### How it fits together
 
 ```text
-auth-jobs repo: push docs → notify workflow → repository_dispatch
-                                                    │
-acme-docs repo: build --sync  ←  content-updated  ──┘
+auth-jobs repo: push docs -> notify workflow -> repository_dispatch
+                                                    |
+acme-docs repo: build --sync  <-  content-updated --+
 ```
 
-A merged PR in any synced package now ends with an up-to-date hub — no manual rebuilds, no scheduled polling.
+A merged PR in any synced package now ends with an up-to-date site. No manual rebuilds and no scheduled polling.
 

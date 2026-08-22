@@ -50,10 +50,10 @@
                 </header>
                 <div class="doc-body">
                     <h2 id="quality-commands">Quality commands</h2>
-<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test:lint</span><span class="token">
-</span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test:types</span><span class="token">
-</span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test:unit</span><span class="token">
-</span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test</span><span class="token">
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test:lint</span><span class="token">     </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">#</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> rector --dry-run &amp;&amp; pint --test
+</span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test:types</span><span class="token">    </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">#</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> phpstan
+</span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test:unit</span><span class="token">     </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">#</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> pest --parallel
+</span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">composer</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">test</span><span class="token">          </span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">#</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> all of the above
 </span></span></code></pre>
 <h2 id="tooling">Tooling</h2>
 <p>The repository is configured with:</p>
@@ -68,7 +68,7 @@
 </span></span></code></pre>
 <p>That command uses Docsmith itself to read Markdown from <code>md/</code> and regenerate the documentation site into <code>docs/</code>.</p>
 <h2 id="ci-github-actions">CI / GitHub Actions</h2>
-<p>The repository includes a workflow at <code>.github/workflows/docs.yml</code> that builds and commits <code>docs/</code> on every push that changes the source markdown or build script.</p>
+<p>The repository includes a workflow at <code>.github/workflows/docs.yml</code> that builds and commits <code>docs/</code> on every push that changes the source Markdown or the build script.</p>
 <p>If you enable generated Open Graph images, install Node, Playwright, and Chromium in CI as well:</p>
 <pre class="phiki language-yaml github-light phiki-themes github-dark" data-language="yaml" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">n</span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">ame</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">B</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">uild docs</span><span class="token">
 </span></span><span class="line"><span class="token">
@@ -121,7 +121,7 @@
 </span></span><span class="line"><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">            git push
 </span></span><span class="line"><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">          fi
 </span></span></code></pre>
-<p>Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node/Playwright steps.</p>
+<p>Adjust the PHP version, source paths, and build command to match your project. Without Open Graph capture you can omit the Node and Playwright steps.</p>
 
                 </div>
                 <footer class="doc-meta">

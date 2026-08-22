@@ -49,19 +49,19 @@
                     
                 </header>
                 <div class="doc-body">
-                    <h2 id="current-pipeline">Current pipeline</h2>
-<p>The current implementation is intentionally small.</p>
+                    <h2 id="build-pipeline">Build pipeline</h2>
 <ol>
-<li><code>Docsmith</code> exposes the public API.</li>
-<li><code>Builder</code> collects configuration (versions, llms-export, readme-index, theme, etc.).</li>
-<li><code>BuildConfig</code> validates source and output paths.</li>
-<li><code>SourceScanner</code> discovers Markdown files (respects per-version source directories).</li>
-<li><code>CommonMarkRenderer</code> converts Markdown into HTML.</li>
-<li><code>SiteBuilder</code> writes HTML pages, hub dropdown and version pills, search overlay, and publishes CSS/JS assets.</li>
-<li><code>AssetPublisher</code> generates <code>search-index.json</code>, <code>sitemap.xml</code>, <code>.nojekyll</code>, <code>llms.txt</code>, <code>llms-full.txt</code>, and <code>export/docs.md</code>.</li>
+<li><code>Docsmith</code> exposes the static and fluent API.</li>
+<li><code>Builder</code> collects configuration: versions, hub entries, LLM export, theme, Open Graph, and more.</li>
+<li><code>BuildConfig</code> validates the source and output paths.</li>
+<li><code>SourceScanner</code> discovers Markdown files and reads frontmatter. Versioned builds scan one source directory per version.</li>
+<li><code>CommonMarkRenderer</code> converts Markdown to HTML through League CommonMark with GitHub-flavored Markdown extensions.</li>
+<li><code>SiteBuilder</code> renders pages with sidebar navigation, version pills, and the hub dropdown, and writes them to the output directory.</li>
+<li><code>AssetPublisher</code> publishes CSS and JS assets and generates <code>search-index.json</code>, <code>sitemap.xml</code>, <code>.nojekyll</code>, and the LLM export files.</li>
 </ol>
-<h2 id="current-source-model">Current source model</h2>
-<p>Every discovered Markdown file is normalized into a <code>Document</code> object containing:</p>
+<p>Remote source syncing lives in <code>src/RemoteSources/</code> and runs before a build. It only writes local directories; the pipeline above never talks to the network.</p>
+<h2 id="document-model">Document model</h2>
+<p>Every discovered Markdown file becomes a <code>Document</code> object containing:</p>
 <ul>
 <li>source path</li>
 <li>relative path</li>
@@ -70,15 +70,6 @@
 <li>raw Markdown</li>
 <li>rendered HTML</li>
 </ul>
-<h2 id="current-renderer">Current renderer</h2>
-<p>The current renderer produces:</p>
-<ul>
-<li>a sidebar navigation</li>
-<li>a main content area</li>
-<li>a generated landing page when needed</li>
-<li>local CSS under <code>assets/app.css</code></li>
-</ul>
-<p>This is the minimal implementation baseline, not the final architecture.</p>
 
                 </div>
                 <footer class="doc-meta">
@@ -87,7 +78,7 @@
             </article>
             <nav class="pager" aria-label="Page navigation"><a class="pager-link" href="../usage/"><span>Previous</span><strong>Usage</strong></a><a class="pager-link pager-link-next" href="../development/"><span>Next</span><strong>Development</strong></a></nav>
         </main>
-        <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#current-pipeline" data-docsmith-toc-link="current-pipeline">Current pipeline</a><a class="toc-link toc-link-level-2" href="#current-source-model" data-docsmith-toc-link="current-source-model">Current source model</a><a class="toc-link toc-link-level-2" href="#current-renderer" data-docsmith-toc-link="current-renderer">Current renderer</a></nav></aside>
+        <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#build-pipeline" data-docsmith-toc-link="build-pipeline">Build pipeline</a><a class="toc-link toc-link-level-2" href="#document-model" data-docsmith-toc-link="document-model">Document model</a></nav></aside>
     </div>
     <div class="search-overlay" data-docsmith-search-overlay hidden role="dialog" aria-label="Search documentation">
     <div class="search-overlay-backdrop" data-docsmith-search-overlay-close></div>
