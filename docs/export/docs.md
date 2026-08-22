@@ -786,7 +786,7 @@ Either way the rules are appended to the published `assets/app.css`.
 
 Docsmith generates `search-index.json` at build time and uses it for global search.
 
-- Type at least 2 characters in the sidebar search box to see global matches.
+- Type at least 1 character in the sidebar search box to see global matches.
 - Results include title, description, headings, and page content.
 - Selecting a result navigates to that page.
 
