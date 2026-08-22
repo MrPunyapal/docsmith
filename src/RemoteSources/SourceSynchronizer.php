@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith\RemoteSources;
 
+use GitReader\Credentials;
 use GitReader\GitException;
 use GitReader\RemoteRepository;
 use GitReader\RepositoryNotFoundException;
@@ -45,7 +46,7 @@ final readonly class SourceSynchronizer
 
                 $remote = new RemoteRepository($source->repository, $transport);
 
-                if ($credentials !== null) {
+                if ($credentials instanceof Credentials) {
                     $remote = $remote->withCredentials($credentials);
                 }
 
@@ -107,7 +108,7 @@ final readonly class SourceSynchronizer
             } catch (Throwable $error) {
                 $hint = '';
 
-                if ($error instanceof RepositoryNotFoundException && $credentials === null) {
+                if ($error instanceof RepositoryNotFoundException && !$credentials instanceof Credentials) {
                     $hint = " (is the repository private? Provide a token via 'token' => '\${ENV_VAR}' in"
                         . ' docsmith.sources.php, or set the DOCSMITH_TOKEN / GITHUB_TOKEN environment variables.)';
                 }

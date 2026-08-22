@@ -23,7 +23,7 @@ use GitReader\Credentials;
  */
 final class SourceCredentials
 {
-    final public const string DEFAULT_USERNAME = 'x-access-token';
+    public const string DEFAULT_USERNAME = 'x-access-token';
 
     private const string ENV_REFERENCE_PATTERN = '/^\$\{([A-Z0-9_]+)\}$/';
 
@@ -32,7 +32,7 @@ final class SourceCredentials
      *
      * @var (callable(string): (string|false))|null
      */
-    public static $envReader = null;
+    public static $envReader;
 
     public static function resolve(DocumentationSource $source): ?Credentials
     {
@@ -110,7 +110,7 @@ final class SourceCredentials
 
     private static function env(string $variable): ?string
     {
-        $reader = self::$envReader ?? static fn (string $name): string|false => getenv($name);
+        $reader = self::$envReader ?? getenv(...);
 
         /** @var string|false $value */
         $value = $reader($variable);

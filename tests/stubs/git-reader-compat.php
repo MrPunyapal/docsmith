@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use GitReader\Credentials;
+
 /*
  * Compatibility shim for git-reader < 0.2, which does not ship authentication
  * support yet. It defines a faithful stub of the upcoming `GitReader\Credentials`
@@ -15,7 +17,7 @@ declare(strict_types=1);
  * Also referenced from phpstan.neon `bootstrapFiles`.
  */
 
-if (! class_exists(GitReader\Credentials::class)) {
+if (! class_exists(Credentials::class)) {
     eval(<<<'PHP'
 namespace GitReader;
 
