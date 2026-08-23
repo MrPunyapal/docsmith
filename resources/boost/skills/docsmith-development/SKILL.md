@@ -45,6 +45,7 @@ Common options: `output` (default `docs`), `description`, `accentColor`, `accent
 - Missing `index.md`: a landing page is generated automatically.
 - Every build generates `search-index.json`, `sitemap.xml`, and `.nojekyll`.
 - LLM export is on by default: `llms.txt`, `llms-full.txt`, `export/docs.md` (`->llmsExport(false)` to disable). `siteUrl()` is required for correct absolute URLs in these exports.
+- Body links to Markdown files (`[text](other-page.md)`) are rewritten to built page URLs at render time, including relative paths and fragments. Unmatched `.md` links are left untouched.
 
 ## Frontmatter keys
 

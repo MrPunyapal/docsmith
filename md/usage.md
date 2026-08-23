@@ -196,7 +196,7 @@ hidden: true
 
 ## LLM export
 
-Docsmith generates three text files for LLM consumption: `llms.txt`, `llms-full.txt`, and `export/docs.md`. This is enabled by default; see [LLM Export](llm-export.md).
+Docsmith generates three text files for LLM consumption: `llms.txt`, `llms-full.txt`, and `export/docs.md`. This is enabled by default; see [LLM Export](llm-export.md) for details.
 
 ## Attribution badge
 
@@ -233,6 +233,16 @@ Each Markdown file becomes an HTML page:
 If the source directory has no `index.md`, Docsmith generates a landing page automatically.
 
 Every build also writes `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files into the output directory.
+
+## Linking between pages
+
+Write internal links the GitHub way, pointing at the `.md` file:
+
+```markdown
+See [Versioned Docs](versioned-docs.md) for details.
+```
+
+Docsmith rewrites these to the built page URLs at build time. Relative paths (`../installation.md`) and fragments (`configuration.md#options`) both resolve, in plain builds as well as versioned and hub builds. Links to `.md` files that are not part of the build are left untouched, as are external URLs and anchors.
 
 ## README index compatibility mode
 

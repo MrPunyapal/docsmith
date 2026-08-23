@@ -409,9 +409,14 @@ MIT. See [LICENSE](https://github.com/MrPunyapal/docsmith/blob/main/LICENSE) for
 composer require --dev mrpunyapal/docsmith
 ```
 
-## Install the AI agent skill
+## Install the AI agent skills
 
-Docsmith ships an [Agent Skills](https://agentskills.io) compatible skill called `docsmith-development`. It teaches coding agents such as Claude Code, Cursor, Codex, and OpenCode how to use the package: build options, frontmatter keys, versioned docs, docs hubs, and remote source syncing.
+Docsmith ships two [Agent Skills](https://agentskills.io) compatible skills:
+
+- `docsmith-development`: teaches agents the package itself, build options, frontmatter keys, versioned docs, docs hubs, remote source syncing, and Open Graph images.
+- `docs-writing`: teaches agents how to write documentation pages that build cleanly and read well.
+
+They work with coding agents such as Claude Code, Cursor, Codex, and OpenCode.
 
 ### Via Laravel Boost
 
@@ -435,7 +440,7 @@ Any agent supported by the [skills CLI](https://skills.sh) can install it too:
 npx skills add MrPunyapal/docsmith/resources/boost/skills
 ```
 
-After installing, ask your agent to activate the `docsmith-development` skill when it works on documentation builds.
+After installing, ask your agent to activate the `docsmith-development` skill when it works on documentation builds, and `docs-writing` when it writes or edits documentation pages.
 
 ## Build documentation
 
@@ -856,7 +861,7 @@ hidden: true
 
 ## LLM export
 
-Docsmith generates three text files for LLM consumption: `llms.txt`, `llms-full.txt`, and `export/docs.md`. This is enabled by default; see [LLM Export](llm-export.md).
+Docsmith generates three text files for LLM consumption: `llms.txt`, `llms-full.txt`, and `export/docs.md`. This is enabled by default; see [LLM Export](llm-export.md) for details.
 
 ## Attribution badge
 
@@ -893,6 +898,16 @@ Each Markdown file becomes an HTML page:
 If the source directory has no `index.md`, Docsmith generates a landing page automatically.
 
 Every build also writes `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files into the output directory.
+
+## Linking between pages
+
+Write internal links the GitHub way, pointing at the `.md` file:
+
+```markdown
+See [Versioned Docs](versioned-docs.md) for details.
+```
+
+Docsmith rewrites these to the built page URLs at build time. Relative paths (`../installation.md`) and fragments (`configuration.md#options`) both resolve, in plain builds as well as versioned and hub builds. Links to `.md` files that are not part of the build are left untouched, as are external URLs and anchors.
 
 ## README index compatibility mode
 

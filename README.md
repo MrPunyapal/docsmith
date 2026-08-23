@@ -31,12 +31,12 @@ Docsmith is designed for package and project documentation where you want a fast
 composer require --dev mrpunyapal/docsmith
 ```
 
-Using AI agents (Claude Code, Cursor, Boost, ...)? Docsmith ships an installable skill:
+Using AI agents (Claude Code, Cursor, Boost, ...)? Docsmith ships installable skills:
 
 ```bash
 npx skills add MrPunyapal/docsmith/resources/boost/skills
 # or, in a Laravel project with Boost:
-php artisan boost:install   # installs it automatically from composer.json
+php artisan boost:install   # installs them automatically from composer.json
 ```
 
 ## Quick Start

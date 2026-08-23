@@ -62,7 +62,7 @@
 </span></span></code></pre>
 <p>Running <code>docsmith sync</code> writes the remote <code>docs/</code> directory to <code>md/laravel/</code>. After that, <code>docsmith build</code> works exactly as it always has.</p>
 <h2 id="works-with-any-build">Works with any build</h2>
-<p>Remote sources only write local folders under your markdown root. What you build from those folders is up to you: a plain single-docs site, a <a href="versioned-docs.md">versioned</a> build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.</p>
+<p>Remote sources only write local folders under your markdown root. What you build from those folders is up to you: a plain single-docs site, a <a href="../versioned-docs/">versioned</a> build, or a docs hub. None of those features know or care where the Markdown came from, and syncing works without any of them.</p>
 <h2 id="how-it-works">How it works</h2>
 <p>Docsmith speaks the standard Git smart HTTP protocol directly over HTTPS:</p>
 <pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">GET  {repo}/info/refs?service=git-upload-pack   -&gt; ref advertisement
