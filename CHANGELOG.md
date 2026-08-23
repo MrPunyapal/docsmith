@@ -3,7 +3,16 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
-## 0.3.0 � 2026-08-22
+## 0.3.1 - 2026-08-23
+
+### Features
+- **Internal link rewriting**: body links to Markdown files (`[text](other-page.md)`) now resolve on built sites. Docsmith rewrites them to built page URLs at render time, including relative paths (`../installation.md`) and fragments (`configuration.md#options`), across plain, versioned, and hub builds. Links whose target is not part of the build are left untouched, as are external URLs and anchors.
+
+### Documentation
+- Full documentation rewrite with a linked page index, a frontmatter reference, CLI option tables matching the binary, and corrected examples (versioned builds require `source()`; sidebar search matches from one character).
+- New `docs-writing` agent skill alongside `docsmith-development`; both install via `npx skills add MrPunyapal/docsmith/resources/boost/skills` or automatically through Laravel Boost.
+
+## 0.3.0 � 2026-08-22
 
 ### Features
 - **Private remote sources** — sync from private Git repositories by adding `'token' => '${ENV_VAR}'` (and optionally `'username'`) to a `docsmith.sources.php` entry. Tokens resolve from the environment at sync time; without an explicit token, `DOCSMITH_TOKEN` is used for any host and `GITHUB_TOKEN` / `GH_TOKEN` only for github.com hosts (never sent to third-party hosts). Requires [mrpunyapal/git-reader](https://github.com/MrPunyapal/git-reader) 0.2.0.
