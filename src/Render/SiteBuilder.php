@@ -65,7 +65,7 @@ final readonly class SiteBuilder
                 mkdir($directory, 0777, true);
             }
 
-            file_put_contents($absoluteOutputPath, $this->page($config, $document, $visibleDocuments));
+            file_put_contents($absoluteOutputPath, $this->page($config, $document, $visibleDocuments, linkTargets: $documents));
         }
 
         if (! $hasRootIndex) {
@@ -163,7 +163,7 @@ final readonly class SiteBuilder
 
             file_put_contents(
                 $absoluteOutputPath,
-                $this->page($config, $document, $visibleDocuments, $hubSwitcher),
+                $this->page($config, $document, $visibleDocuments, $hubSwitcher, $documents),
             );
         }
 
@@ -224,12 +224,15 @@ HTML;
         file_put_contents(rtrim($rootOutput, '/') . '/index.html', $html);
     }
 
-    /** @param list<Document> $documents */
-    private function page(BuildConfig $config, Document $document, array $documents, string $hubSwitcher = ''): string
+    /**
+     * @param list<Document> $documents
+     * @param list<Document>|null $linkTargets
+     */
+    private function page(BuildConfig $config, Document $document, array $documents, string $hubSwitcher = '', ?array $linkTargets = null): string
     {
         $tocData = $this->tocFromHtml($document->html);
         $toc = $tocData['items'];
-        $contentHtml = $tocData['html'];
+        $contentHtml = $this->rewriteMarkdownLinks($tocData['html'], $document, $linkTargets ?? $documents);
         $neighbors = $this->neighbors($documents, $document);
         $editUrl = $this->editUrl($config, $document);
         $breadcrumbs = $this->breadcrumbs($document, $documents);
@@ -708,6 +711,141 @@ HTML;
         $directory = trim(dirname($outputPath), '/.');
 
         return $directory === '' ? [] : explode('/', $directory);
+    }
+
+    /**
+     * Rewrite links to Markdown files into links to their built pages, so
+     * GitHub-style hrefs such as `guides/setup.md` resolve on the built site.
+     * Hrefs that do not match a document in this build are left untouched.
+     *
+     * @param list<Document> $linkTargets
+     */
+    private function rewriteMarkdownLinks(string $html, Document $current, array $linkTargets): string
+    {
+        if (! str_contains($html, 'href="')) {
+            return $html;
+        }
+
+        /** @var array<string, Document> $targets */
+        $targets = [];
+
+        foreach ($linkTargets as $target) {
+            $key = strtolower($this->resolveRelativeMarkdownPath(
+                $this->stripMarkdownExtension($target->relativePath),
+                $target->relativePath,
+            ));
+            $targets[$key] = $target;
+        }
+
+        if ($targets === []) {
+            return $html;
+        }
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $previousErrors = libxml_use_internal_errors(true);
+
+        try {
+            $dom->loadHTML(
+                '<?xml encoding="utf-8" ?><div id="docsmith-fragment">' . $html . '</div>',
+                LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD,
+            );
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrors);
+        }
+
+        $xpath = new DOMXPath($dom);
+        $anchors = $xpath->query('//*[@id="docsmith-fragment"]//a[@href]');
+        $rootNodes = $xpath->query('//*[@id="docsmith-fragment"]');
+        $root = $rootNodes !== false ? $rootNodes->item(0) : null;
+
+        if ($anchors === false || ! $root instanceof DOMElement) {
+            return $html;
+        }
+
+        foreach ($anchors as $anchor) {
+            if (! $anchor instanceof DOMElement) {
+                continue;
+            }
+
+            $rewritten = $this->builtHrefFor($anchor->getAttribute('href'), $current, $targets);
+
+            if ($rewritten !== null) {
+                $anchor->setAttribute('href', $rewritten);
+            }
+        }
+
+        $renderedHtml = '';
+
+        foreach ($root->childNodes as $child) {
+            $renderedHtml .= $dom->saveHTML($child) ?: '';
+        }
+
+        return $renderedHtml;
+    }
+
+    /**
+     * Resolve one href to a built page URL, or null when it is not a link to
+     * a Markdown file in this build. Fragments and query strings survive.
+     *
+     * @param array<string, Document> $targets
+     */
+    private function builtHrefFor(string $href, Document $current, array $targets): ?string
+    {
+        if ($href === '' || preg_match('~^(?:[a-z][a-z0-9+.-]*:|//|/|#)~i', $href) === 1) {
+            return null;
+        }
+
+        $path = $href;
+        $suffix = '';
+
+        if (preg_match('/([?#].*)$/i', $path, $matches) === 1) {
+            $suffix = $matches[1];
+            $path = substr($path, 0, -strlen($suffix));
+        }
+
+        if (! str_ends_with(strtolower($path), '.md')) {
+            return null;
+        }
+
+        $key = strtolower($this->resolveRelativeMarkdownPath(rawurldecode(substr($path, 0, -3)), $current->relativePath));
+        $target = $targets[$key] ?? null;
+
+        if ($target === null) {
+            return null;
+        }
+
+        return $this->relativePagePath($current->outputPath, $target->outputPath) . $suffix;
+    }
+
+    /** Resolve a relative href against the current document's directory. */
+    private function resolveRelativeMarkdownPath(string $hrefPath, string $currentRelativePath): string
+    {
+        $baseDirectory = trim(str_replace('\\', '/', dirname($currentRelativePath)), '/.');
+        $hrefPath = str_replace('\\', '/', $hrefPath);
+        $combined = $baseDirectory === '' ? $hrefPath : $baseDirectory . '/' . ltrim($hrefPath, '/');
+        $segments = [];
+
+        foreach (explode('/', $combined) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+
+            if ($segment === '..') {
+                array_pop($segments);
+
+                continue;
+            }
+
+            $segments[] = $segment;
+        }
+
+        return implode('/', $segments);
+    }
+
+    private function stripMarkdownExtension(string $path): string
+    {
+        return str_ends_with(strtolower($path), '.md') ? substr($path, 0, -3) : $path;
     }
 
     /** @param list<Document> $documents */

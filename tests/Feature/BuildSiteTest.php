@@ -4,6 +4,55 @@ declare(strict_types=1);
 
 use Docsmith\Docsmith;
 
+it('rewrites markdown links between pages into built page urls', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-md-links-' . uniqid();
+    mkdir($sourcePath . '/guides', 0777, true);
+
+    file_put_contents($sourcePath . '/index.md', <<<'MD'
+        # Home
+
+        See [Installation](installation.md) and [Configuration](guides/configuration.md).
+        MD);
+    file_put_contents($sourcePath . '/installation.md', <<<'MD'
+        # Installation
+
+        - Home: [back](index.md#top)
+        - Nested: [configuration](./guides/configuration.md)
+        - Parent: [configuration](../guides/configuration.md)
+        MD);
+    file_put_contents($sourcePath . '/guides/configuration.md', <<<'MD'
+        # Configuration
+
+        - Up: [installation](../installation.md?from=guide)
+        - Missing: [ghost](ghost.md)
+        - External: [readme](https://example.com/readme.md)
+        - Anchor: [section](#section)
+        MD);
+
+    $outputPath = sys_get_temp_dir() . '/docsmith-md-links-out-' . uniqid();
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        title: 'Docsmith',
+    );
+
+    $homePage = (string) file_get_contents($outputPath . '/index.html');
+    $installationPage = (string) file_get_contents($outputPath . '/installation/index.html');
+    $configurationPage = (string) file_get_contents($outputPath . '/guides/configuration/index.html');
+
+    expect($homePage)->toContain('href="installation/"')
+        ->toContain('href="guides/configuration/"')
+        ->and($installationPage)->toContain('href="../#top"')
+        ->toContain('href="../guides/configuration/"')
+        ->and($configurationPage)->toContain('href="../../installation/?from=guide"')
+        ->toContain('href="ghost.md"')
+        ->toContain('href="https://example.com/readme.md"')
+        ->toContain('href="#section"');
+
+    expect(str_contains($configurationPage, 'href="../installation.md'))->toBeFalse();
+});
+
 it('builds a static site from markdown files', function (): void {
     $sourcePath = __DIR__ . '/../Fixtures/Content';
     $outputPath = sys_get_temp_dir() . '/docsmith-build-' . uniqid();
