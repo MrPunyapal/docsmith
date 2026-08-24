@@ -8,6 +8,7 @@ Docsmith is a PHP package that turns a directory of Markdown files into a static
 - Sidebar navigation with grouping, active page highlighting, and a filter box.
 - Global search backed by a generated `search-index.json`, plus a `Cmd+K` / `Ctrl+K` search overlay.
 - Dark mode, syntax-highlighted code blocks, and a copy button on snippets.
+- Media support: images, videos, audio, and PDFs in the source tree are published, and their references are rewritten for each page.
 - Frontmatter support for `title`, `description`, `slug`, `order`, `sidebar_label`, and `hidden`.
 - Versioned docs with pill buttons to switch versions.
 - Docs hub that combines several independent documentation sets under one sidebar dropdown.
@@ -46,6 +47,7 @@ This reads Markdown from `md/` and writes the site to `docs/` by default, which 
 
 - [Installation](installation.md)
 - [Usage](usage.md)
+- [Media](media.md)
 - [Versioned Docs](versioned-docs.md)
 - [Docs Hub](docs-hub.md)
 - [Remote Sources](remote-sources.md)

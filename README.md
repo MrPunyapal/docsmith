@@ -21,7 +21,7 @@ Docsmith is designed for package and project documentation where you want a fast
 - Configurable accent color with Laravel red as the default theme
 - Syntax-highlighted fenced code blocks
 - One-click copy button on code snippets
-- Image, video, audio, and PDF support with automatic reference rewriting
+- Image, video, and PDF publishing from the source tree with rewritten references
 - Repository/edit links and previous/next page navigation
 - Generated `search-index.json`, `sitemap.xml`, and `.nojekyll` artifacts
 - Optional README index compatibility mode for existing repositories
@@ -143,7 +143,7 @@ Local favicons are copied into `assets/` and linked with the correct relative pa
 
 ## Media
 
-Images, videos, audio, and PDFs kept next to your Markdown are published automatically — no configuration needed:
+Images, videos, audio, and PDFs kept in the source directory are published into the built site automatically:
 
 ```md
 # Installation
@@ -155,11 +155,13 @@ Images, videos, audio, and PDFs kept next to your Markdown are published automat
 [Download the spec](files/spec.pdf)
 ```
 
-Every media file in the source tree (png, jpg, gif, svg, webp, avif, ico, bmp, mp4, webm, mov, m4v, ogv, mp3, wav, ogg, m4a, flac, aac, pdf) is copied into the built site preserving its relative structure. Because pages live one level deeper than the source mirror (`guides/configuration.md` becomes `guides/configuration/index.html`), Docsmith rewrites relative references at render time so they resolve from the built URL: `images/setup.png` on that page is emitted as `../images/setup.png`.
+Docsmith copies every media file with its relative path. Supported types: png, jpg, gif, svg, webp, avif, ico, bmp, mp4, webm, mov, m4v, ogv, mp3, wav, ogg, m4a, flac, aac, pdf.
 
-References are left untouched when they point at remote URLs, root-relative paths (`/assets/...`), data URIs, or files that are not part of the build.
+Built pages sit one level deeper than the source mirror (`guides/configuration.md` becomes `guides/configuration/index.html`), so relative references are rewritten per page: `images/setup.png` on that page is emitted as `../images/setup.png`.
 
-Disable publishing (and rewriting) with:
+Remote URLs, root-relative paths (`/assets/...`), data URIs, and files that were not published are left untouched.
+
+Disable publishing and rewriting with:
 
 ```php
 Docsmith::make()

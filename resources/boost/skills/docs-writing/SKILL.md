@@ -1,6 +1,6 @@
 ---
 name: docs-writing
-description: "Use when writing, editing, or reviewing documentation pages, especially for Docsmith builds: page structure, frontmatter keys, navigation order, linking between pages, code samples, hidden drafts, and multi-version consistency. Also for general technical writing where clear documentation is the goal."
+description: "Use when writing, editing, or reviewing documentation pages, especially for Docsmith builds: page structure, frontmatter keys, navigation order, linking between pages, media references, code samples, hidden drafts, and multi-version consistency. Also for general technical writing where clear documentation is the goal."
 license: MIT
 metadata:
   author: mrpunyapal
@@ -43,6 +43,20 @@ See [Versioned Docs](versioned-docs.md) for details.
 
 Docsmith rewrites these to the built page URLs at build time, including relative paths (`../installation.md`) and fragments (`configuration.md#options`). A link to a `.md` file that is not part of the build is left untouched, so double-check those during review.
 
+## Media files
+
+Keep images, videos, and PDFs next to the Markdown that references them. Docsmith copies them into the build and rewrites relative references so they resolve from the built URL:
+
+```markdown
+![Diagram](images/diagram.png)
+
+<video controls src="media/demo.mp4"></video>
+
+[Download the spec](files/spec.pdf)
+```
+
+Remote URLs and root-relative paths are not rewritten. Reference only files that exist in the source tree; a missing file stays broken in the output.
+
 ## Structure that holds up
 
 - Put runnable code before prose explanations. Show, then explain.
@@ -69,6 +83,7 @@ Docsmith rewrites these to the built page URLs at build time, including relative
 
 1. Does every page have title, description, and one H1?
 2. Do all internal links point at `.md` files that exist in the build?
-3. Is the sidebar order deliberate (`order:` or `navigationOrder()`), not accidental?
-4. Would a newcomer understand the first screen without reading another page?
-5. Are code blocks copy-pasteable with no hidden context?
+3. Do image, video, and download paths point at media files that exist in the source tree?
+4. Is the sidebar order deliberate (`order:` or `navigationOrder()`), not accidental?
+5. Would a newcomer understand the first screen without reading another page?
+6. Are code blocks copy-pasteable with no hidden context?

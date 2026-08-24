@@ -244,6 +244,20 @@ See [Versioned Docs](versioned-docs.md) for details.
 
 Docsmith rewrites these to the built page URLs at build time. Relative paths (`../installation.md`) and fragments (`configuration.md#options`) both resolve, in plain builds as well as versioned and hub builds. Links to `.md` files that are not part of the build are left untouched, as are external URLs and anchors.
 
+## Media
+
+Images, videos, audio, and PDFs in the source directory are published into the build automatically. Relative references to them are rewritten for each page so they resolve from the built URL:
+
+```markdown
+![Diagram](images/diagram.png)
+
+<video controls src="media/demo.mp4"></video>
+
+[Download the spec](files/spec.pdf)
+```
+
+Remote URLs, root-relative paths, data URIs, and files that were not published are left untouched. Disable with `->publishMedia(false)`. See [Media](media.md) for details.
+
 ## README index compatibility mode
 
 Docsmith can import README index formats used by projects like `laravel-undocumented` and `laravel-attributes-list`:
