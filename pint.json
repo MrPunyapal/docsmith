@@ -3,8 +3,7 @@
     "exclude": [
         "vendor",
         "test-hub",
-        "test-auto",
-        "backup"
+        "test-auto"
     ],
     "notPath": [
         "tests/Fixtures/Expected/**"

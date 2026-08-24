@@ -94,12 +94,6 @@ doc pages). In the v1 refactor those entry points were removed and AI is
 **MCP-only** — Docsmith never calls an LLM itself, and compliance with your
 coding agent's provider terms and keys is entirely up to that agent.
 
-The removed work is preserved in the repository for anyone who wants it back:
-
-- `backup/ai-pipeline/` — the SDK-free provider, reviewer agent, `agent:run`,
-  and pre-strip copies of the pipeline, PHP API, CLI, tests, and docs
-- `backup/laravel-ai-provider/` — the original `laravel/ai` SDK-based provider
-- `backup/structural-pipeline/` — the structural `generate` pipeline, agents,
-  media capture, and its tests
-
-See [Future Scope](future-scope.md) for how these could be restored.
+The removed code lives in git history (pre-refactor commits on `feat/AI`).
+See [Future Scope](future-scope.md) for why the coding-agent architecture
+replaced it.
