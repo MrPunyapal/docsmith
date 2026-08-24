@@ -7,7 +7,27 @@ use Docsmith\Command\InstallAiCommand;
 use Docsmith\Command\McpServeCommand;
 use Symfony\Component\Console\Application;
 
-require __DIR__ . '/../vendor/autoload.php';
+// Works both in a composer consumer (vendor/mrpunyapal/docsmith/bin)
+// and inside the docsmith repository checkout.
+$autoloadCandidates = [
+    __DIR__ . '/../../../autoload.php',
+    __DIR__ . '/../vendor/autoload.php',
+];
+
+$autoloadLoaded = false;
+
+foreach ($autoloadCandidates as $autoloadCandidate) {
+    if (is_file($autoloadCandidate)) {
+        require $autoloadCandidate;
+        $autoloadLoaded = true;
+        break;
+    }
+}
+
+if (! $autoloadLoaded) {
+    fwrite(STDERR, "Docsmith: unable to locate the composer autoloader.\n");
+    exit(1);
+}
 
 use Docsmith\Docsmith;
 use Docsmith\RemoteSources\RemoteSources;
