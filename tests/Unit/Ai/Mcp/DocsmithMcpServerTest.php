@@ -56,10 +56,11 @@ it('returns tool list', function (): void {
 
     expect($tools)->toBeArray()
         ->and(array_is_list($tools))->toBeTrue()
-        ->and($tools)->toHaveCount(3);
+        ->and($tools)->toHaveCount(4);
 
     $names = array_column($tools, 'name');
     expect($names)->toContain('read_source')
+        ->toContain('capture_media')
         ->toContain('build_site');
 
     foreach (array_column($tools, 'inputSchema') as $schema) {

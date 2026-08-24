@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith\Ai\Mcp;
 
+use Docsmith\Ai\Tools\CaptureMediaTool;
 use Docsmith\Ai\Tools\ReadSourceTool;
 use Docsmith\Ai\Tools\ToolInterface;
 use Docsmith\Ai\Tools\WriteMarkdownTool;
@@ -81,6 +82,10 @@ final class DocsmithMcpServer
 
         if ($docsSourcePath !== '') {
             $this->tools['write_markdown'] = new WriteMarkdownTool($docsSourcePath);
+            $this->tools['capture_media'] = new CaptureMediaTool(
+                $docsSourcePath,
+                $sourcePath !== '' ? $sourcePath : (string) getcwd()
+            );
         }
 
         $this->tools['build_site'] = new class () implements ToolInterface {

@@ -42,11 +42,22 @@ docsmith mcp:serve \
 |------|-------------|-------------------------|
 | `read_source` | Read and analyze source code files | No — operates on local files only |
 | `write_markdown` | Create or update markdown documentation pages | No — operates on local files only |
+| `capture_media` | Screenshot a running app or record an interaction video (via [capturist](https://github.com/MrPunyapal/capturist) + Playwright) | No — local browser capture |
 | `build_site` | Build the static HTML documentation site | No — built-in Docsmith builder |
 
 These tools work entirely on local files — no LLM calls, no API keys. The AI
 assistant connecting to the MCP server uses its own credentials to decide *when*
 to call these tools.
+
+`capture_media` requires one-time dev dependencies in the documented project:
+
+```bash
+npm install -D playwright capturist
+npx playwright install chromium
+```
+
+Captures land in the docs source `media/` directory and are published with the
+site build automatically.
 
 ## PHP API
 
