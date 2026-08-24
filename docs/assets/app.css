@@ -774,6 +774,17 @@ li + li {
     white-space: nowrap;
 }
 
+.doc-body img,
+.doc-body video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+.doc-body audio {
+    width: 100%;
+}
+
 pre {
     position: relative;
     max-width: 100%;

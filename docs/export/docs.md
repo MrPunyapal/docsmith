@@ -142,8 +142,9 @@ To split the steps, call `captureOg(false)` in the HTML job, then capture later 
 3. `BuildConfig` validates the source and output paths.
 4. `SourceScanner` discovers Markdown files and reads frontmatter. Versioned builds scan one source directory per version.
 5. `CommonMarkRenderer` converts Markdown to HTML through League CommonMark with GitHub-flavored Markdown extensions.
-6. `SiteBuilder` renders pages with sidebar navigation, version pills, and the hub dropdown, and writes them to the output directory.
+6. `SiteBuilder` renders pages with sidebar navigation, version pills, and the hub dropdown, and writes them to the output directory. It rewrites relative media references so images, videos, and downloads resolve from the built page locations.
 7. `AssetPublisher` publishes CSS and JS assets and generates `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files.
+8. `MediaPublisher` copies image, video, audio, and PDF files from the source tree into the output directory, preserving their relative structure (disable with `publishMedia(false)`).
 
 Remote source syncing lives in `src/RemoteSources/` and runs before a build. It only writes local directories; the pipeline above never talks to the network.
 
@@ -340,6 +341,7 @@ Docsmith is a PHP package that turns a directory of Markdown files into a static
 - Sidebar navigation with grouping, active page highlighting, and a filter box.
 - Global search backed by a generated `search-index.json`, plus a `Cmd+K` / `Ctrl+K` search overlay.
 - Dark mode, syntax-highlighted code blocks, and a copy button on snippets.
+- Media support: images, videos, audio, and PDFs in the source tree are published, and their references are rewritten for each page.
 - Frontmatter support for `title`, `description`, `slug`, `order`, `sidebar_label`, and `hidden`.
 - Versioned docs with pill buttons to switch versions.
 - Docs hub that combines several independent documentation sets under one sidebar dropdown.
@@ -378,6 +380,7 @@ This reads Markdown from `md/` and writes the site to `docs/` by default, which 
 
 - [Installation](installation.md)
 - [Usage](usage.md)
+- [Media](media.md)
 - [Versioned Docs](versioned-docs.md)
 - [Docs Hub](docs-hub.md)
 - [Remote Sources](remote-sources.md)
@@ -537,6 +540,72 @@ Every page's raw Markdown merged into a single file with frontmatter metadata.
 `siteUrl` must be set for correct URL generation in `llms.txt`.
 
 If no `index.md` exists in the source directory, the generated landing page is included in the export.
+
+
+---
+
+# Media
+
+# Media
+
+Docsmith publishes images, videos, audio, and PDFs from your source directory and rewrites their references so they resolve on the built site.
+
+## What gets published
+
+Every file with a media extension found under the source directory is copied into the output directory with the same relative path.
+
+| Type | Extensions |
+|---|---|
+| Image | `png`, `jpg`, `jpeg`, `gif`, `svg`, `webp`, `avif`, `ico`, `bmp` |
+| Video | `mp4`, `webm`, `mov`, `m4v`, `ogv` |
+| Audio | `mp3`, `wav`, `ogg`, `m4a`, `flac`, `aac` |
+| Document | `pdf` |
+
+Files with other extensions are ignored.
+
+## Referencing media
+
+Reference files by their path relative to the Markdown page, using Markdown syntax or raw HTML:
+
+```markdown
+![Setup wizard](images/setup.png)
+
+<video controls src="media/demo.mp4"></video>
+
+[Download the spec](files/spec.pdf)
+```
+
+Built pages sit deeper than the source tree (`guides/configuration.md` becomes `guides/configuration/index.html`). Docsmith rewrites each reference so it resolves from the built URL. On that page, `images/setup.png` is emitted as `../images/setup.png`. Query strings and fragments survive rewriting.
+
+Rewriting applies to `<img>` sources, `<video>` and `<audio>` sources, video `poster` attributes, `<source>` and `<track>` elements, and links pointing at published media files.
+
+## What is left untouched
+
+A reference stays exactly as written when it:
+
+- points at a remote URL such as `https://example.com/photo.jpg`
+- is protocol-relative, starting with `//`
+- is root-relative, starting with `/`, for example `/assets/logo.png`
+- uses a `data:` URI
+- names a file that was not published, for example a typo or a missing file
+
+Root-relative paths assume your own hosting layout, so rewriting them would break them.
+
+## Versions and hubs
+
+Each version and hub entry publishes the media from its own source directory under its own mount point. References resolve within that unit, so two versions can ship different files under the same path.
+
+## Disabling
+
+Pass `publishMedia(false)` to skip copying and reference rewriting:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/dist')
+    ->publishMedia(false)
+    ->build();
+```
 
 
 ---
@@ -908,6 +977,20 @@ See [Versioned Docs](versioned-docs.md) for details.
 ```
 
 Docsmith rewrites these to the built page URLs at build time. Relative paths (`../installation.md`) and fragments (`configuration.md#options`) both resolve, in plain builds as well as versioned and hub builds. Links to `.md` files that are not part of the build are left untouched, as are external URLs and anchors.
+
+## Media
+
+Images, videos, audio, and PDFs in the source directory are published into the build automatically. Relative references to them are rewritten for each page so they resolve from the built URL:
+
+```markdown
+![Diagram](images/diagram.png)
+
+<video controls src="media/demo.mp4"></video>
+
+[Download the spec](files/spec.pdf)
+```
+
+Remote URLs, root-relative paths, data URIs, and files that were not published are left untouched. Disable with `->publishMedia(false)`. See [Media](media.md) for details.
 
 ## README index compatibility mode
 
