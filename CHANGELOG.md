@@ -3,7 +3,7 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
-## Unreleased
+## 0.3.2 - 2026-08-24
 
 ### Features
 - **Media support**: images, videos, audio, and PDFs kept in the source tree are published into the built site automatically, preserving their relative structure (png/jpg/jpeg/gif/svg/webp/avif/ico/bmp, mp4/webm/mov/m4v/ogv, mp3/wav/ogg/m4a/flac/aac, pdf). Built pages sit one level deeper than the source mirror (`guides/configuration.md` -> `guides/configuration/index.html`), so Docsmith also rewrites relative media references at render time: `<img>`, `<video>` / `<audio>` sources and posters, subtitle tracks, and download links resolve from the built URL (`images/setup.png` becomes `../images/setup.png`). Remote URLs, root-relative paths, data URIs, and references outside the published set are left untouched. Works across plain, versioned, and hub builds; self-hosted builds (output inside the source) skip self-copying. Opt out with `->publishMedia(false)`. Content styles for `img`, `video`, and `audio` are included in the generated stylesheet.
