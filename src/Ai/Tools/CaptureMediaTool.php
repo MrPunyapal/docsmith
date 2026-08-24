@@ -96,7 +96,7 @@ final readonly class CaptureMediaTool implements ToolInterface
         }
 
         $name = $this->resolveName(is_string($input['name'] ?? null) ? $input['name'] : '', $url);
-        $targetPath = $this->docsSourcePath . '/media/' . $name . '.' . $extension;
+        $targetPath = $this->absoluteDocsSourcePath() . '/media/' . $name . '.' . $extension;
 
         $flags = $this->buildFlags($action, $input);
         $stepsFile = $action === 'video' ? $this->findStepsFilePath($flags) : null;
@@ -162,6 +162,25 @@ final readonly class CaptureMediaTool implements ToolInterface
         }
 
         return null;
+    }
+
+    /**
+     * The docs source root as an absolute path — relative values (e.g. the
+     * install:ai default "docs-source") resolve against the current working
+     * directory so the capture lands where write_markdown/build operate.
+     */
+    private function absoluteDocsSourcePath(): string
+    {
+        $path = str_replace('\\', '/', $this->docsSourcePath);
+
+        if (preg_match('#^([a-zA-Z]:)?/#', $path) === 1) {
+            return rtrim($path, '/');
+        }
+
+        $cwd = getcwd();
+        $base = $cwd !== false ? str_replace('\\', '/', $cwd) : '.';
+
+        return rtrim($base, '/') . '/' . trim($path, '/');
     }
 
     /**
