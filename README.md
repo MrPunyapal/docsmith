@@ -21,6 +21,7 @@ Docsmith is designed for package and project documentation where you want a fast
 - Configurable accent color with Laravel red as the default theme
 - Syntax-highlighted fenced code blocks
 - One-click copy button on code snippets
+- Image, video, audio, and PDF support with automatic reference rewriting
 - Repository/edit links and previous/next page navigation
 - Generated `search-index.json`, `sitemap.xml`, and `.nojekyll` artifacts
 - Optional README index compatibility mode for existing repositories
@@ -139,6 +140,33 @@ Docsmith::make()
 ```
 
 Local favicons are copied into `assets/` and linked with the correct relative path for each page.
+
+## Media
+
+Images, videos, audio, and PDFs kept next to your Markdown are published automatically — no configuration needed:
+
+```md
+# Installation
+
+![Setup wizard](images/setup.png)
+
+<video controls src="media/demo.mp4"></video>
+
+[Download the spec](files/spec.pdf)
+```
+
+Every media file in the source tree (png, jpg, gif, svg, webp, avif, ico, bmp, mp4, webm, mov, m4v, ogv, mp3, wav, ogg, m4a, flac, aac, pdf) is copied into the built site preserving its relative structure. Because pages live one level deeper than the source mirror (`guides/configuration.md` becomes `guides/configuration/index.html`), Docsmith rewrites relative references at render time so they resolve from the built URL: `images/setup.png` on that page is emitted as `../images/setup.png`.
+
+References are left untouched when they point at remote URLs, root-relative paths (`/assets/...`), data URIs, or files that are not part of the build.
+
+Disable publishing (and rewriting) with:
+
+```php
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->publishMedia(false)
+    ->build();
+```
 
 ## Open Graph Images
 
