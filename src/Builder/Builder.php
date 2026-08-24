@@ -65,6 +65,8 @@ final class Builder
 
     private bool $showDocsmithBadge = true;
 
+    private bool $publishMedia = true;
+
     /** @var list<string> */
     private array $navigationOrder = [];
 
@@ -619,6 +621,18 @@ final class Builder
     }
 
     /**
+     * Whether image, video, audio, and PDF files found in the source tree are
+     * published into the site (default true) and their relative references
+     * rewritten for the built page locations.
+     */
+    public function publishMedia(bool $publishMedia = true): self
+    {
+        $this->publishMedia = $publishMedia;
+
+        return $this;
+    }
+
+    /**
      * Whether to run Open Graph image capture during build (default true).
      * When false, preview HTML and capturist.config.json are still written.
      */
@@ -698,6 +712,7 @@ final class Builder
                 llmsExport: $this->llmsExport,
                 favicon: $this->favicon,
                 showDocsmithBadge: $this->showDocsmithBadge,
+                publishMedia: $this->publishMedia,
                 navigationOrder: $this->navigationOrder,
             ),
             baseUrl: $this->baseUrl,
@@ -897,6 +912,7 @@ final class Builder
                     llmsExport: $this->llmsExport,
                     favicon: $this->favicon,
                     showDocsmithBadge: $this->showDocsmithBadge,
+                    publishMedia: $this->publishMedia,
                     navigationOrder: $navigationOrder,
                 ),
                 baseUrl: $this->baseUrl,

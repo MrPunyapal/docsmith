@@ -21,6 +21,7 @@ final readonly class SiteMetadata
         public bool $llmsExport = true,
         public string $favicon = '',
         public bool $showDocsmithBadge = true,
+        public bool $publishMedia = true,
         /** @var list<string> */
         public array $navigationOrder = [],
     ) {

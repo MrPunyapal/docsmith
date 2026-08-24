@@ -1,6 +1,6 @@
 ---
 name: docsmith-development
-description: "Use for tasks involving mrpunyapal/docsmith: building static documentation sites from Markdown, the Docsmith::build()/make() API, the vendor/bin/docsmith CLI, frontmatter keys, versioned docs, docs hubs, remote source syncing, llms.txt export, and Open Graph images. Do not use for general static site generators unrelated to Docsmith."
+description: "Use for tasks involving mrpunyapal/docsmith: building static documentation sites from Markdown, the Docsmith::build()/make() API, the vendor/bin/docsmith CLI, frontmatter keys, versioned docs, docs hubs, remote source syncing, llms.txt export, media publishing, and Open Graph images. Do not use for general static site generators unrelated to Docsmith."
 license: MIT
 metadata:
   author: mrpunyapal
@@ -46,6 +46,7 @@ Common options: `output` (default `docs`), `description`, `accentColor`, `accent
 - Every build generates `search-index.json`, `sitemap.xml`, and `.nojekyll`.
 - LLM export is on by default: `llms.txt`, `llms-full.txt`, `export/docs.md` (`->llmsExport(false)` to disable). `siteUrl()` is required for correct absolute URLs in these exports.
 - Body links to Markdown files (`[text](other-page.md)`) are rewritten to built page URLs at render time, including relative paths and fragments. Unmatched `.md` links are left untouched.
+- Media files (images, video, audio, PDF) in the source tree are published into the output with the same relative path, and relative references are rewritten per page so they resolve from the built URL. Remote URLs, root-relative paths, data URIs, and unpublished files are left untouched. `->publishMedia(false)` disables copying and rewriting.
 
 ## Frontmatter keys
 
@@ -93,7 +94,7 @@ composer test:unit     # pest --parallel
 composer docs:build    # regenerate docs/ from md/ using Docsmith itself
 ```
 
-Pipeline: `Docsmith` (API) -> `Builder`/`BuildConfig` (config validation) -> `SourceScanner` -> `CommonMarkRenderer` -> `SiteBuilder` (pages, hub dropdown, version pills) -> `AssetPublisher` (search index, sitemap, llms export). Remote syncing lives in `src/RemoteSources/*`.
+Pipeline: `Docsmith` (API) -> `Builder`/`BuildConfig` (config validation) -> `SourceScanner` -> `CommonMarkRenderer` -> `SiteBuilder` (pages, hub dropdown, version pills, media reference rewriting) -> `AssetPublisher` (search index, sitemap, llms export) -> `MediaPublisher` (copies media files from source). Remote syncing lives in `src/RemoteSources/*`.
 
 ## Gotchas
 

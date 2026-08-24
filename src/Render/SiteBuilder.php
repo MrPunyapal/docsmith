@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Docsmith\Render;
 
 use Docsmith\Assets\AssetPublisher;
+use Docsmith\Assets\MediaPublisher;
 use Docsmith\Config\BuildConfig;
 use Docsmith\Config\OgImageConfig;
 use Docsmith\Content\Document;
@@ -23,11 +24,14 @@ final readonly class SiteBuilder
 
     private AssetPublisher $assets;
 
-    public function __construct(?SourceScanner $scanner = null, ?CommonMarkRenderer $renderer = null, ?AssetPublisher $assets = null)
+    private MediaPublisher $media;
+
+    public function __construct(?SourceScanner $scanner = null, ?CommonMarkRenderer $renderer = null, ?AssetPublisher $assets = null, ?MediaPublisher $media = null)
     {
         $this->scanner = $scanner ?? new SourceScanner();
         $this->renderer = $renderer ?? new CommonMarkRenderer();
         $this->assets = $assets ?? new AssetPublisher();
+        $this->media = $media ?? new MediaPublisher();
     }
 
     /** @param list<Document>|null $documents */
@@ -55,6 +59,7 @@ final readonly class SiteBuilder
         }
 
         $this->assets->publish($config->outputPath, $config->metadata);
+        $mediaFiles = $this->publishMedia($config);
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
@@ -65,7 +70,7 @@ final readonly class SiteBuilder
                 mkdir($directory, 0777, true);
             }
 
-            file_put_contents($absoluteOutputPath, $this->page($config, $document, $visibleDocuments, linkTargets: $documents));
+            file_put_contents($absoluteOutputPath, $this->page($config, $document, $visibleDocuments, linkTargets: $documents, mediaFiles: $mediaFiles));
         }
 
         if (! $hasRootIndex) {
@@ -142,6 +147,7 @@ final readonly class SiteBuilder
         }
 
         $this->assets->publish($writeTarget, $config->metadata);
+        $mediaFiles = $this->publishMedia($config);
         $hasRootIndex = $this->hasRootIndex($documents);
 
         foreach ($documents as $document) {
@@ -163,7 +169,7 @@ final readonly class SiteBuilder
 
             file_put_contents(
                 $absoluteOutputPath,
-                $this->page($config, $document, $visibleDocuments, $hubSwitcher, $documents),
+                $this->page($config, $document, $visibleDocuments, $hubSwitcher, $documents, $mediaFiles),
             );
         }
 
@@ -227,12 +233,15 @@ HTML;
     /**
      * @param list<Document> $documents
      * @param list<Document>|null $linkTargets
+     * @param array<string, true> $mediaFiles
      */
-    private function page(BuildConfig $config, Document $document, array $documents, string $hubSwitcher = '', ?array $linkTargets = null): string
+    private function page(BuildConfig $config, Document $document, array $documents, string $hubSwitcher = '', ?array $linkTargets = null, array $mediaFiles = []): string
     {
         $tocData = $this->tocFromHtml($document->html);
         $toc = $tocData['items'];
         $contentHtml = $this->rewriteMarkdownLinks($tocData['html'], $document, $linkTargets ?? $documents);
+        $contentHtml = $this->rewriteMediaReferences($contentHtml, $document, $mediaFiles);
+
         $neighbors = $this->neighbors($documents, $document);
         $editUrl = $this->editUrl($config, $document);
         $breadcrumbs = $this->breadcrumbs($document, $documents);
@@ -714,6 +723,21 @@ HTML;
     }
 
     /**
+     * Publish the source tree's media files into the output directory when
+     * enabled; the returned relative paths drive URL rewriting.
+     *
+     * @return array<string, true>
+     */
+    private function publishMedia(BuildConfig $config): array
+    {
+        if (! $config->metadata->publishMedia) {
+            return [];
+        }
+
+        return $this->media->publish($config);
+    }
+
+    /**
      * Rewrite links to Markdown files into links to their built pages, so
      * GitHub-style hrefs such as `guides/setup.md` resolve on the built site.
      * Hrefs that do not match a document in this build are left untouched.
@@ -730,7 +754,7 @@ HTML;
         $targets = [];
 
         foreach ($linkTargets as $target) {
-            $key = strtolower($this->resolveRelativeMarkdownPath(
+            $key = strtolower($this->resolveRelativeSourcePath(
                 $this->stripMarkdownExtension($target->relativePath),
                 $target->relativePath,
             ));
@@ -808,7 +832,7 @@ HTML;
             return null;
         }
 
-        $key = strtolower($this->resolveRelativeMarkdownPath(rawurldecode(substr($path, 0, -3)), $current->relativePath));
+        $key = strtolower($this->resolveRelativeSourcePath(rawurldecode(substr($path, 0, -3)), $current->relativePath));
         $target = $targets[$key] ?? null;
 
         if ($target === null) {
@@ -819,7 +843,7 @@ HTML;
     }
 
     /** Resolve a relative href against the current document's directory. */
-    private function resolveRelativeMarkdownPath(string $hrefPath, string $currentRelativePath): string
+    private function resolveRelativeSourcePath(string $hrefPath, string $currentRelativePath): string
     {
         $baseDirectory = trim(str_replace('\\', '/', dirname($currentRelativePath)), '/.');
         $hrefPath = str_replace('\\', '/', $hrefPath);
@@ -841,6 +865,141 @@ HTML;
         }
 
         return implode('/', $segments);
+    }
+
+    /**
+     * Rewrite relative media references (images, video/audio sources,
+     * posters, subtitle tracks, and download links) so they resolve from the
+     * built page location, which sits one level deeper than the mirrored
+     * source tree (`guides/config.md` -> `guides/config/index.html`).
+     * Absolute URLs, root-relative paths, data URIs, and references that are
+     * not part of the published media set are left untouched.
+     *
+     * @param array<string, true> $mediaFiles
+     */
+    private function rewriteMediaReferences(string $html, Document $current, array $mediaFiles): string
+    {
+        if ($mediaFiles === [] || preg_match('/(?:src|poster|href)="[^"]*"/i', $html) !== 1) {
+            return $html;
+        }
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $previousErrors = libxml_use_internal_errors(true);
+
+        try {
+            $dom->loadHTML(
+                '<?xml encoding="utf-8" ?><div id="docsmith-fragment">' . $html . '</div>',
+                LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD,
+            );
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrors);
+        }
+
+        $xpath = new DOMXPath($dom);
+        $rootNodes = $xpath->query('//*[@id="docsmith-fragment"]');
+        $root = $rootNodes !== false ? $rootNodes->item(0) : null;
+
+        if (! $root instanceof DOMElement) {
+            return $html;
+        }
+
+        $sourceNodes = $xpath->query('//*[@id="docsmith-fragment"]//*[@src or @poster]');
+        $anchorNodes = $xpath->query('//*[@id="docsmith-fragment"]//a[@href]');
+
+        if ($sourceNodes !== false) {
+            foreach ($sourceNodes as $node) {
+                if (! $node instanceof DOMElement) {
+                    continue;
+                }
+
+                foreach (['src', 'poster'] as $attributeName) {
+                    $value = $node->getAttribute($attributeName);
+
+                    if ($value === '') {
+                        continue;
+                    }
+
+                    $rewritten = $this->mediaHrefFor($value, $current, $mediaFiles);
+
+                    if ($rewritten !== null) {
+                        $node->setAttribute($attributeName, $rewritten);
+                    }
+                }
+            }
+        }
+
+        if ($anchorNodes !== false) {
+            foreach ($anchorNodes as $node) {
+                if (! $node instanceof DOMElement) {
+                    continue;
+                }
+
+                $rewritten = $this->mediaHrefFor($node->getAttribute('href'), $current, $mediaFiles);
+
+                if ($rewritten !== null) {
+                    $node->setAttribute('href', $rewritten);
+                }
+            }
+        }
+
+        $renderedHtml = '';
+
+        foreach ($root->childNodes as $child) {
+            $renderedHtml .= $dom->saveHTML($child) ?: '';
+        }
+
+        return $renderedHtml;
+    }
+
+    /**
+     * Resolve one media URL against the current document's source location
+     * and return the href relative to the built page, or null when the URL
+     * must stay as-is.
+     *
+     * @param array<string, true> $mediaFiles
+     */
+    private function mediaHrefFor(string $url, Document $current, array $mediaFiles): ?string
+    {
+        $trimmed = trim($url);
+
+        if ($trimmed === '' || preg_match('~^(?:[a-z][a-z0-9+.-]*:|//|/|#)~i', $trimmed) === 1) {
+            return null;
+        }
+
+        $path = $trimmed;
+        $suffix = '';
+
+        if (preg_match('/([?#].*)$/', $path, $matches) === 1) {
+            $suffix = $matches[1];
+            $path = substr($path, 0, -strlen($suffix));
+        }
+
+        $resolved = $this->resolveRelativeSourcePath(rawurldecode($path), $current->relativePath);
+
+        if (! isset($mediaFiles[strtolower($resolved)])) {
+            return null;
+        }
+
+        return $this->relativeMediaHref($current->outputPath, $resolved) . $suffix;
+    }
+
+    /** Compute a media path relative to the page it is referenced from. */
+    private function relativeMediaHref(string $fromOutputPath, string $mediaRelativePath): string
+    {
+        $fromSegments = $this->directorySegments($fromOutputPath);
+        $toSegments = explode('/', trim($mediaRelativePath, '/'));
+        $sharedSegments = 0;
+        $maxSharedSegments = min(count($fromSegments), count($toSegments));
+
+        while ($sharedSegments < $maxSharedSegments && $fromSegments[$sharedSegments] === $toSegments[$sharedSegments]) {
+            $sharedSegments++;
+        }
+
+        $up = str_repeat('../', count($fromSegments) - $sharedSegments);
+        $down = implode('/', array_slice($toSegments, $sharedSegments));
+
+        return $up . $down;
     }
 
     private function stripMarkdownExtension(string $path): string
