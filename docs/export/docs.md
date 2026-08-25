@@ -109,9 +109,15 @@ Capture runs during `build()` when a generated mode is enabled. It is incrementa
 
 To force a full regeneration without the method, delete `og/.capturist-cache.json`.
 
+> [!TIP]
+> Use `captureOg(false)` while writing locally for fast rebuilds, then let CI run the full capture with screenshots.
+
 If capture is enabled but Node, capturist, or Chromium is missing, the build fails with install instructions.
 
 ## CI
+
+> [!WARNING]
+> CI runners ship without Chromium and Playwright browsers. Install them before the build step or every capture-enabled build will fail.
 
 Install Node dependencies and Chromium before a docs build that runs capture:
 
@@ -174,6 +180,9 @@ composer test:types    # phpstan
 composer test:unit     # pest --parallel
 composer test          # all of the above
 ```
+
+> [!NOTE]
+> Rector and Pint run in check-only mode during CI — apply fixes locally with `composer lint` before pushing.
 
 ## Tooling
 
@@ -375,6 +384,9 @@ Docsmith::build(
 ```
 
 This reads Markdown from `md/` and writes the site to `docs/` by default, which works directly with GitHub Pages.
+
+> [!TIP]
+> Docsmith ships [Agent Skills](installation.md#install-the-ai-agent-skills) that teach coding agents how to build and write docs with it — install them once and let your agent do the wiring.
 
 ## Documentation
 
@@ -692,6 +704,9 @@ Syncing is restricted by default:
 
 ## Private repositories
 
+> [!CAUTION]
+> Never commit tokens to your repository. Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
+
 Pass a token in `docsmith.sources.php`:
 
 ```php
@@ -710,7 +725,6 @@ return [
 - **`'token' => '${ENV_VAR_NAME}'`** is the recommended form. Docsmith reads the variable from the environment at sync time and fails with a clear message naming the variable if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
 - **Automatic fallbacks.** If no `token` key is present, Docsmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
 - **`.env` files.** Tokens may also live in a `.env` file next to `docsmith.sources.php`. Real environment variables always take precedence.
-- **Never commit tokens.** Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
 
 ## Programmatic use
 
@@ -813,6 +827,37 @@ vendor/bin/docsmith build \
     --source=md \
     --commonmark-config=docsmith.commonmark.php
 ```
+
+## Alerts
+
+GitHub-style alerts are enabled by default. Start a block quote with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` (case-insensitive) to turn it into a colored callout:
+
+```md
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention.
+```
+
+The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown inside — lists, code blocks, links. Unknown markers like `[!FOO]` and regular block quotes are rendered as plain block quotes. Styling ships with the built-in theme; override `.markdown-alert` in custom CSS to change it.
+
+Every type in action — this is what the five markers look like in the built theme:
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!IMPORTANT]
+> Key information users need to know.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
 
 ## Command line
 
