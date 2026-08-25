@@ -118,9 +118,13 @@ it('fails clearly when the commonmark config has invalid extensions', function (
 });
 
 it('runs when docsmith is installed as a dependency', function (): void {
-    $projectPath = sys_get_temp_dir() . '/docsmith-dependency-' . uniqid();
+    $projectPath = sys_get_temp_dir() . '/docsmith-dependency-' . bin2hex(random_bytes(8));
+
+    if (! mkdir($projectPath . '/vendor/mrpunyapal/docsmith/bin', 0700, true)) {
+        throw new RuntimeException('Unable to create the temporary project directory.');
+    }
+
     $packageBinPath = $projectPath . '/vendor/mrpunyapal/docsmith/bin';
-    mkdir($packageBinPath, 0777, true);
 
     copy(dirname(__DIR__, 2) . '/bin/docsmith', $packageBinPath . '/docsmith');
 
