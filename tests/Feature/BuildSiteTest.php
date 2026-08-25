@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Docsmith\Builder\Builder;
 use Docsmith\Docsmith;
 use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
 
@@ -39,6 +40,18 @@ it('uses additional commonmark environment config in site builds', function (): 
 
     expect(str_contains($html, '<div>'))->toBeFalse()
         ->and(str_contains($html, 'removed'))->toBeFalse();
+});
+
+it('rejects commonmark extension values that are not extension instances', function (): void {
+    // @phpstan-ignore-next-line Deliberately passing an invalid value.
+    expect(fn (): Builder => Docsmith::make()->commonMarkExtensions([DescriptionListExtension::class]))
+        ->toThrow(InvalidArgumentException::class, DescriptionListExtension::class);
+});
+
+it('rejects commonmark config keys that are not strings', function (): void {
+    // @phpstan-ignore-next-line Deliberately passing an invalid value.
+    expect(fn (): Builder => Docsmith::make()->commonMarkConfig(['html_input']))
+        ->toThrow(InvalidArgumentException::class, 'string keys');
 });
 
 it('rewrites markdown links between pages into built page urls', function (): void {

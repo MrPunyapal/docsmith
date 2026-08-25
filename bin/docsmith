@@ -254,6 +254,9 @@ function boolOption(array $options, string $key): bool
 }
 
 /**
+ * Load a CLI CommonMark config file. Extension and config values are
+ * validated by the builder when applied.
+ *
  * @return array{extensions: list<ExtensionInterface>, config: array<string, mixed>}
  */
 function loadCommonMarkConfig(string $path): array
@@ -275,20 +278,8 @@ function loadCommonMarkConfig(string $path): array
         throw new InvalidArgumentException('[extensions] must be a list of CommonMark extensions.');
     }
 
-    foreach ($extensions as $extension) {
-        if (! $extension instanceof ExtensionInterface) {
-            throw new InvalidArgumentException('[extensions] must contain only ExtensionInterface instances.');
-        }
-    }
-
     if (! is_array($config)) {
         throw new InvalidArgumentException('[config] must be an array.');
-    }
-
-    foreach (array_keys($config) as $key) {
-        if (! is_string($key)) {
-            throw new InvalidArgumentException('[config] must use string keys.');
-        }
     }
 
     return [

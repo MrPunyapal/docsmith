@@ -12,6 +12,7 @@ use Docsmith\Content\Document;
 use Docsmith\Markdown\CommonMarkRenderer;
 use Docsmith\Render\OgImageGenerator;
 use Docsmith\Render\SiteBuilder;
+use InvalidArgumentException;
 use League\CommonMark\Extension\ExtensionInterface;
 use LogicException;
 use RecursiveDirectoryIterator;
@@ -73,6 +74,8 @@ final class Builder
 
     /** @var array<string, mixed> */
     private array $commonMarkConfig = [];
+
+    private ?CommonMarkRenderer $commonMarkRenderer = null;
 
     /** @var list<string> */
     private array $navigationOrder = [];
@@ -440,9 +443,15 @@ final class Builder
      * Register additional League CommonMark extensions for Markdown rendering.
      *
      * @param list<ExtensionInterface> $extensions
+     *
+     * @throws InvalidArgumentException When an extension does not implement ExtensionInterface.
      */
     public function commonMarkExtensions(array $extensions): self
     {
+        foreach ($extensions as $extension) {
+            $this->assertCommonMarkExtension($extension);
+        }
+
         $this->commonMarkExtensions = $extensions;
 
         return $this;
@@ -455,12 +464,39 @@ final class Builder
      * configuration.
      *
      * @param array<string, mixed> $config
+     *
+     * @throws InvalidArgumentException When a config key is not a string.
      */
     public function commonMarkConfig(array $config): self
     {
+        foreach (array_keys($config) as $key) {
+            $this->assertCommonMarkConfigKey($key);
+        }
+
         $this->commonMarkConfig = $config;
 
         return $this;
+    }
+
+    private function assertCommonMarkExtension(mixed $extension): void
+    {
+        if (! $extension instanceof ExtensionInterface) {
+            throw new InvalidArgumentException(sprintf(
+                'CommonMark extensions must implement %s, [%s] given.',
+                ExtensionInterface::class,
+                is_string($extension) ? $extension : get_debug_type($extension),
+            ));
+        }
+    }
+
+    private function assertCommonMarkConfigKey(mixed $key): void
+    {
+        if (! is_string($key)) {
+            throw new InvalidArgumentException(sprintf(
+                'CommonMark config must use string keys, [%s] given.',
+                get_debug_type($key),
+            ));
+        }
     }
 
     /** @param list<string> $order */
@@ -783,7 +819,7 @@ final class Builder
 
     private function commonMarkRenderer(): CommonMarkRenderer
     {
-        return new CommonMarkRenderer($this->commonMarkExtensions, $this->commonMarkConfig);
+        return $this->commonMarkRenderer ??= new CommonMarkRenderer($this->commonMarkExtensions, $this->commonMarkConfig);
     }
 
     private function buildDocs(): void

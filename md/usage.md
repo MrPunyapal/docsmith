@@ -43,7 +43,7 @@ use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
 
 Docsmith::make()
     ->source(__DIR__ . '/md')
-    ->output(__DIR__ . '/dist')
+    ->output(__DIR__ . '/docs')
     ->commonMarkExtensions([
         new DescriptionListExtension(),
     ])

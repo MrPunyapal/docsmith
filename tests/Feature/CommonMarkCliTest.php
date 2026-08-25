@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
+
 it('uses commonmark extensions and environment config in cli builds', function (): void {
     $projectPath = sys_get_temp_dir() . '/docsmith-commonmark-cli-' . uniqid();
     $sourcePath = $projectPath . '/md';
@@ -31,13 +33,103 @@ it('uses commonmark extensions and environment config in cli builds', function (
         ];
         PHP);
 
-    $command = [
-        PHP_BINARY,
-        dirname(__DIR__, 2) . '/bin/docsmith',
+    $result = docsmithCliProcess([
         'build',
         '--source=' . $sourcePath,
         '--output=' . $outputPath,
         '--commonmark-config=' . $commonMarkConfigPath,
+    ]);
+
+    expect($result['exitCode'])->toBe(0, $result['stderr'])
+        ->and($result['stdout'])->toContain('Built docs');
+
+    $html = (string) file_get_contents($outputPath . '/index.html');
+
+    expect($html)->toContain('<dl>')
+        ->toContain('<dt>Term</dt>')
+        ->toContain('<dd>Definition</dd>')
+        ->and(str_contains($html, '<div>'))->toBeFalse()
+        ->and(str_contains($html, 'removed'))->toBeFalse();
+});
+
+it('fails clearly when the commonmark config file does not exist', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-commonmark-cli-missing-' . uniqid();
+    $sourcePath = $projectPath . '/md';
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', '# Hello');
+
+    $result = docsmithCliProcess([
+        'build',
+        '--source=' . $sourcePath,
+        '--output=' . $projectPath . '/docs',
+        '--commonmark-config=' . $projectPath . '/missing.php',
+    ]);
+
+    expect($result['exitCode'])->toBe(1)
+        ->and($result['stderr'])->toContain('[Docsmith] Invalid CommonMark config')
+        ->and($result['stderr'])->toContain('File does not exist');
+});
+
+it('fails clearly when the commonmark config does not return an array', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-commonmark-cli-nonarray-' . uniqid();
+    $sourcePath = $projectPath . '/md';
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', '# Hello');
+
+    $configPath = $projectPath . '/commonmark.php';
+    file_put_contents($configPath, "<?php\n\nreturn 'not-an-array';\n");
+
+    $result = docsmithCliProcess([
+        'build',
+        '--source=' . $sourcePath,
+        '--output=' . $projectPath . '/docs',
+        '--commonmark-config=' . $configPath,
+    ]);
+
+    expect($result['exitCode'])->toBe(1)
+        ->and($result['stderr'])->toContain('The file must return an array.');
+});
+
+it('fails clearly when the commonmark config has invalid extensions', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-commonmark-cli-badext-' . uniqid();
+    $sourcePath = $projectPath . '/md';
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', '# Hello');
+
+    $configPath = $projectPath . '/commonmark.php';
+    file_put_contents($configPath, <<<'PHP'
+        <?php
+
+        return [
+            'extensions' => [\League\CommonMark\Extension\DescriptionList\DescriptionListExtension::class],
+        ];
+        PHP);
+
+    $result = docsmithCliProcess([
+        'build',
+        '--source=' . $sourcePath,
+        '--output=' . $projectPath . '/docs',
+        '--commonmark-config=' . $configPath,
+    ]);
+
+    expect($result['exitCode'])->toBe(1)
+        ->and($result['stderr'])->toContain(DescriptionListExtension::class)
+        ->and($result['stderr'])->toContain('must implement');
+});
+
+/**
+ * Run the Docsmith binary in a subprocess and capture its output.
+ *
+ * @param list<string> $arguments
+ *
+ * @return array{exitCode: int, stdout: string, stderr: string}
+ */
+function docsmithCliProcess(array $arguments): array
+{
+    $command = [
+        PHP_BINARY,
+        dirname(__DIR__, 2) . '/bin/docsmith',
+        ...$arguments,
     ];
     $pipes = [];
     $process = proc_open($command, [
@@ -55,14 +147,9 @@ it('uses commonmark extensions and environment config in cli builds', function (
     fclose($pipes[2]);
     $exitCode = proc_close($process);
 
-    expect($exitCode)->toBe(0, $stderr)
-        ->and($stdout)->toContain('Built docs');
-
-    $html = (string) file_get_contents($outputPath . '/index.html');
-
-    expect($html)->toContain('<dl>')
-        ->toContain('<dt>Term</dt>')
-        ->toContain('<dd>Definition</dd>')
-        ->and(str_contains($html, '<div>'))->toBeFalse()
-        ->and(str_contains($html, 'removed'))->toBeFalse();
-});
+    return [
+        'exitCode' => $exitCode,
+        'stdout' => (string) $stdout,
+        'stderr' => (string) $stderr,
+    ];
+}
