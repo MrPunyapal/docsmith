@@ -859,6 +859,24 @@ Every type in action — this is what the five markers look like in the built th
 > [!CAUTION]
 > Advises about risks or negative outcomes of certain actions.
 
+## Checklists
+
+GitHub Flavored Markdown task lists render out of the box — `- [x]` for done, `- [ ]` for pending:
+
+```md
+- [x] Install Docsmith
+- [ ] Write the first page
+- [ ] Ship it
+```
+
+Good use cases for checklists in documentation:
+
+- **Prerequisites** — list what readers need before starting; they can scan it at a glance.
+- **Step-by-step progress** — long setup or migration guides readers return to later.
+- **Release readiness** — QA and pre-launch checklists inside engineering docs.
+- **Troubleshooting trees** — ordered fixes readers work through until the problem resolves.
+- **Support matrices** — compact yes/no capability lists without building a table.
+
 ## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
