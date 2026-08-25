@@ -12,6 +12,7 @@ use Docsmith\Content\Document;
 use Docsmith\Markdown\CommonMarkRenderer;
 use Docsmith\Render\OgImageGenerator;
 use Docsmith\Render\SiteBuilder;
+use League\CommonMark\Extension\ExtensionInterface;
 use LogicException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -66,6 +67,12 @@ final class Builder
     private bool $showDocsmithBadge = true;
 
     private bool $publishMedia = true;
+
+    /** @var list<ExtensionInterface> */
+    private array $commonMarkExtensions = [];
+
+    /** @var array<string, mixed> */
+    private array $commonMarkConfig = [];
 
     /** @var list<string> */
     private array $navigationOrder = [];
@@ -429,6 +436,33 @@ final class Builder
         return $this;
     }
 
+    /**
+     * Register additional League CommonMark extensions for Markdown rendering.
+     *
+     * @param list<ExtensionInterface> $extensions
+     */
+    public function commonMarkExtensions(array $extensions): self
+    {
+        $this->commonMarkExtensions = $extensions;
+
+        return $this;
+    }
+
+    /**
+     * Configure the League CommonMark environment.
+     *
+     * Values override Docsmith's defaults and may include extension-specific
+     * configuration.
+     *
+     * @param array<string, mixed> $config
+     */
+    public function commonMarkConfig(array $config): self
+    {
+        $this->commonMarkConfig = $config;
+
+        return $this;
+    }
+
     /** @param list<string> $order */
     public function navigationOrder(array $order): self
     {
@@ -691,7 +725,7 @@ final class Builder
         if ($this->readmeIndexPath !== null) {
             $readmePath = $this->resolveReadmePath();
             $sourcePath = dirname($readmePath);
-            $documents = (new ReadmeIndexImporter(new CommonMarkRenderer()))->import($readmePath, $this->readmeSkipSections);
+            $documents = (new ReadmeIndexImporter($this->commonMarkRenderer()))->import($readmePath, $this->readmeSkipSections);
         }
 
         $config = BuildConfig::fromInput(
@@ -720,7 +754,7 @@ final class Builder
             ogImage: $this->ogImage,
         );
 
-        (new SiteBuilder())->build($config, $documents);
+        (new SiteBuilder(renderer: $this->commonMarkRenderer()))->build($config, $documents);
 
         $this->generateOgImages($config, $documents);
     }
@@ -747,10 +781,15 @@ final class Builder
         );
     }
 
+    private function commonMarkRenderer(): CommonMarkRenderer
+    {
+        return new CommonMarkRenderer($this->commonMarkExtensions, $this->commonMarkConfig);
+    }
+
     private function buildDocs(): void
     {
         $outputPath = $this->requireOutputPath();
-        $siteBuilder = new SiteBuilder();
+        $siteBuilder = new SiteBuilder(renderer: $this->commonMarkRenderer());
         $dropdownGroups = [];
         $pageSets = [];
         $units = [];

@@ -3,6 +3,43 @@
 declare(strict_types=1);
 
 use Docsmith\Docsmith;
+use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
+
+it('uses additional commonmark extensions in site builds', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-commonmark-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-commonmark-out-' . uniqid();
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Glossary\n\nTerm\n: Definition\n");
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        commonMarkExtensions: [new DescriptionListExtension()],
+    );
+
+    expect((string) file_get_contents($outputPath . '/index.html'))
+        ->toContain('<dl>')
+        ->toContain('<dt>Term</dt>')
+        ->toContain('<dd>Definition</dd>');
+});
+
+it('uses additional commonmark environment config in site builds', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-commonmark-config-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-commonmark-config-out-' . uniqid();
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Config\n\n<div>\nremoved\n</div>\n");
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->commonMarkConfig(['html_input' => 'strip'])
+        ->build();
+
+    $html = (string) file_get_contents($outputPath . '/index.html');
+
+    expect(str_contains($html, '<div>'))->toBeFalse()
+        ->and(str_contains($html, 'removed'))->toBeFalse();
+});
 
 it('rewrites markdown links between pages into built page urls', function (): void {
     $sourcePath = sys_get_temp_dir() . '/docsmith-md-links-' . uniqid();

@@ -6,6 +6,7 @@ namespace Docsmith\Markdown;
 
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\ExtensionInterface;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\MarkdownConverter;
 use Phiki\Grammar\Grammar;
@@ -19,15 +20,23 @@ final readonly class CommonMarkRenderer
 
     private Phiki $highlighter;
 
-    public function __construct()
+    /**
+     * @param iterable<ExtensionInterface> $extensions
+     * @param array<string, mixed> $config
+     */
+    public function __construct(iterable $extensions = [], array $config = [])
     {
-        $environment = new Environment([
+        $environment = new Environment($config + [
             'html_input' => 'allow',
             'allow_unsafe_links' => false,
         ]);
 
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new GithubFlavoredMarkdownExtension());
+
+        foreach ($extensions as $extension) {
+            $environment->addExtension($extension);
+        }
 
         $this->converter = new MarkdownConverter($environment);
         $this->highlighter = new Phiki();
