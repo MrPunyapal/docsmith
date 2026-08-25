@@ -8,6 +8,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Docsmith\Docsmith;
 use Docsmith\RemoteSources\RemoteSources;
 use Docsmith\RemoteSources\InvalidSourcesConfiguration;
+use League\CommonMark\Extension\ExtensionInterface;
 
 const USAGE = <<<TXT
 Usage:
@@ -23,6 +24,8 @@ Build options:
   --accent-color=HEX    Accent color (default: #ff2d20)
   --accent-color-dark=HEX  Dark-mode accent color
   --custom-css=FILE     Path to custom CSS file
+  --commonmark-config=FILE
+                        PHP file returning CommonMark extensions and config
   --base-url=URL        Base URL (default: /)
   --right-sidebar       Enable the right sidebar
   --repository-url=URL  Repository URL for edit links
@@ -123,6 +126,21 @@ $builder = Docsmith::make()
     ->editBranch(stringOption($options, 'edit-branch', 'main'))
     ->editPrefix(stringOption($options, 'edit-prefix', ''))
     ->showDocsmithBadge(! boolOption($options, 'no-docsmith-badge'));
+
+$commonMarkConfigPath = stringOption($options, 'commonmark-config', '');
+
+if ($commonMarkConfigPath !== '') {
+    try {
+        $commonMark = loadCommonMarkConfig($commonMarkConfigPath);
+        $builder
+            ->commonMarkExtensions($commonMark['extensions'])
+            ->commonMarkConfig($commonMark['config']);
+    } catch (Throwable $error) {
+        fwrite(STDERR, '[Docsmith] Invalid CommonMark config: ' . $error->getMessage() . "\n");
+
+        exit(1);
+    }
+}
 
 $favicon = stringOption($options, 'favicon', '');
 
@@ -233,4 +251,48 @@ function boolOption(array $options, string $key): bool
     $value = $options[$key] ?? false;
 
     return $value === true || $value === '1' || $value === 'true';
+}
+
+/**
+ * @return array{extensions: list<ExtensionInterface>, config: array<string, mixed>}
+ */
+function loadCommonMarkConfig(string $path): array
+{
+    if (! is_file($path)) {
+        throw new InvalidArgumentException("File does not exist: {$path}");
+    }
+
+    $manifest = require $path;
+
+    if (! is_array($manifest)) {
+        throw new InvalidArgumentException('The file must return an array.');
+    }
+
+    $extensions = $manifest['extensions'] ?? [];
+    $config = $manifest['config'] ?? [];
+
+    if (! is_array($extensions) || ! array_is_list($extensions)) {
+        throw new InvalidArgumentException('[extensions] must be a list of CommonMark extensions.');
+    }
+
+    foreach ($extensions as $extension) {
+        if (! $extension instanceof ExtensionInterface) {
+            throw new InvalidArgumentException('[extensions] must contain only ExtensionInterface instances.');
+        }
+    }
+
+    if (! is_array($config)) {
+        throw new InvalidArgumentException('[config] must be an array.');
+    }
+
+    foreach (array_keys($config) as $key) {
+        if (! is_string($key)) {
+            throw new InvalidArgumentException('[config] must use string keys.');
+        }
+    }
+
+    return [
+        'extensions' => $extensions,
+        'config' => $config,
+    ];
 }
