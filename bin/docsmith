@@ -3,7 +3,23 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
+$autoloader = null;
+
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $file) {
+    if (is_file($file)) {
+        $autoloader = $file;
+
+        break;
+    }
+}
+
+if ($autoloader === null) {
+    fwrite(STDERR, "[Docsmith] Unable to find the Composer autoloader. Run `composer install` first.\n");
+
+    exit(1);
+}
+
+require $autoloader;
 
 use Docsmith\Docsmith;
 use Docsmith\RemoteSources\RemoteSources;
