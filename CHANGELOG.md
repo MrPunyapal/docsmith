@@ -3,6 +3,10 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
+## 0.4.1 - 2026-08-26
+
+Republish of 0.4.0. The v0.4.0 tag was deleted and recreated during the release, and Packagist does not re-import a tag name it has already seen, so 0.4.0 never became installable through Composer. Use 0.4.1 or later.
+
 ## 0.4.0 - 2026-08-26
 
 ### Features
