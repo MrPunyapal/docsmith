@@ -117,7 +117,7 @@ If capture is enabled but Node, capturist, or Chromium is missing, the build fai
 ## CI
 
 > [!WARNING]
-> CI runners ship without Chromium and Playwright browsers. Install them before the build step or every capture-enabled build will fail.
+> CI runners do not include Chromium or Playwright browsers. Install them before the build step, or every capture-enabled build will fail.
 
 Install Node dependencies and Chromium before a docs build that runs capture:
 
@@ -182,7 +182,7 @@ composer test          # all of the above
 ```
 
 > [!NOTE]
-> Rector and Pint run in check-only mode during CI — apply fixes locally with `composer lint` before pushing.
+> Rector and Pint run in check-only mode during CI. Run `composer lint` to apply their fixes before you push.
 
 ## Tooling
 
@@ -386,7 +386,7 @@ Docsmith::build(
 This reads Markdown from `md/` and writes the site to `docs/` by default, which works directly with GitHub Pages.
 
 > [!TIP]
-> Docsmith ships [Agent Skills](installation.md#install-the-ai-agent-skills) that teach coding agents how to build and write docs with it — install them once and let your agent do the wiring.
+> Docsmith includes [Agent Skills](installation.md#install-the-ai-agent-skills) that teach coding agents how to configure Docsmith and write documentation pages. Install them before letting an agent work on your docs.
 
 ## Documentation
 
@@ -840,9 +840,9 @@ GitHub-style alerts are enabled by default. Start a block quote with `[!NOTE]`, 
 > Urgent info that needs immediate user attention.
 ```
 
-The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown inside — lists, code blocks, links. Unknown markers like `[!FOO]` and regular block quotes are rendered as plain block quotes. Styling ships with the built-in theme; override `.markdown-alert` in custom CSS to change it.
+The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown content, including lists, code blocks, and links. Unknown markers like `[!FOO]` and regular block quotes render as plain block quotes. Styles come from the built-in theme; override `.markdown-alert` in custom CSS if you want to change them.
 
-Every type in action — this is what the five markers look like in the built theme:
+All five markers as they look with the built-in theme:
 
 > [!NOTE]
 > Useful information that users should know, even when skimming content.
@@ -861,7 +861,7 @@ Every type in action — this is what the five markers look like in the built th
 
 ## Checklists
 
-GitHub Flavored Markdown task lists render out of the box — `- [x]` for done, `- [ ]` for pending:
+Task lists are part of GitHub Flavored Markdown and need no configuration. Use `- [x]` for done items and `- [ ]` for pending items:
 
 ```md
 - [x] Install Docsmith
@@ -869,13 +869,12 @@ GitHub Flavored Markdown task lists render out of the box — `- [x]` for done, 
 - [ ] Ship it
 ```
 
-Good use cases for checklists in documentation:
+Places where checklists work well:
 
-- **Prerequisites** — list what readers need before starting; they can scan it at a glance.
-- **Step-by-step progress** — long setup or migration guides readers return to later.
-- **Release readiness** — QA and pre-launch checklists inside engineering docs.
-- **Troubleshooting trees** — ordered fixes readers work through until the problem resolves.
-- **Support matrices** — compact yes/no capability lists without building a table.
+- Prerequisites at the start of a guide.
+- Setup or migration steps that readers complete over more than one session.
+- Release and review checklists in engineering docs.
+- Ordered troubleshooting fixes that readers try one at a time.
 
 ## Command line
 

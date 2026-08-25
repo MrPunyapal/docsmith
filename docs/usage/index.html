@@ -120,8 +120,8 @@
 </span></span><span class="line"><span class="token">&gt; [!WARNING]
 </span></span><span class="line"><span class="token">&gt; Urgent info that needs immediate user attention.
 </span></span></code></pre>
-<p>The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown inside — lists, code blocks, links. Unknown markers like <code>[!FOO]</code> and regular block quotes are rendered as plain block quotes. Styling ships with the built-in theme; override <code>.markdown-alert</code> in custom CSS to change it.</p>
-<p>Every type in action — this is what the five markers look like in the built theme:</p>
+<p>The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown content, including lists, code blocks, and links. Unknown markers like <code>[!FOO]</code> and regular block quotes render as plain block quotes. Styles come from the built-in theme; override <code>.markdown-alert</code> in custom CSS if you want to change them.</p>
+<p>All five markers as they look with the built-in theme:</p>
 <div class="markdown-alert markdown-alert-note">
 <p class="markdown-alert-title">Note</p>
 <p>Useful information that users should know, even when skimming content.</p>
@@ -143,18 +143,17 @@
 <p>Advises about risks or negative outcomes of certain actions.</p>
 </div>
 <h2 id="checklists">Checklists</h2>
-<p>GitHub Flavored Markdown task lists render out of the box — <code>- [x]</code> for done, <code>- [ ]</code> for pending:</p>
+<p>Task lists are part of GitHub Flavored Markdown and need no configuration. Use <code>- [x]</code> for done items and <code>- [ ]</code> for pending items:</p>
 <pre class="phiki github-light phiki-themes github-dark" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">- [x] Install Docsmith
 </span></span><span class="line"><span class="token">- [ ] Write the first page
 </span></span><span class="line"><span class="token">- [ ] Ship it
 </span></span></code></pre>
-<p>Good use cases for checklists in documentation:</p>
+<p>Places where checklists work well:</p>
 <ul>
-<li><strong>Prerequisites</strong> — list what readers need before starting; they can scan it at a glance.</li>
-<li><strong>Step-by-step progress</strong> — long setup or migration guides readers return to later.</li>
-<li><strong>Release readiness</strong> — QA and pre-launch checklists inside engineering docs.</li>
-<li><strong>Troubleshooting trees</strong> — ordered fixes readers work through until the problem resolves.</li>
-<li><strong>Support matrices</strong> — compact yes/no capability lists without building a table.</li>
+<li>Prerequisites at the start of a guide.</li>
+<li>Setup or migration steps that readers complete over more than one session.</li>
+<li>Release and review checklists in engineering docs.</li>
+<li>Ordered troubleshooting fixes that readers try one at a time.</li>
 </ul>
 <h2 id="command-line">Command line</h2>
 <p>Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:</p>
