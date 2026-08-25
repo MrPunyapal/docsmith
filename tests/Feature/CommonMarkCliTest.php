@@ -117,6 +117,34 @@ it('fails clearly when the commonmark config has invalid extensions', function (
         ->and($result['stderr'])->toContain('must implement');
 });
 
+it('runs when docsmith is installed as a dependency', function (): void {
+    $projectPath = sys_get_temp_dir() . '/docsmith-dependency-' . uniqid();
+    $packageBinPath = $projectPath . '/vendor/mrpunyapal/docsmith/bin';
+    mkdir($packageBinPath, 0777, true);
+
+    copy(dirname(__DIR__, 2) . '/bin/docsmith', $packageBinPath . '/docsmith');
+
+    // Simulate the consuming project's autoloader three levels up from the binary.
+    file_put_contents(
+        $projectPath . '/vendor/autoload.php',
+        '<?php require ' . var_export(dirname(__DIR__, 2) . '/vendor/autoload.php', true) . ';',
+    );
+
+    $sourcePath = $projectPath . '/md';
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', '# Dependency build');
+
+    $result = docsmithCliProcess([
+        'build',
+        '--source=' . $sourcePath,
+        '--output=' . $projectPath . '/docs',
+    ]);
+
+    expect($result['exitCode'])->toBe(0, $result['stderr'])
+        ->and($result['stdout'])->toContain('Built docs')
+        ->and(file_exists($projectPath . '/docs/index.html'))->toBeTrue();
+});
+
 /**
  * Run the Docsmith binary in a subprocess and capture its output.
  *
