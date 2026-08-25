@@ -189,14 +189,20 @@ final readonly class InstallAi
         $root = str_replace('\\', '/', $this->projectRoot);
 
         $patterns = [
-            $root . '/app/Providers/Filament/*Panel.php',
-            $root . '/*/app/Providers/Filament/*Panel.php',
+            $root . '/app/Providers/Filament/*.php',
+            $root . '/*/app/Providers/Filament/*.php',
         ];
 
         foreach ($patterns as $pattern) {
             $providers = glob($pattern);
 
             foreach ((is_array($providers) ? $providers : []) as $provider) {
+                $basename = basename((string) $provider);
+
+                if (! (str_contains($basename, 'Panel') && str_ends_with($basename, 'Provider.php'))) {
+                    continue;
+                }
+
                 $code = (string) file_get_contents((string) $provider);
 
                 if (preg_match('/->path\(\s*[\'"]([^\'"]+)[\'"]/', $code, $match) === 1) {
