@@ -9,6 +9,9 @@ composer test:unit     # pest --parallel
 composer test          # all of the above
 ```
 
+> [!NOTE]
+> Rector and Pint run in check-only mode during CI — apply fixes locally with `composer lint` before pushing.
+
 ## Tooling
 
 The repository is configured with:

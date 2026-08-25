@@ -29,3 +29,80 @@ it('passes additional configuration to the commonmark environment', function ():
         ->toContain('Before')
         ->toContain('After');
 });
+
+it('renders github style alerts', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    $html = $renderer->render("> [!NOTE]\n> Useful information.");
+
+    expect(str_contains($html, '<blockquote>'))->toBeFalse()
+        ->and($html)
+        ->toContain('<div class="markdown-alert markdown-alert-note">')
+        ->toContain('<p class="markdown-alert-title">Note</p>')
+        ->toContain('<p>Useful information.</p>');
+});
+
+it('supports every github alert type', function (string $type, string $label): void {
+    $renderer = new CommonMarkRenderer();
+
+    expect($renderer->render("> [!{$type}]\n> Body"))
+        ->toContain('markdown-alert markdown-alert-' . strtolower($type))
+        ->toContain('<p class="markdown-alert-title">' . $label . '</p>');
+})->with([
+    ['note', 'Note'],
+    ['tip', 'Tip'],
+    ['important', 'Important'],
+    ['warning', 'Warning'],
+    ['caution', 'Caution'],
+]);
+
+it('matches alert markers case insensitively', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    expect($renderer->render("> [!Caution]\n> Risky."))
+        ->toContain('<div class="markdown-alert markdown-alert-caution">')
+        ->toContain('<p class="markdown-alert-title">Caution</p>');
+});
+
+it('keeps multiline content inside alerts', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    $html = $renderer->render("> [!WARNING]\n> First paragraph.\n>\n> - one\n> - two");
+
+    expect($html)
+        ->toContain('markdown-alert-warning')
+        ->toContain('<p>First paragraph.</p>')
+        ->toContain('<li>one</li>')
+        ->toContain('<li>two</li>');
+});
+
+it('leaves unknown alert markers as regular block quotes', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    $html = $renderer->render("> [!FOO]\n> stays plain.");
+
+    expect(str_contains($html, 'markdown-alert'))->toBeFalse()
+        ->and($html)
+        ->toContain('<blockquote>')
+        ->toContain('[!FOO]');
+});
+
+it('requires alert markers to be alone on their line', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    $html = $renderer->render('> [!NOTE] inline text');
+
+    expect(str_contains($html, 'markdown-alert'))->toBeFalse()
+        ->and($html)->toContain('<blockquote>');
+});
+
+it('leaves regular block quotes untouched', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    $html = $renderer->render('> Just a quote.');
+
+    expect(str_contains($html, 'markdown-alert'))->toBeFalse()
+        ->and($html)
+        ->toContain('<blockquote>')
+        ->toContain('<p>Just a quote.</p>');
+});

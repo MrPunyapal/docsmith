@@ -54,6 +54,22 @@ it('rejects commonmark config keys that are not strings', function (): void {
         ->toThrow(InvalidArgumentException::class, 'string keys');
 });
 
+it('renders github style alerts in built sites', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-alerts-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-alerts-out-' . uniqid();
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Alerts\n\n> [!CAUTION]\n> Watch out.\n");
+
+    Docsmith::build(source: $sourcePath, output: $outputPath);
+
+    expect((string) file_get_contents($outputPath . '/index.html'))
+        ->toContain('<div class="markdown-alert markdown-alert-caution">')
+        ->toContain('<p class="markdown-alert-title">Caution</p>')
+        ->toContain('<p>Watch out.</p>')
+        ->and((string) file_get_contents($outputPath . '/assets/app.css'))
+        ->toContain('.markdown-alert');
+});
+
 it('rewrites markdown links between pages into built page urls', function (): void {
     $sourcePath = sys_get_temp_dir() . '/docsmith-md-links-' . uniqid();
     mkdir($sourcePath . '/guides', 0777, true);
