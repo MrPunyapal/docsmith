@@ -50,8 +50,17 @@ final readonly class CaptureMediaTool implements ToolInterface
                 'dark' => ['type' => 'boolean', 'description' => 'Emulate dark color scheme'],
                 'steps' => [
                     'type' => 'array',
-                    'description' => 'Interaction steps while recording (video). Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus. focus pins a selector to fill the frame (use after opening a dropdown/modal for a widget-only recording). Example: {"action": "click", "selector": "#login"}',
+                    'description' => 'Interaction steps while recording (video). Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus. focus pins a selector to fill ~90% of the frame centered over a backdrop — use after opening a dropdown/modal for a widget-only recording. Steps are paced automatically (~0.4s apart). Example: {"action": "click", "selector": "#login"}',
                     'items' => ['type' => 'object'],
+                ],
+                'before' => [
+                    'type' => 'array',
+                    'description' => 'Setup steps that run BEFORE the capture starts and are never recorded — use them to log in or navigate past boilerplate so the capture starts directly on the target page. Same format as steps. Example: [{"action": "goto", "url": "/admin/login"}, {"action": "fill", "selector": "input[type=email]", "value": "..."}, {"action": "click", "selector": "button[type=submit]"}, {"action": "wait", "selector": ".dashboard"}]',
+                    'items' => ['type' => 'object'],
+                ],
+                'pace' => [
+                    'type' => 'integer',
+                    'description' => 'Milliseconds inserted between recorded steps (default 400). Raise it when viewers need more time to follow.',
                 ],
             ],
             'required' => ['action', 'url'],
@@ -84,15 +93,21 @@ final readonly class CaptureMediaTool implements ToolInterface
                 return ['error' => 'Video capture requires a non-empty steps array, e.g. [{"action": "click", "selector": "#login"}, {"action": "wait", "ms": 500}].'];
             }
 
-            foreach ($input['steps'] as $step) {
-                if (! is_array($step) || ! is_string($step['action'] ?? null)) {
-                    return ['error' => 'Each step must be an object with an "action" string (goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus).'];
-                }
-            }
-
             $extension = 'webm';
         } else {
             return ['error' => 'Unknown action: ' . $action . ' (expected screenshot or video).'];
+        }
+
+        foreach (['steps', 'before'] as $list) {
+            foreach ((array) ($input[$list] ?? []) as $step) {
+                if (! is_array($step) || ! is_string($step['action'] ?? null)) {
+                    $label = $list === 'before'
+                        ? 'Each before step (runs off-camera before the capture — for login etc.)'
+                        : 'Each step';
+
+                    return ['error' => $label . ' must be an object with an "action" string (goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus).'];
+                }
+            }
         }
 
         $name = $this->resolveName(is_string($input['name'] ?? null) ? $input['name'] : '', $url);
@@ -228,8 +243,13 @@ final readonly class CaptureMediaTool implements ToolInterface
             }
         }
 
-        if ($action === 'video') {
-            $stepsFile = $this->writeStepsFile($input['steps'] ?? null);
+        // Videos carry recorded steps; screenshots only ever carry off-camera
+        // `before` setup (login etc.) — both travel via --steps-file.
+        $hasBefore = is_array($input['before'] ?? null) && $input['before'] !== [];
+        $hasSteps = $action === 'video' && is_array($input['steps'] ?? null) && $input['steps'] !== [];
+
+        if ($hasBefore || $hasSteps) {
+            $stepsFile = $this->writeStepsFile($action, $input);
 
             if ($stepsFile !== null) {
                 $flags[] = '--steps-file ' . $escape($stepsFile);
@@ -240,18 +260,36 @@ final readonly class CaptureMediaTool implements ToolInterface
     }
 
     /**
-     * Persists agent-supplied steps to a temp JSON file for --steps-file.
+     * Persists agent-supplied capture instructions to a temp JSON file for
+     * --steps-file: recorded `steps` (video) plus optional off-camera `before`
+     * setup and inter-step `pace`.
+     *
+     * @param  array<int|string, mixed>  $input
      */
-    private function writeStepsFile(mixed $steps): ?string
+    private function writeStepsFile(string $action, array $input): ?string
     {
-        if (! is_array($steps) || $steps === []) {
+        $steps = $action === 'video' && is_array($input['steps'] ?? null)
+            ? array_values($input['steps'])
+            : [];
+
+        if ($action === 'video' && $steps === []) {
             return null;
         }
 
-        foreach ($steps as $step) {
+        foreach ([...$steps, ...(is_array($input['before'] ?? null) ? $input['before'] : [])] as $step) {
             if (! is_array($step) || ! is_string($step['action'] ?? null)) {
                 return null;
             }
+        }
+
+        $payload = ['steps' => $steps];
+
+        if (is_array($input['before'] ?? null) && $input['before'] !== []) {
+            $payload['before'] = array_values($input['before']);
+        }
+
+        if (is_numeric($input['pace'] ?? null) && (int) $input['pace'] > 0) {
+            $payload['pace'] = (int) $input['pace'];
         }
 
         $file = tempnam(sys_get_temp_dir(), 'docsmith-steps-');
@@ -263,7 +301,7 @@ final readonly class CaptureMediaTool implements ToolInterface
         $json = $file . '.json';
         @unlink($file);
 
-        if (file_put_contents($json, (string) json_encode(['steps' => array_values($steps)])) === false) {
+        if (file_put_contents($json, (string) json_encode($payload)) === false) {
             return null;
         }
 

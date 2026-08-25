@@ -89,14 +89,113 @@ final readonly class InstallAi
     {
         $results = [];
 
-        $results['.ai/skills/docsmith-docs/SKILL.md'] = $this->writeResourceIfNeeded('.ai/skills/docsmith-docs/SKILL.md', 'skills/docsmith-docs/SKILL.md', $force);
+        $content = $this->skillContent();
+
+        $results['.ai/skills/docsmith-docs/SKILL.md'] = $this->writeContentIfNeeded('.ai/skills/docsmith-docs/SKILL.md', $content, $force);
 
         foreach ($this->skillTargets() as $target) {
             $relative = $target . '/docsmith-docs/SKILL.md';
-            $results[$relative] = $this->writeResourceIfNeeded($relative, 'skills/docsmith-docs/SKILL.md', $force);
+            $results[$relative] = $this->writeContentIfNeeded($relative, $content, $force);
         }
 
         return $results;
+    }
+
+    /**
+     * The skill template plus a generated "App profile" section tailored to
+     * the detected stack (Filament panel path/version, Laravel, Livewire) so
+     * capture guidance references the real app instead of generic advice.
+     */
+    private function skillContent(): string
+    {
+        return $this->resource('skills/docsmith-docs/SKILL.md') . $this->appProfileSection();
+    }
+
+    private function appProfileSection(): string
+    {
+        $requires = $this->composerRequirements();
+
+        $section = "\n## App profile\n\nDetected from composer.json — tailor captures to THIS app:\n\n";
+        $lines = [];
+
+        $filament = isset($requires['filament/filament']) ? 'filament/filament'
+            : (isset($requires['filament/forms']) ? 'filament/forms' : null);
+
+        if ($filament !== null) {
+            $constraint = $requires[$filament] ?? null;
+            $version = is_string($constraint) && preg_match('/\d+/', $constraint, $m) === 1 ? $m[0] : '';
+            $panelPath = $this->filamentPanelPath();
+
+            $lines[] = "This project uses **Filament" . ($version !== '' ? " v{$version}" : '') . "**" .
+                ($panelPath !== null ? " — panel served at `/{$panelPath}`" : ' (panel path not detected; check the Panel provider)') . '.';
+            $lines[] = '- Log in off-camera with `before` steps: goto `/admin/login`, fill `input[type=email]` / `input[type=password]`, click `button[type=submit]`, wait for a `.fi-*` element. Never record the login page itself.';
+            $lines[] = '- Deep-link straight to target pages (e.g. a record edit URL) instead of clicking through the sidebar.';
+            $lines[] = "- Frame widgets with Filament's own classes: form fields live under `.fi-field`, select panels `.fi-select-panel`-style overlays — inspect the DOM first, then `focus` the widget for the recording.";
+        } elseif (isset($requires['laravel/framework'])) {
+            $lines[] = 'This project is a **Laravel** application.';
+            $lines[] = '- If the app has auth, log in via `before` steps (`/login`, fill credentials, submit, wait for the post-login page) so no login screen is ever recorded.';
+            $lines[] = '- Deep-link to the exact route you are documenting.';
+        }
+
+        if (isset($requires['livewire/livewire']) && $filament === null) {
+            $lines[] = '- Livewire components update over wire requests — after interacting, add a short `{\"action\": \"wait\", \"ms\": 600}` before capturing so the morph settles.';
+        }
+
+        if ($lines === []) {
+            return '';
+        }
+
+        return $section . implode("\n", array_map(static fn (string $line): string => $line . "\n", $lines));
+    }
+
+    /**
+     * @return array<string, mixed> merged require + require-dev constraints
+     */
+    private function composerRequirements(): array
+    {
+        $path = $this->projectRoot . '/composer.json';
+
+        if (! is_file($path)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) file_get_contents($path), true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $merged */
+        $merged = [];
+
+        foreach ([is_array($decoded['require'] ?? null) ? $decoded['require'] : [], is_array($decoded['require-dev'] ?? null) ? $decoded['require-dev'] : []] as $group) {
+            foreach ($group as $package => $constraint) {
+                if (is_string($package)) {
+                    $merged[$package] = $constraint;
+                }
+            }
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Best-effort panel path from the project's Filament panel provider
+     * (the `->path('...')` call), defaulting to `admin`.
+     */
+    private function filamentPanelPath(): ?string
+    {
+        $providers = glob($this->projectRoot . '/app/Providers/Filament/*Panel.php');
+
+        foreach ((is_array($providers) ? $providers : []) as $provider) {
+            $code = (string) file_get_contents((string) $provider);
+
+            if (preg_match('/->path\(\s*[\'"]([^\'"]+)[\'"]/', $code, $match) === 1) {
+                return trim($match[1], '/');
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -246,7 +345,7 @@ final readonly class InstallAi
             : ['docsmith', ...$args];
     }
 
-    private function writeResourceIfNeeded(string $relative, string $resource, bool $force): string
+    private function writeContentIfNeeded(string $relative, string $content, bool $force): string
     {
         $path = $this->projectRoot . '/' . $relative;
 
@@ -254,7 +353,7 @@ final readonly class InstallAi
             return 'skipped (exists)';
         }
 
-        return $this->writeFile($path, $this->resource($resource));
+        return $this->writeFile($path, $content);
     }
 
     private function resource(string $name): string

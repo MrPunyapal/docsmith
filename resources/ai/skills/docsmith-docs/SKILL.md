@@ -30,17 +30,33 @@ When the project has a UI (admin panel, components, dashboards), boot it and
 capture real screenshots instead of describing features in prose:
 
 1. Start the app (e.g. `php artisan serve`) and note the URL.
-2. `capture_media` with `action: "screenshot"` for stills — **frame the
+2. **Never record login or boilerplate navigation.** If the target page needs
+   auth, pass `before` steps — they run off-camera before the capture starts
+   (for videos AND screenshots) and the session carries over:
+
+   ```json
+   {"before": [
+     {"action": "goto", "url": "http://127.0.0.1:8000/admin/login"},
+     {"action": "fill", "selector": "input[type=email]", "value": "admin@example.com"},
+     {"action": "fill", "selector": "input[type=password]", "value": "password"},
+     {"action": "click", "selector": "button[type=submit]"},
+     {"action": "wait", "selector": ".fi-sidebar"}
+   ], "steps": [...]}
+   ```
+
+   Deep-link `url` straight to the page being documented.
+3. `capture_media` with `action: "screenshot"` for stills — **frame the
    component, not the page**: pass `selector` (the widget's CSS class) to clip
    exactly that element, plus `viewport` (e.g. `1280x800`) for context shots.
    Use `wait_for` when content loads async, `dark: true` for dark mode.
-3. `capture_media` with `action: "video"` plus `steps` for short workflow demos.
+4. `capture_media` with `action: "video"` plus `steps` for short workflow demos.
    **Frame the widget, not the whole page**: use a small-ish `viewport`
-   (e.g. `900x600`) and add a `focus` step after opening the dropdown/modal —
-   it pins that element to fill the recording frame:
+   (e.g. `640x480`) and add a `focus` step after opening the dropdown/modal —
+   it measures the element, then frames it centered at ~90% of the recording
+   over a dimmed backdrop, whatever its natural size:
 
    ```json
-   {"steps": [
+   {"pace": 500, "steps": [
      {"action": "click", "selector": ".fi-select-input"},
      {"action": "wait", "selector": ".fi-select-panel"},
      {"action": "focus", "selector": ".fi-select-panel"},
@@ -50,10 +66,12 @@ capture real screenshots instead of describing features in prose:
    ]}
    ```
 
-   Keep videos under ~15 seconds and under ~2 MB — they ship inside the repo.
-4. Both actions return `path` (e.g. `media/dashboard.png`) — embed it with
+   Steps are paced automatically (~400ms apart); raise `pace` if viewers need
+   more time. Keep videos under ~15 seconds and under ~2 MB — they ship inside
+   the repo.
+5. Both actions return `path` (e.g. `media/dashboard.png`) — embed it with
    `write_markdown insert_media`, or reference `![](media/dashboard.png)` directly.
-5. If `capture_media` returns an install error, tell the user to run
+6. If `capture_media` returns an install error, tell the user to run
    `npm install -D playwright capturist && npx playwright install chromium`.
 
 Use captures when they show something code cannot: rendered UI, visual states,
