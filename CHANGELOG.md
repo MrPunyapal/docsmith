@@ -7,6 +7,7 @@
 
 ### Features
 - **GitHub-style alerts**: block quotes starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` (case-insensitive, marker alone on the first line) render as colored callout boxes with icons in both light and dark themes. Implemented as a built-in League CommonMark extension that is always enabled; unknown markers and regular block quotes are unaffected. Callouts use GitHub-compatible class names (`.markdown-alert markdown-alert-{type}`) so custom CSS written for GitHub also works with Docsmith.
+- **Custom checkmarks**: GFM task lists (`- [x]` / `- [ ]`) now render with theme-styled checkboxes instead of raw browser widgets — accent-colored fill with a white check when done, bordered box while pending, bullet markers hidden, in both light and dark themes. The checkmark follows `--accent`, so accent-color customization applies automatically; override `.doc-body li > input[type='checkbox']` in custom CSS for full control.
 
 ## 0.3.2 - 2026-08-24
 

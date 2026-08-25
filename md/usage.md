@@ -111,6 +111,41 @@ Every type in action — this is what the five markers look like in the built th
 > [!CAUTION]
 > Advises about risks or negative outcomes of certain actions.
 
+## Checklists
+
+Task lists from GitHub Flavored Markdown render as custom-styled checkmarks matching your site accent color — no configuration needed:
+
+```md
+- [x] Install Docsmith
+- [ ] Write the first page
+- [ ] Ship it
+```
+
+renders as:
+
+- [x] Install Docsmith
+- [ ] Write the first page
+- [ ] Ship it
+
+### Good use cases
+
+- **Prerequisites** — list what readers need before starting a guide; they can scan completion at a glance.
+- **Step-by-step progress** — long setup or migration guides where readers return later and pick up where they left off.
+- **Release readiness** — QA and pre-launch checklists inside engineering docs.
+- **Troubleshooting trees** — ordered fixes readers work through, checking each off until the problem resolves.
+- **Support matrices** — compact yes/no capability lists without building a table.
+
+### Customizing the checkmark
+
+The checkmark inherits your `--accent` theme color automatically. To override it, target the checkbox in custom CSS:
+
+```css
+.doc-body li > input[type='checkbox']:checked {
+    border-color: #1a7f37;
+    background-color: #1a7f37;
+}
+```
+
 ## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:

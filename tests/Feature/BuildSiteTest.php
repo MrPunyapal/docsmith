@@ -70,6 +70,23 @@ it('renders github style alerts in built sites', function (): void {
         ->toContain('.markdown-alert');
 });
 
+it('ships custom checklist styling with built sites', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-checklists-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-checklists-out-' . uniqid();
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Checklist\n\n- [x] done\n- [ ] pending\n");
+
+    Docsmith::build(source: $sourcePath, output: $outputPath);
+
+    $html = (string) file_get_contents($outputPath . '/index.html');
+    $css = (string) file_get_contents($outputPath . '/assets/app.css');
+
+    expect(str_contains($html, '<input'))->toBeTrue()
+        ->and($css)
+        ->toContain(".doc-body li > input[type='checkbox']")
+        ->toContain("li > input[type='checkbox']:checked");
+});
+
 it('rewrites markdown links between pages into built page urls', function (): void {
     $sourcePath = sys_get_temp_dir() . '/docsmith-md-links-' . uniqid();
     mkdir($sourcePath . '/guides', 0777, true);

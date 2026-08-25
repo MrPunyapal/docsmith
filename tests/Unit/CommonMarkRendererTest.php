@@ -106,3 +106,15 @@ it('leaves regular block quotes untouched', function (): void {
         ->toContain('<blockquote>')
         ->toContain('<p>Just a quote.</p>');
 });
+
+it('renders task list checkboxes for checklists', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    $html = $renderer->render("- [x] installed\n- [ ] configured");
+
+    expect($html)
+        ->toContain('<input checked="" disabled="" type="checkbox">')
+        ->toContain('<input disabled="" type="checkbox">')
+        ->toContain('installed')
+        ->toContain('configured');
+});
