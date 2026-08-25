@@ -3,6 +3,11 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
+## Unreleased
+
+### Features
+- **GitHub-style alerts**: block quotes starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` (case-insensitive, marker alone on the first line) render as colored callout boxes with icons in both light and dark themes. Implemented as a built-in League CommonMark extension that is always enabled; unknown markers and regular block quotes are unaffected. Callouts use GitHub-compatible class names (`.markdown-alert markdown-alert-{type}`) so custom CSS written for GitHub also works with Docsmith.
+
 ## 0.3.2 - 2026-08-24
 
 ### Features

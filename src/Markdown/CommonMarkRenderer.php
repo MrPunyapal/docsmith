@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith\Markdown;
 
+use Docsmith\Markdown\GitHubAlerts\GitHubAlertsExtension;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\ExtensionInterface;
@@ -33,6 +34,7 @@ final readonly class CommonMarkRenderer
 
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new GithubFlavoredMarkdownExtension());
+        $environment->addExtension(new GitHubAlertsExtension());
 
         foreach ($extensions as $extension) {
             $environment->addExtension($extension);

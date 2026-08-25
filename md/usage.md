@@ -80,6 +80,20 @@ vendor/bin/docsmith build \
     --commonmark-config=docsmith.commonmark.php
 ```
 
+## Alerts
+
+GitHub-style alerts are enabled by default. Start a block quote with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` (case-insensitive) to turn it into a colored callout:
+
+```md
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention.
+```
+
+The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown inside — lists, code blocks, links. Unknown markers like `[!FOO]` and regular block quotes are rendered as plain block quotes. Styling ships with the built-in theme; override `.markdown-alert` in custom CSS to change it.
+
 ## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
