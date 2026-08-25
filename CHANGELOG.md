@@ -3,10 +3,13 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
-## Unreleased
+## 0.4.0 - 2026-08-26
 
 ### Features
-- **GitHub-style alerts**: block quotes starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` (case-insensitive, marker alone on the first line) render as colored callout boxes with icons in both light and dark themes. Implemented as a built-in League CommonMark extension that is always enabled; unknown markers and regular block quotes are unaffected. Callouts use GitHub-compatible class names (`.markdown-alert markdown-alert-{type}`) so custom CSS written for GitHub also works with Docsmith.
+- **GitHub-style alerts**: block quotes starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` render as colored callout boxes with icons in light and dark themes. Markers are case-insensitive and must be alone on the first line of the block quote. The feature is always enabled; unknown markers and regular block quotes are unaffected. Callouts use GitHub-compatible class names (`.markdown-alert markdown-alert-{type}`), so custom CSS written for GitHub works with Docsmith too.
+
+### Bug Fixes
+- **Autoloader resolution**: the `docsmith` binary now finds the Composer autoloader when Docsmith is installed as a dependency (`vendor/mrpunyapal/docsmith`). Previously every CLI command failed with "Failed opening required .../bin/../vendor/autoload.php". If no autoloader is found, the binary exits with a hint to run `composer install` (#13).
 
 ## 0.3.2 - 2026-08-24
 
