@@ -30,17 +30,23 @@ When the project has a UI (admin panel, components, dashboards), boot it and
 capture real screenshots instead of describing features in prose:
 
 1. Start the app (e.g. `php artisan serve`) and note the URL.
-2. `capture_media` with `action: "screenshot"` for stills — pass `viewport`
-   (e.g. `1280x720`), `selector` to frame one component, `wait_for` when the
-   page loads async content, `dark: true` for dark-mode shots.
-3. `capture_media` with `action: "video"` plus `steps` for short workflow demos:
+2. `capture_media` with `action: "screenshot"` for stills — **frame the
+   component, not the page**: pass `selector` (the widget's CSS class) to clip
+   exactly that element, plus `viewport` (e.g. `1280x800`) for context shots.
+   Use `wait_for` when content loads async, `dark: true` for dark mode.
+3. `capture_media` with `action: "video"` plus `steps` for short workflow demos.
+   **Frame the widget, not the whole page**: use a small-ish `viewport`
+   (e.g. `900x600`) and add a `focus` step after opening the dropdown/modal —
+   it pins that element to fill the recording frame:
 
    ```json
    {"steps": [
-     {"action": "fill", "selector": "#email", "value": "user@example.com"},
-     {"action": "click", "selector": "#login"},
-     {"action": "wait", "selector": ".dashboard"},
-     {"action": "wait", "ms": 500}
+     {"action": "click", "selector": ".fi-select-input"},
+     {"action": "wait", "selector": ".fi-select-panel"},
+     {"action": "focus", "selector": ".fi-select-panel"},
+     {"action": "scroll", "y": 600},
+     {"action": "wait", "ms": 400},
+     {"action": "screenshot", "output": "loaded-more.png"}
    ]}
    ```
 
@@ -51,4 +57,5 @@ capture real screenshots instead of describing features in prose:
    `npm install -D playwright capturist && npx playwright install chromium`.
 
 Use captures when they show something code cannot: rendered UI, visual states,
-multi-step flows. Skip them for pure API/CLI documentation.
+multi-step flows. Skip them for pure API/CLI documentation. A focused shot of
+the component beats a full-page capture — readers want the widget.

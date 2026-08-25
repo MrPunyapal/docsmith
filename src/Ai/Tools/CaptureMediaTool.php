@@ -50,7 +50,7 @@ final readonly class CaptureMediaTool implements ToolInterface
                 'dark' => ['type' => 'boolean', 'description' => 'Emulate dark color scheme'],
                 'steps' => [
                     'type' => 'array',
-                    'description' => 'Interaction steps while recording (video). Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot. Example: {"action": "click", "selector": "#login"}',
+                    'description' => 'Interaction steps while recording (video). Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus. focus pins a selector to fill the frame (use after opening a dropdown/modal for a widget-only recording). Example: {"action": "click", "selector": "#login"}',
                     'items' => ['type' => 'object'],
                 ],
             ],
@@ -86,7 +86,7 @@ final readonly class CaptureMediaTool implements ToolInterface
 
             foreach ($input['steps'] as $step) {
                 if (! is_array($step) || ! is_string($step['action'] ?? null)) {
-                    return ['error' => 'Each step must be an object with an "action" string (goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot).'];
+                    return ['error' => 'Each step must be an object with an "action" string (goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus).'];
                 }
             }
 
