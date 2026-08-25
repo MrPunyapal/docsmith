@@ -185,13 +185,23 @@ final readonly class InstallAi
      */
     private function filamentPanelPath(): ?string
     {
-        $providers = glob($this->projectRoot . '/app/Providers/Filament/*Panel.php');
+        // Forward slashes: PHP glob treats backslashes as escape characters.
+        $root = str_replace('\\', '/', $this->projectRoot);
 
-        foreach ((is_array($providers) ? $providers : []) as $provider) {
-            $code = (string) file_get_contents((string) $provider);
+        $patterns = [
+            $root . '/app/Providers/Filament/*Panel.php',
+            $root . '/*/app/Providers/Filament/*Panel.php',
+        ];
 
-            if (preg_match('/->path\(\s*[\'"]([^\'"]+)[\'"]/', $code, $match) === 1) {
-                return trim($match[1], '/');
+        foreach ($patterns as $pattern) {
+            $providers = glob($pattern);
+
+            foreach ((is_array($providers) ? $providers : []) as $provider) {
+                $code = (string) file_get_contents((string) $provider);
+
+                if (preg_match('/->path\(\s*[\'"]([^\'"]+)[\'"]/', $code, $match) === 1) {
+                    return trim($match[1], '/');
+                }
             }
         }
 
