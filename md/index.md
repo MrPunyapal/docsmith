@@ -44,7 +44,7 @@ Docsmith::build(
 This reads Markdown from `md/` and writes the site to `docs/` by default, which works directly with GitHub Pages.
 
 > [!TIP]
-> Docsmith ships [Agent Skills](installation.md#install-the-ai-agent-skills) that teach coding agents how to build and write docs with it — install them once and let your agent do the wiring.
+> Docsmith includes [Agent Skills](installation.md#install-the-ai-agent-skills) that teach coding agents how to configure Docsmith and write documentation pages. Install them before letting an agent work on your docs.
 
 ## Documentation
 

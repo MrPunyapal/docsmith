@@ -120,7 +120,7 @@ If capture is enabled but Node, capturist, or Chromium is missing, the build fai
 ## CI
 
 > [!WARNING]
-> CI runners ship without Chromium and Playwright browsers. Install them before the build step or every capture-enabled build will fail.
+> CI runners do not include Chromium or Playwright browsers. Install them before the build step, or every capture-enabled build will fail.
 
 Install Node dependencies and Chromium before a docs build that runs capture:
 

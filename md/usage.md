@@ -92,9 +92,9 @@ GitHub-style alerts are enabled by default. Start a block quote with `[!NOTE]`, 
 > Urgent info that needs immediate user attention.
 ```
 
-The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown inside — lists, code blocks, links. Unknown markers like `[!FOO]` and regular block quotes are rendered as plain block quotes. Styling ships with the built-in theme; override `.markdown-alert` in custom CSS to change it.
+The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown content, including lists, code blocks, and links. Unknown markers like `[!FOO]` and regular block quotes render as plain block quotes. Styles come from the built-in theme; override `.markdown-alert` in custom CSS if you want to change them.
 
-Every type in action — this is what the five markers look like in the built theme:
+All five markers as they look with the built-in theme:
 
 > [!NOTE]
 > Useful information that users should know, even when skimming content.
@@ -113,7 +113,7 @@ Every type in action — this is what the five markers look like in the built th
 
 ## Checklists
 
-GitHub Flavored Markdown task lists render out of the box — `- [x]` for done, `- [ ]` for pending:
+Task lists are part of GitHub Flavored Markdown and need no configuration. Use `- [x]` for done items and `- [ ]` for pending items:
 
 ```md
 - [x] Install Docsmith
@@ -121,13 +121,12 @@ GitHub Flavored Markdown task lists render out of the box — `- [x]` for done, 
 - [ ] Ship it
 ```
 
-Good use cases for checklists in documentation:
+Places where checklists work well:
 
-- **Prerequisites** — list what readers need before starting; they can scan it at a glance.
-- **Step-by-step progress** — long setup or migration guides readers return to later.
-- **Release readiness** — QA and pre-launch checklists inside engineering docs.
-- **Troubleshooting trees** — ordered fixes readers work through until the problem resolves.
-- **Support matrices** — compact yes/no capability lists without building a table.
+- Prerequisites at the start of a guide.
+- Setup or migration steps that readers complete over more than one session.
+- Release and review checklists in engineering docs.
+- Ordered troubleshooting fixes that readers try one at a time.
 
 ## Command line
 

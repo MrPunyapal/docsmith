@@ -10,7 +10,7 @@ composer test          # all of the above
 ```
 
 > [!NOTE]
-> Rector and Pint run in check-only mode during CI — apply fixes locally with `composer lint` before pushing.
+> Rector and Pint run in check-only mode during CI. Run `composer lint` to apply their fixes before you push.
 
 ## Tooling
 
