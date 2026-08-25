@@ -94,6 +94,23 @@ GitHub-style alerts are enabled by default. Start a block quote with `[!NOTE]`, 
 
 The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown inside — lists, code blocks, links. Unknown markers like `[!FOO]` and regular block quotes are rendered as plain block quotes. Styling ships with the built-in theme; override `.markdown-alert` in custom CSS to change it.
 
+Every type in action — this is what the five markers look like in the built theme:
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!IMPORTANT]
+> Key information users need to know.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+
 ## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
