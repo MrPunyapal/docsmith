@@ -3,6 +3,11 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
+## Unreleased
+
+### Features
+- **Asset minification**: CSS and JavaScript are minified using `matthiasmullie/minify` during the build step. Output files are stripped of comments, unnecessary whitespace, and redundant characters. Falls back to unminified output on failure so builds never break.
+
 ## 0.4.1 - 2026-08-26
 
 Republish of 0.4.0. The v0.4.0 tag was deleted and recreated during the release, and Packagist does not re-import a tag name it has already seen, so 0.4.0 never became installable through Composer. Use 0.4.1 or later.
