@@ -7,8 +7,12 @@ namespace Docsmith\Assets;
 use Docsmith\Config\SiteMetadata;
 use Docsmith\Support\Color;
 
-final class AssetPublisher
+final readonly class AssetPublisher
 {
+    public function __construct(private AssetMinifier $minifier = new AssetMinifier())
+    {
+    }
+
     public function publish(string $outputPath, SiteMetadata $metadata): void
     {
         $assetsDirectory = rtrim($outputPath, '/') . '/assets';
@@ -17,8 +21,8 @@ final class AssetPublisher
             mkdir($assetsDirectory, 0777, true);
         }
 
-        file_put_contents($assetsDirectory . '/app.css', $this->css($metadata));
-        file_put_contents($assetsDirectory . '/app.js', $this->js());
+        file_put_contents($assetsDirectory . '/app.css', $this->minifier->minifyCss($this->css($metadata)));
+        file_put_contents($assetsDirectory . '/app.js', $this->minifier->minifyJs($this->js()));
         $this->publishFavicon($assetsDirectory, $metadata);
     }
 
