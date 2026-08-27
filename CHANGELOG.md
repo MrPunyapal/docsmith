@@ -3,10 +3,10 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
-## Unreleased
+## 1.1.0 - 2026-08-28
 
 ### Features
-- **AI docs**: `docsmith install:ai` sets up MCP tools and a `docsmith-docs` skill for Grok, Claude Code, Codex, Cursor, and OpenCode. Agents write docs in words unless the user asked for screenshots or videos. `capture_media` then inspects a running page, crops a widget screenshot with padding, or records a short video framed the same way. Login goes in off-camera `before` steps. Grok gets `.grok/config.toml` and `.grok/skills/`.
+- **AI docs**: `docsmith install:ai` sets up MCP tools and a `docsmith-docs` skill for Grok, Claude Code, Codex, Cursor, OpenCode, and Google Antigravity. Agents write docs in words unless the user asked for screenshots or videos. `capture_media` then inspects a running page, crops a widget screenshot with padding, or records a short video framed the same way. Login goes in off-camera `before` steps. Grok gets `.grok/config.toml` and `.grok/skills/`.
 - **Asset minification**: CSS and JavaScript are minified using `matthiasmullie/minify` during the build step. Output files are stripped of comments, unnecessary whitespace, and redundant characters. Falls back to unminified output on failure so builds never break.
 
 ## 0.4.1 - 2026-08-26

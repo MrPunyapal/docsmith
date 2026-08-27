@@ -11,7 +11,7 @@ They use their own API key. Docsmith never calls an LLM.
 | AI assistant drives the process interactively | Renders markdown to a static site |
 | Assistant uses its own API key | No API key at all |
 | Good for iterative, guided doc creation | Good for CI/CD publishing |
-| Tools exposed: read, write, build | One command: markdown → HTML |
+| Tools exposed: read, write, capture, build | One command: markdown → HTML |
 
 ## Starting the Server
 
@@ -86,6 +86,7 @@ Docsmith::serveMcp(
     transport: 'http',
     port: 8090,
     sourcePath: __DIR__ . '/app',
+    docsSourcePath: __DIR__ . '/docs-source',
 );
 ```
 

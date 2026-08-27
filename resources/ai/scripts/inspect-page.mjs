@@ -87,7 +87,7 @@ try {
       if (wireKey) {
         // Livewire prefixes wire:key values with a request-specific id. Keep
         // the stable form path so the selector survives a fresh capture.
-        const stableKey = wireKey.replace(/^[^.]+(?=\\.form\\.)/, '');
+        const stableKey = wireKey.replace(/^[^.]+(?=\.form\.)/, '');
         return `[wire\\:key*="${stableKey.replace(/"/g, '\\"')}"]`;
       }
 

@@ -384,8 +384,22 @@ final readonly class InstallAi
         $section = $this->codexSection();
 
         if (is_file($path)) {
-            if (str_contains((string) file_get_contents($path), '[mcp_servers.docsmith]') && ! $force) {
-                return 'skipped (docsmith already configured)';
+            $contents = (string) file_get_contents($path);
+
+            if (str_contains($contents, '[mcp_servers.docsmith]')) {
+                if (! $force) {
+                    return 'skipped (docsmith already configured)';
+                }
+
+                $replaced = preg_replace(
+                    '/\[mcp_servers\.docsmith\].*?(?=\n\[|\z)/s',
+                    trim($section),
+                    $contents,
+                );
+
+                if (is_string($replaced)) {
+                    return $this->writeFile($path, $replaced);
+                }
             }
 
             return $this->appendFile($path, PHP_EOL . $section);

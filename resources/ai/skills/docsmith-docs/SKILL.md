@@ -34,7 +34,7 @@ After capture retries, delete failed, debug, superseded, and duplicate media fil
 If capture tools are missing:
 
 ```bash
-npm install -D playwright capturist@^0.5.0
+npm install -D playwright@^1.62.1 capturist@^0.5.0
 npx playwright install chromium
 ```
 
