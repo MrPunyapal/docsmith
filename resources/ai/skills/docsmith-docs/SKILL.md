@@ -20,7 +20,7 @@ Typical set: `index.md`, `installation.md`, `usage.md`. Add `configuration.md` o
 ## Workflow
 
 1. `read_source` (`list_files`, `analyze_structure`, `read_file`). Do not invent APIs, routes, or options.
-2. `write_markdown`.
+2. `write_markdown` (use `insert_media` with `after` to place media below the heading for the step it shows).
 3. `build_site`.
 
 Do not call `capture_media`, boot a demo, or ask for a URL unless the user asked for screenshots or videos.
@@ -69,7 +69,7 @@ Only when the user asked for screenshots or videos. Skip on a plain "write docs"
 }
 ```
 
-Stills: `![caption](media/select.png)`. Videos: `<video controls src="media/select.webm"></video>`.
+Stills: `![caption](media/select.png)`. Videos: `<video controls preload="none" src="media/select.webm"></video>`.
 
 ## Pages
 
