@@ -7,31 +7,28 @@ use Docsmith\Command\InstallAiCommand;
 use Docsmith\Command\McpServeCommand;
 use Symfony\Component\Console\Application;
 
-// Works both in a composer consumer (vendor/mrpunyapal/docsmith/bin)
-// and inside the docsmith repository checkout.
-$autoloadCandidates = [
-    __DIR__ . '/../../../autoload.php',
-    __DIR__ . '/../vendor/autoload.php',
-];
+$autoloader = null;
 
-$autoloadLoaded = false;
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $file) {
+    if (is_file($file)) {
+        $autoloader = $file;
 
-foreach ($autoloadCandidates as $autoloadCandidate) {
-    if (is_file($autoloadCandidate)) {
-        require $autoloadCandidate;
-        $autoloadLoaded = true;
         break;
     }
 }
 
-if (! $autoloadLoaded) {
-    fwrite(STDERR, "Docsmith: unable to locate the composer autoloader.\n");
+if ($autoloader === null) {
+    fwrite(STDERR, "[Docsmith] Unable to find the Composer autoloader. Run `composer install` first.\n");
+
     exit(1);
 }
+
+require $autoloader;
 
 use Docsmith\Docsmith;
 use Docsmith\RemoteSources\RemoteSources;
 use Docsmith\RemoteSources\InvalidSourcesConfiguration;
+use League\CommonMark\Extension\ExtensionInterface;
 
 if (class_exists(McpServeCommand::class) && in_array($argv[1] ?? null, ['mcp:serve', 'install:ai'], true)) {
     $application = new Application('Docsmith');
@@ -56,6 +53,8 @@ Build options:
   --accent-color=HEX    Accent color (default: #ff2d20)
   --accent-color-dark=HEX  Dark-mode accent color
   --custom-css=FILE     Path to custom CSS file
+  --commonmark-config=FILE
+                        PHP file returning CommonMark extensions and config
   --base-url=URL        Base URL (default: /)
   --right-sidebar       Enable the right sidebar
   --repository-url=URL  Repository URL for edit links
@@ -156,6 +155,21 @@ $builder = Docsmith\Docsmith::make()
     ->editBranch(stringOption($options, 'edit-branch', 'main'))
     ->editPrefix(stringOption($options, 'edit-prefix', ''))
     ->showDocsmithBadge(! boolOption($options, 'no-docsmith-badge'));
+
+$commonMarkConfigPath = stringOption($options, 'commonmark-config', '');
+
+if ($commonMarkConfigPath !== '') {
+    try {
+        $commonMark = loadCommonMarkConfig($commonMarkConfigPath);
+        $builder
+            ->commonMarkExtensions($commonMark['extensions'])
+            ->commonMarkConfig($commonMark['config']);
+    } catch (Throwable $error) {
+        fwrite(STDERR, '[Docsmith] Invalid CommonMark config: ' . $error->getMessage() . "\n");
+
+        exit(1);
+    }
+}
 
 $favicon = stringOption($options, 'favicon', '');
 
@@ -266,4 +280,39 @@ function boolOption(array $options, string $key): bool
     $value = $options[$key] ?? false;
 
     return $value === true || $value === '1' || $value === 'true';
+}
+
+/**
+ * Load a CLI CommonMark config file. Extension and config values are
+ * validated by the builder when applied.
+ *
+ * @return array{extensions: list<ExtensionInterface>, config: array<string, mixed>}
+ */
+function loadCommonMarkConfig(string $path): array
+{
+    if (! is_file($path)) {
+        throw new InvalidArgumentException("File does not exist: {$path}");
+    }
+
+    $manifest = require $path;
+
+    if (! is_array($manifest)) {
+        throw new InvalidArgumentException('The file must return an array.');
+    }
+
+    $extensions = $manifest['extensions'] ?? [];
+    $config = $manifest['config'] ?? [];
+
+    if (! is_array($extensions) || ! array_is_list($extensions)) {
+        throw new InvalidArgumentException('[extensions] must be a list of CommonMark extensions.');
+    }
+
+    if (! is_array($config)) {
+        throw new InvalidArgumentException('[config] must be an array.');
+    }
+
+    return [
+        'extensions' => $extensions,
+        'config' => $config,
+    ];
 }

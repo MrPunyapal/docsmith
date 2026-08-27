@@ -109,9 +109,15 @@ Capture runs during `build()` when a generated mode is enabled. It is incrementa
 
 To force a full regeneration without the method, delete `og/.capturist-cache.json`.
 
+> [!TIP]
+> Use `captureOg(false)` while writing locally for fast rebuilds, then let CI run the full capture with screenshots.
+
 If capture is enabled but Node, capturist, or Chromium is missing, the build fails with install instructions.
 
 ## CI
+
+> [!WARNING]
+> CI runners do not include Chromium or Playwright browsers. Install them before the build step, or every capture-enabled build will fail.
 
 Install Node dependencies and Chromium before a docs build that runs capture:
 
@@ -143,7 +149,7 @@ To split the steps, call `captureOg(false)` in the HTML job, then capture later 
 4. `SourceScanner` discovers Markdown files and reads frontmatter. Versioned builds scan one source directory per version.
 5. `CommonMarkRenderer` converts Markdown to HTML through League CommonMark with GitHub-flavored Markdown extensions.
 6. `SiteBuilder` renders pages with sidebar navigation, version pills, and the hub dropdown, and writes them to the output directory. It rewrites relative media references so images, videos, and downloads resolve from the built page locations.
-7. `AssetPublisher` publishes CSS and JS assets and generates `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files.
+7. `AssetPublisher` publishes CSS and JS assets, minifying them through `AssetMinifier` before writing, and generates `search-index.json`, `sitemap.xml`, `.nojekyll`, and the LLM export files.
 8. `MediaPublisher` copies image, video, audio, and PDF files from the source tree into the output directory, preserving their relative structure (disable with `publishMedia(false)`).
 
 Remote source syncing lives in `src/RemoteSources/` and runs before a build. It only writes local directories; the pipeline above never talks to the network.
@@ -174,6 +180,9 @@ composer test:types    # phpstan
 composer test:unit     # pest --parallel
 composer test          # all of the above
 ```
+
+> [!NOTE]
+> Rector and Pint run in check-only mode during CI. Run `composer lint` to apply their fixes before you push.
 
 ## Tooling
 
@@ -375,6 +384,9 @@ Docsmith::build(
 ```
 
 This reads Markdown from `md/` and writes the site to `docs/` by default, which works directly with GitHub Pages.
+
+> [!TIP]
+> Docsmith includes [Agent Skills](installation.md#install-the-ai-agent-skills) that teach coding agents how to configure Docsmith and write documentation pages. Install them before letting an agent work on your docs.
 
 ## Documentation
 
@@ -692,6 +704,9 @@ Syncing is restricted by default:
 
 ## Private repositories
 
+> [!CAUTION]
+> Never commit tokens to your repository. Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
+
 Pass a token in `docsmith.sources.php`:
 
 ```php
@@ -710,7 +725,6 @@ return [
 - **`'token' => '${ENV_VAR_NAME}'`** is the recommended form. Docsmith reads the variable from the environment at sync time and fails with a clear message naming the variable if it is unset. A literal token string also works, but hardcoding secrets in a committed file is discouraged.
 - **Automatic fallbacks.** If no `token` key is present, Docsmith uses `DOCSMITH_TOKEN` for any HTTPS host, and `GITHUB_TOKEN` / `GH_TOKEN` only for repositories on github.com. GitHub tokens are never sent to third-party hosts, and fallback tokens are never attached to plain-HTTP URLs.
 - **`.env` files.** Tokens may also live in a `.env` file next to `docsmith.sources.php`. Real environment variables always take precedence.
-- **Never commit tokens.** Keep them in your shell profile or `.env`, and let CI inject them via repository secrets.
 
 ## Programmatic use
 
@@ -767,6 +781,101 @@ Docsmith::make()
     ->build();
 ```
 
+## CommonMark extensions
+
+Docsmith enables CommonMark core and GitHub-flavored Markdown by default. Register additional League CommonMark extensions with the fluent API:
+
+```php
+use Docsmith\Docsmith;
+use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
+
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/docs')
+    ->commonMarkExtensions([
+        new DescriptionListExtension(),
+    ])
+    ->commonMarkConfig([
+        'html_input' => 'strip',
+    ])
+    ->build();
+```
+
+Configuration passed to `commonMarkConfig()` overrides Docsmith's environment defaults and may include configuration for registered extensions. The static `Docsmith::build()` API also accepts `commonMarkExtensions` and `commonMarkConfig` arrays.
+
+For command-line builds, put both values in a PHP configuration file:
+
+```php
+<?php
+
+use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
+
+return [
+    'extensions' => [
+        new DescriptionListExtension(),
+    ],
+    'config' => [
+        'html_input' => 'strip',
+    ],
+];
+```
+
+Pass that file to the build command:
+
+```bash
+vendor/bin/docsmith build \
+    --source=md \
+    --commonmark-config=docsmith.commonmark.php
+```
+
+## Alerts
+
+GitHub-style alerts are enabled by default. Start a block quote with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` (case-insensitive) to turn it into a colored callout:
+
+```md
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention.
+```
+
+The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown content, including lists, code blocks, and links. Unknown markers like `[!FOO]` and regular block quotes render as plain block quotes. Styles come from the built-in theme; override `.markdown-alert` in custom CSS if you want to change them.
+
+All five markers as they look with the built-in theme:
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!IMPORTANT]
+> Key information users need to know.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+
+## Checklists
+
+Task lists are part of GitHub Flavored Markdown and need no configuration. Use `- [x]` for done items and `- [ ]` for pending items:
+
+```md
+- [x] Install Docsmith
+- [ ] Write the first page
+- [ ] Ship it
+```
+
+Places where checklists work well:
+
+- Prerequisites at the start of a guide.
+- Setup or migration steps that readers complete over more than one session.
+- Release and review checklists in engineering docs.
+- Ordered troubleshooting fixes that readers try one at a time.
+
 ## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
@@ -790,6 +899,7 @@ php bin/docsmith build --source=md --output=docs --title="Project Docs"
 | `--accent-color=HEX` | Accent color | `#ff2d20` |
 | `--accent-color-dark=HEX` | Dark-mode accent color | derived from accent |
 | `--custom-css=FILE` | Path to a custom CSS file | none |
+| `--commonmark-config=FILE` | PHP file returning CommonMark extensions and environment config | none |
 | `--base-url=URL` | Base URL | `/` |
 | `--right-sidebar` | Enable the right sidebar table of contents | off |
 | `--repository-url=URL` | Repository URL for edit links | none |

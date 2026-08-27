@@ -112,9 +112,15 @@ Capture runs during `build()` when a generated mode is enabled. It is incrementa
 
 To force a full regeneration without the method, delete `og/.capturist-cache.json`.
 
+> [!TIP]
+> Use `captureOg(false)` while writing locally for fast rebuilds, then let CI run the full capture with screenshots.
+
 If capture is enabled but Node, capturist, or Chromium is missing, the build fails with install instructions.
 
 ## CI
+
+> [!WARNING]
+> CI runners do not include Chromium or Playwright browsers. Install them before the build step, or every capture-enabled build will fail.
 
 Install Node dependencies and Chromium before a docs build that runs capture:
 

@@ -140,8 +140,16 @@
 </tbody>
 </table></div>
 <p>To force a full regeneration without the method, delete <code>og/.capturist-cache.json</code>.</p>
+<div class="markdown-alert markdown-alert-tip">
+<p class="markdown-alert-title">Tip</p>
+<p>Use <code>captureOg(false)</code> while writing locally for fast rebuilds, then let CI run the full capture with screenshots.</p>
+</div>
 <p>If capture is enabled but Node, capturist, or Chromium is missing, the build fails with install instructions.</p>
 <h2 id="ci">CI</h2>
+<div class="markdown-alert markdown-alert-warning">
+<p class="markdown-alert-title">Warning</p>
+<p>CI runners do not include Chromium or Playwright browsers. Install them before the build step, or every capture-enabled build will fail.</p>
+</div>
 <p>Install Node dependencies and Chromium before a docs build that runs capture:</p>
 <pre class="phiki language-yaml github-light phiki-themes github-dark" data-language="yaml" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">-</span><span class="token"> </span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">u</span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">ses</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">a</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">ctions/setup-node@v4</span><span class="token">
 </span></span><span class="line"><span class="token">  </span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">w</span><span class="token" style="color: #22863a;--phiki-dark-color: #85e89d;">ith</span><span class="token">:</span><span class="token">

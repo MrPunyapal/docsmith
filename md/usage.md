@@ -33,6 +33,101 @@ Docsmith::make()
     ->build();
 ```
 
+## CommonMark extensions
+
+Docsmith enables CommonMark core and GitHub-flavored Markdown by default. Register additional League CommonMark extensions with the fluent API:
+
+```php
+use Docsmith\Docsmith;
+use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
+
+Docsmith::make()
+    ->source(__DIR__ . '/md')
+    ->output(__DIR__ . '/docs')
+    ->commonMarkExtensions([
+        new DescriptionListExtension(),
+    ])
+    ->commonMarkConfig([
+        'html_input' => 'strip',
+    ])
+    ->build();
+```
+
+Configuration passed to `commonMarkConfig()` overrides Docsmith's environment defaults and may include configuration for registered extensions. The static `Docsmith::build()` API also accepts `commonMarkExtensions` and `commonMarkConfig` arrays.
+
+For command-line builds, put both values in a PHP configuration file:
+
+```php
+<?php
+
+use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
+
+return [
+    'extensions' => [
+        new DescriptionListExtension(),
+    ],
+    'config' => [
+        'html_input' => 'strip',
+    ],
+];
+```
+
+Pass that file to the build command:
+
+```bash
+vendor/bin/docsmith build \
+    --source=md \
+    --commonmark-config=docsmith.commonmark.php
+```
+
+## Alerts
+
+GitHub-style alerts are enabled by default. Start a block quote with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, or `[!CAUTION]` (case-insensitive) to turn it into a colored callout:
+
+```md
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention.
+```
+
+The marker must be alone on its first line, and content follows on the lines below. Alerts support any Markdown content, including lists, code blocks, and links. Unknown markers like `[!FOO]` and regular block quotes render as plain block quotes. Styles come from the built-in theme; override `.markdown-alert` in custom CSS if you want to change them.
+
+All five markers as they look with the built-in theme:
+
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better.
+
+> [!IMPORTANT]
+> Key information users need to know.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+
+## Checklists
+
+Task lists are part of GitHub Flavored Markdown and need no configuration. Use `- [x]` for done items and `- [ ]` for pending items:
+
+```md
+- [x] Install Docsmith
+- [ ] Write the first page
+- [ ] Ship it
+```
+
+Places where checklists work well:
+
+- Prerequisites at the start of a guide.
+- Setup or migration steps that readers complete over more than one session.
+- Release and review checklists in engineering docs.
+- Ordered troubleshooting fixes that readers try one at a time.
+
 ## Command line
 
 Docsmith ships a standalone binary that builds a site without writing any PHP. After installing the package, run:
@@ -56,6 +151,7 @@ php bin/docsmith build --source=md --output=docs --title="Project Docs"
 | `--accent-color=HEX` | Accent color | `#ff2d20` |
 | `--accent-color-dark=HEX` | Dark-mode accent color | derived from accent |
 | `--custom-css=FILE` | Path to a custom CSS file | none |
+| `--commonmark-config=FILE` | PHP file returning CommonMark extensions and environment config | none |
 | `--base-url=URL` | Base URL | `/` |
 | `--right-sidebar` | Enable the right sidebar table of contents | off |
 | `--repository-url=URL` | Repository URL for edit links | none |

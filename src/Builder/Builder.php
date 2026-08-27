@@ -12,6 +12,8 @@ use Docsmith\Content\Document;
 use Docsmith\Markdown\CommonMarkRenderer;
 use Docsmith\Render\OgImageGenerator;
 use Docsmith\Render\SiteBuilder;
+use InvalidArgumentException;
+use League\CommonMark\Extension\ExtensionInterface;
 use LogicException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -66,6 +68,14 @@ final class Builder
     private bool $showDocsmithBadge = true;
 
     private bool $publishMedia = true;
+
+    /** @var list<ExtensionInterface> */
+    private array $commonMarkExtensions = [];
+
+    /** @var array<string, mixed> */
+    private array $commonMarkConfig = [];
+
+    private ?CommonMarkRenderer $commonMarkRenderer = null;
 
     /** @var list<string> */
     private array $navigationOrder = [];
@@ -429,6 +439,66 @@ final class Builder
         return $this;
     }
 
+    /**
+     * Register additional League CommonMark extensions for Markdown rendering.
+     *
+     * @param list<ExtensionInterface> $extensions
+     *
+     * @throws InvalidArgumentException When an extension does not implement ExtensionInterface.
+     */
+    public function commonMarkExtensions(array $extensions): self
+    {
+        foreach ($extensions as $extension) {
+            $this->assertCommonMarkExtension($extension);
+        }
+
+        $this->commonMarkExtensions = $extensions;
+
+        return $this;
+    }
+
+    /**
+     * Configure the League CommonMark environment.
+     *
+     * Values override Docsmith's defaults and may include extension-specific
+     * configuration.
+     *
+     * @param array<string, mixed> $config
+     *
+     * @throws InvalidArgumentException When a config key is not a string.
+     */
+    public function commonMarkConfig(array $config): self
+    {
+        foreach (array_keys($config) as $key) {
+            $this->assertCommonMarkConfigKey($key);
+        }
+
+        $this->commonMarkConfig = $config;
+
+        return $this;
+    }
+
+    private function assertCommonMarkExtension(mixed $extension): void
+    {
+        if (! $extension instanceof ExtensionInterface) {
+            throw new InvalidArgumentException(sprintf(
+                'CommonMark extensions must implement %s, [%s] given.',
+                ExtensionInterface::class,
+                is_string($extension) ? $extension : get_debug_type($extension),
+            ));
+        }
+    }
+
+    private function assertCommonMarkConfigKey(mixed $key): void
+    {
+        if (! is_string($key)) {
+            throw new InvalidArgumentException(sprintf(
+                'CommonMark config must use string keys, [%s] given.',
+                get_debug_type($key),
+            ));
+        }
+    }
+
     /** @param list<string> $order */
     public function navigationOrder(array $order): self
     {
@@ -691,7 +761,7 @@ final class Builder
         if ($this->readmeIndexPath !== null) {
             $readmePath = $this->resolveReadmePath();
             $sourcePath = dirname($readmePath);
-            $documents = (new ReadmeIndexImporter(new CommonMarkRenderer()))->import($readmePath, $this->readmeSkipSections);
+            $documents = (new ReadmeIndexImporter($this->commonMarkRenderer()))->import($readmePath, $this->readmeSkipSections);
         }
 
         $config = BuildConfig::fromInput(
@@ -720,7 +790,7 @@ final class Builder
             ogImage: $this->ogImage,
         );
 
-        (new SiteBuilder())->build($config, $documents);
+        (new SiteBuilder(renderer: $this->commonMarkRenderer()))->build($config, $documents);
 
         $this->generateOgImages($config, $documents);
     }
@@ -747,10 +817,15 @@ final class Builder
         );
     }
 
+    private function commonMarkRenderer(): CommonMarkRenderer
+    {
+        return $this->commonMarkRenderer ??= new CommonMarkRenderer($this->commonMarkExtensions, $this->commonMarkConfig);
+    }
+
     private function buildDocs(): void
     {
         $outputPath = $this->requireOutputPath();
-        $siteBuilder = new SiteBuilder();
+        $siteBuilder = new SiteBuilder(renderer: $this->commonMarkRenderer());
         $dropdownGroups = [];
         $pageSets = [];
         $units = [];

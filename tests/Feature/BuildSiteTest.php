@@ -2,7 +2,73 @@
 
 declare(strict_types=1);
 
+use Docsmith\Builder\Builder;
 use Docsmith\Docsmith;
+use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
+
+it('uses additional commonmark extensions in site builds', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-commonmark-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-commonmark-out-' . uniqid();
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Glossary\n\nTerm\n: Definition\n");
+
+    Docsmith::build(
+        source: $sourcePath,
+        output: $outputPath,
+        commonMarkExtensions: [new DescriptionListExtension()],
+    );
+
+    expect((string) file_get_contents($outputPath . '/index.html'))
+        ->toContain('<dl>')
+        ->toContain('<dt>Term</dt>')
+        ->toContain('<dd>Definition</dd>');
+});
+
+it('uses additional commonmark environment config in site builds', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-commonmark-config-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-commonmark-config-out-' . uniqid();
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Config\n\n<div>\nremoved\n</div>\n");
+
+    Docsmith::make()
+        ->source($sourcePath)
+        ->output($outputPath)
+        ->commonMarkConfig(['html_input' => 'strip'])
+        ->build();
+
+    $html = (string) file_get_contents($outputPath . '/index.html');
+
+    expect(str_contains($html, '<div>'))->toBeFalse()
+        ->and(str_contains($html, 'removed'))->toBeFalse();
+});
+
+it('rejects commonmark extension values that are not extension instances', function (): void {
+    // @phpstan-ignore-next-line Deliberately passing an invalid value.
+    expect(fn (): Builder => Docsmith::make()->commonMarkExtensions([DescriptionListExtension::class]))
+        ->toThrow(InvalidArgumentException::class, DescriptionListExtension::class);
+});
+
+it('rejects commonmark config keys that are not strings', function (): void {
+    // @phpstan-ignore-next-line Deliberately passing an invalid value.
+    expect(fn (): Builder => Docsmith::make()->commonMarkConfig(['html_input']))
+        ->toThrow(InvalidArgumentException::class, 'string keys');
+});
+
+it('renders github style alerts in built sites', function (): void {
+    $sourcePath = sys_get_temp_dir() . '/docsmith-alerts-' . uniqid();
+    $outputPath = sys_get_temp_dir() . '/docsmith-alerts-out-' . uniqid();
+    mkdir($sourcePath, 0777, true);
+    file_put_contents($sourcePath . '/index.md', "# Alerts\n\n> [!CAUTION]\n> Watch out.\n");
+
+    Docsmith::build(source: $sourcePath, output: $outputPath);
+
+    expect((string) file_get_contents($outputPath . '/index.html'))
+        ->toContain('<div class="markdown-alert markdown-alert-caution">')
+        ->toContain('<p class="markdown-alert-title">Caution</p>')
+        ->toContain('<p>Watch out.</p>')
+        ->and((string) file_get_contents($outputPath . '/assets/app.css'))
+        ->toContain('.markdown-alert');
+});
 
 it('rewrites markdown links between pages into built page urls', function (): void {
     $sourcePath = sys_get_temp_dir() . '/docsmith-md-links-' . uniqid();
@@ -86,7 +152,7 @@ it('builds a static site from markdown files', function (): void {
         ->and($configurationPage)->toContain('<h1>Configuration</h1>')
         ->toContain('../../assets/app.css')
         ->toContain('../../assets/app.js')
-        ->and($appCss)->toContain('--accent: #ff2d20;');
+        ->and($appCss)->toContain('--accent:#ff2d20;');
 });
 
 it('can build into the same folder as the markdown source', function (): void {
@@ -401,8 +467,8 @@ it('allows overriding the accent color during builds', function (): void {
     $appCss = file_get_contents($outputPath . '/assets/app.css');
 
     expect($appCss)
-        ->toContain('--accent: #1d4ed8;')
-        ->toContain('--accent: #60a5fa;')
+        ->toContain('--accent:#1d4ed8;')
+        ->toContain('--accent:#60a5fa;')
         ->toContain('rgba(29, 78, 216, 0.14)')
         ->toContain('rgba(96, 165, 250, 0.16)');
 });
@@ -421,7 +487,7 @@ it('allows appending custom css as raw string', function (): void {
 
     $appCss = file_get_contents($outputPath . '/assets/app.css');
 
-    expect($appCss)->toContain('/* my override */ .brand { color: #123456 }');
+    expect($appCss)->toContain('.brand{color:#123456}');
 });
 
 it('excludes hidden pages from navigation, pagination, and search index', function (): void {
