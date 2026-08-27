@@ -73,11 +73,16 @@ final readonly class WriteMarkdownTool implements ToolInterface
     }
 
     /**
-     * @return PageResult
+     * @return PageResult|ErrorResult
      */
     private function createPage(string $path, string $content): array
     {
         $resolved = $this->resolvePath($path);
+
+        if (file_exists($resolved)) {
+            return ['error' => 'Page already exists: ' . $resolved . ' (use update_page to modify it)'];
+        }
+
         $dir = dirname($resolved);
 
         if (! is_dir($dir)) {

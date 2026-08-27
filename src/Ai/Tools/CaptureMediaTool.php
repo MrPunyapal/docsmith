@@ -119,8 +119,8 @@ final readonly class CaptureMediaTool implements ToolInterface
         $name = $this->resolveName(is_string($input['name'] ?? null) ? $input['name'] : '', $url);
         $targetPath = $this->absoluteDocsSourcePath() . '/media/' . $name . '.' . $extension;
 
-        $flags = $this->buildFlags($action, $input);
-        $stepsFile = $action === 'video' ? $this->findStepsFilePath($flags) : null;
+        $stepsFile = null;
+        $flags = $this->buildFlags($action, $input, $stepsFile);
         $command = sprintf(
             '%s %s --output %s --json --quiet%s',
             $this->environment->escapeShell($binary),
@@ -238,26 +238,6 @@ final readonly class CaptureMediaTool implements ToolInterface
     }
 
     /**
-     * Extracts the steps-file path from the built flags (for post-run cleanup).
-     *
-     * @param  list<string>  $flags
-     */
-    private function findStepsFilePath(array $flags): ?string
-    {
-        foreach ($flags as $flag) {
-            if (str_starts_with($flag, '--steps-file ')) {
-                $quoted = trim(substr($flag, strlen('--steps-file ')));
-
-                return str_starts_with($quoted, '"') && str_ends_with($quoted, '"')
-                    ? str_replace('""', '"', substr($quoted, 1, -1))
-                    : $quoted;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * The docs source root as an absolute path — relative values (e.g. the
      * install:ai default "docs-source") resolve against the current working
      * directory so the capture lands where write_markdown/build operate.
@@ -282,7 +262,7 @@ final readonly class CaptureMediaTool implements ToolInterface
      * @param  array<int|string, mixed>  $input
      * @return list<string>
      */
-    private function buildFlags(string $action, array $input): array
+    private function buildFlags(string $action, array $input, ?string &$stepsFile = null): array
     {
         $escape = fn (string $value): string => $this->environment->escapeShell($value);
         $flags = [];
@@ -386,6 +366,8 @@ final readonly class CaptureMediaTool implements ToolInterface
         if (file_put_contents($json, (string) json_encode($payload)) === false) {
             return null;
         }
+
+        @chmod($json, 0600);
 
         return $json;
     }

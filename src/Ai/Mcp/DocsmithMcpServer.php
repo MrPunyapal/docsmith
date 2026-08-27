@@ -241,9 +241,22 @@ final class DocsmithMcpServer
      */
     private function readHttpRequest($conn): string
     {
+        stream_set_timeout($conn, 10);
+        $maxBytes = 1024 * 1024;
+        $deadline = time() + 30;
         $data = '';
 
-        while (($chunk = fread($conn, 8192)) !== false && $chunk !== '') {
+        while (time() < $deadline) {
+            $remaining = $maxBytes - strlen($data);
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $chunk = fread($conn, min(8192, $remaining));
+            if ($chunk === false || $chunk === '') {
+                break;
+            }
+
             $data .= $chunk;
 
             $headerEnd = strpos($data, "\r\n\r\n");

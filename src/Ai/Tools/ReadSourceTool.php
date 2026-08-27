@@ -150,6 +150,14 @@ final readonly class ReadSourceTool implements ToolInterface
             return ['error' => 'Access denied: path outside source root'];
         }
 
+        $relative = str_replace($sourceRoot . DIRECTORY_SEPARATOR, '', $targetPath);
+        $segments = explode(DIRECTORY_SEPARATOR, $relative);
+        foreach ($segments as $segment) {
+            if (in_array($segment, self::SKIP_DIRECTORIES, true)) {
+                return ['error' => 'Access denied: path is in a skipped directory'];
+            }
+        }
+
         $content = file_get_contents($targetPath);
 
         if ($content === false) {
@@ -188,6 +196,14 @@ final readonly class ReadSourceTool implements ToolInterface
 
         if (! str_starts_with($targetPath, $sourceRoot . DIRECTORY_SEPARATOR) && $targetPath !== $sourceRoot) {
             return ['error' => 'Access denied: path outside source root'];
+        }
+
+        $relative = str_replace($sourceRoot . DIRECTORY_SEPARATOR, '', $targetPath);
+        $segments = explode(DIRECTORY_SEPARATOR, $relative);
+        foreach ($segments as $segment) {
+            if (in_array($segment, self::SKIP_DIRECTORIES, true)) {
+                return ['error' => 'Access denied: path is in a skipped directory'];
+            }
         }
 
         $structure = [];

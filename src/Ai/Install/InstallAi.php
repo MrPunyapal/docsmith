@@ -66,6 +66,10 @@ final readonly class InstallAi
     {
         $results = [];
 
+        if (in_array('gemini', $this->agents, true)) {
+            $results['.gemini/settings.json'] = $this->installGeminiConfig($force);
+        }
+
         if (array_intersect($this->agents, self::MCP_AGENTS) !== []) {
             $results['.mcp.json'] = $this->installJsonConfig('.mcp.json', $force);
         }
@@ -368,6 +372,44 @@ final readonly class InstallAi
             $json = json_encode([
                 '$schema' => 'https://opencode.ai/config.json',
                 'mcp' => ['servers' => ['docsmith' => $entry]],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        }
+
+        if ($json === false) {
+            return 'failed (JSON encoding)';
+        }
+
+        return $this->writeFile($path, $json . PHP_EOL);
+    }
+
+    private function installGeminiConfig(bool $force): string
+    {
+        $dir = $this->projectRoot . '/.gemini';
+        $path = $dir . '/settings.json';
+        $entry = $this->mcpServerEntry();
+
+        if (is_file($path)) {
+            $decoded = json_decode((string) file_get_contents($path), true);
+            if (! is_array($decoded)) {
+                return 'skipped (existing .gemini/settings.json is not valid JSON)';
+            }
+
+            $servers = is_array($decoded['mcpServers'] ?? null) ? $decoded['mcpServers'] : [];
+
+            if (array_key_exists('docsmith', $servers) && ! $force) {
+                return 'skipped (docsmith already configured)';
+            }
+
+            $servers['docsmith'] = $entry;
+            $decoded['mcpServers'] = $servers;
+            $json = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        } else {
+            if (! is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+
+            $json = json_encode([
+                'mcpServers' => ['docsmith' => $entry],
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         }
 

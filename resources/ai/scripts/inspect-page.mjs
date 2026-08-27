@@ -224,9 +224,22 @@ async function runSteps(page, steps) {
     }
 
     switch (step.action) {
-      case 'goto':
-        await page.goto(step.url, { waitUntil: 'load', timeout: 30000 });
+      case 'goto': {
+        const target = step.url || '';
+        let resolved = target;
+
+        if (/^(https?:|data:|blob:)/.test(target)) {
+          resolved = target;
+        } else if (target.startsWith('/')) {
+          const cur = new URL(page.url());
+          resolved = `${cur.protocol}//${cur.host}${target}`;
+        } else if (target !== '') {
+          resolved = new URL(target, page.url()).href;
+        }
+
+        await page.goto(resolved, { waitUntil: 'load', timeout: 30000 });
         break;
+      }
       case 'click':
         await page.click(step.selector);
         break;
