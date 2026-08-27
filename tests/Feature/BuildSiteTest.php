@@ -152,7 +152,7 @@ it('builds a static site from markdown files', function (): void {
         ->and($configurationPage)->toContain('<h1>Configuration</h1>')
         ->toContain('../../assets/app.css')
         ->toContain('../../assets/app.js')
-        ->and($appCss)->toContain('--accent: #ff2d20;');
+        ->and($appCss)->toContain('--accent:#ff2d20;');
 });
 
 it('can build into the same folder as the markdown source', function (): void {
@@ -467,8 +467,8 @@ it('allows overriding the accent color during builds', function (): void {
     $appCss = file_get_contents($outputPath . '/assets/app.css');
 
     expect($appCss)
-        ->toContain('--accent: #1d4ed8;')
-        ->toContain('--accent: #60a5fa;')
+        ->toContain('--accent:#1d4ed8;')
+        ->toContain('--accent:#60a5fa;')
         ->toContain('rgba(29, 78, 216, 0.14)')
         ->toContain('rgba(96, 165, 250, 0.16)');
 });
@@ -487,7 +487,7 @@ it('allows appending custom css as raw string', function (): void {
 
     $appCss = file_get_contents($outputPath . '/assets/app.css');
 
-    expect($appCss)->toContain('/* my override */ .brand { color: #123456 }');
+    expect($appCss)->toContain('.brand{color:#123456}');
 });
 
 it('excludes hidden pages from navigation, pagination, and search index', function (): void {
