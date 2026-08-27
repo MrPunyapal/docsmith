@@ -57,7 +57,7 @@
 <li><code>SourceScanner</code> discovers Markdown files and reads frontmatter. Versioned builds scan one source directory per version.</li>
 <li><code>CommonMarkRenderer</code> converts Markdown to HTML through League CommonMark with GitHub-flavored Markdown extensions.</li>
 <li><code>SiteBuilder</code> renders pages with sidebar navigation, version pills, and the hub dropdown, and writes them to the output directory. It rewrites relative media references so images, videos, and downloads resolve from the built page locations.</li>
-<li><code>AssetPublisher</code> publishes CSS and JS assets and generates <code>search-index.json</code>, <code>sitemap.xml</code>, <code>.nojekyll</code>, and the LLM export files.</li>
+<li><code>AssetPublisher</code> publishes CSS and JS assets, minifying them through <code>AssetMinifier</code> before writing, and generates <code>search-index.json</code>, <code>sitemap.xml</code>, <code>.nojekyll</code>, and the LLM export files.</li>
 <li><code>MediaPublisher</code> copies image, video, audio, and PDF files from the source tree into the output directory, preserving their relative structure (disable with <code>publishMedia(false)</code>).</li>
 </ol>
 <p>Remote source syncing lives in <code>src/RemoteSources/</code> and runs before a build. It only writes local directories; the pipeline above never talks to the network.</p>
