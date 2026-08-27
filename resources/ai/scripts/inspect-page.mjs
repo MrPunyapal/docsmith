@@ -13,14 +13,14 @@ if (!/^https?:\/\//i.test(url)) {
 }
 
 const chromium = loadChromium(cwd);
-const before = loadBefore(args['steps-file']);
+const instructions = loadInstructions(args['steps-file']);
 
 const browser = await chromium.launch({ headless: true });
 
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-  await runSteps(page, before);
+  await runSteps(page, instructions.before);
 
   const waitFor = args['wait-for'] || '';
   if (waitFor) {
@@ -32,6 +32,8 @@ try {
     await page.waitForTimeout(delay);
   }
 
+  await runSteps(page, instructions.steps);
+
   const payload = await page.evaluate((max) => {
     const interesting = [
       'button',
@@ -42,6 +44,7 @@ try {
       '[role="button"]',
       '[role="dialog"]',
       '[role="listbox"]',
+      '[role="option"]',
       '[role="combobox"]',
       '[role="menu"]',
       '[role="tab"]',
@@ -68,14 +71,24 @@ try {
     };
 
     const suggestSelector = (el) => {
-      if (el.id) {
+      // Filament generates random ids for teleported dropdown panels. Those
+      // ids work only for the current page instance, so prefer the stable
+      // component classes for them.
+      if (el.id && !/^fi-select-input-(dropdown|option)-/.test(el.id)) {
         return '#' + cssEscape(el.id);
       }
 
-      const testId = el.getAttribute('data-testid') || el.getAttribute('wire:key');
-      if (testId) {
-        const attr = el.getAttribute('data-testid') ? 'data-testid' : 'wire:key';
-        return `[${attr}="${testId.replace(/"/g, '\\"')}"]`;
+      const dataTestId = el.getAttribute('data-testid');
+      if (dataTestId) {
+        return `[data-testid="${dataTestId.replace(/"/g, '\\"')}"]`;
+      }
+
+      const wireKey = el.getAttribute('wire:key');
+      if (wireKey) {
+        // Livewire prefixes wire:key values with a request-specific id. Keep
+        // the stable form path so the selector survives a fresh capture.
+        const stableKey = wireKey.replace(/^[^.]+(?=\\.form\\.)/, '');
+        return `[wire\\:key*="${stableKey.replace(/"/g, '\\"')}"]`;
       }
 
       const classList = [...el.classList].filter((name) =>
@@ -185,20 +198,23 @@ function loadChromium(projectRoot) {
   fail('Playwright is not installed. Run: npm install -D playwright capturist && npx playwright install chromium');
 }
 
-function loadBefore(stepsFile) {
+function loadInstructions(stepsFile) {
   if (!stepsFile) {
-    return [];
+    return { before: [], steps: [] };
   }
 
   const raw = JSON.parse(readFileSync(stepsFile, 'utf8'));
   if (Array.isArray(raw)) {
-    return raw;
+    return { before: [], steps: raw };
   }
-  if (raw && typeof raw === 'object' && Array.isArray(raw.before)) {
-    return raw.before;
+  if (raw && typeof raw === 'object') {
+    return {
+      before: Array.isArray(raw.before) ? raw.before : [],
+      steps: Array.isArray(raw.steps) ? raw.steps : [],
+    };
   }
 
-  return [];
+  return { before: [], steps: [] };
 }
 
 async function runSteps(page, steps) {

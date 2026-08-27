@@ -52,7 +52,7 @@ final readonly class CaptureMediaTool implements ToolInterface
                 'dark' => ['type' => 'boolean', 'description' => 'Emulate dark color scheme'],
                 'steps' => [
                     'type' => 'array',
-                    'description' => 'Same-page steps after load: open a dropdown, type, wait. Used by video and by screenshot (open then crop). Not for login. Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus. Example: {"action": "click", "selector": ".fi-select-input"}',
+                    'description' => 'Same-page steps after load: open a dropdown, type, wait. Used by inspect, screenshot, and video. Not for login. Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus. Example: {"action": "click", "selector": ".fi-select-input"}',
                     'items' => ['type' => 'object'],
                 ],
                 'before' => [
@@ -199,7 +199,10 @@ final readonly class CaptureMediaTool implements ToolInterface
         }
 
         $stepsFile = null;
-        if (is_array($input['before'] ?? null) && $input['before'] !== []) {
+        if (
+            (is_array($input['before'] ?? null) && $input['before'] !== []) ||
+            (is_array($input['steps'] ?? null) && $input['steps'] !== [])
+        ) {
             $stepsFile = $this->writeStepsFile('inspect', $input);
 
             if (is_string($stepsFile) && $stepsFile !== '') {

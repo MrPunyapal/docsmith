@@ -106,3 +106,13 @@ it('leaves regular block quotes untouched', function (): void {
         ->toContain('<blockquote>')
         ->toContain('<p>Just a quote.</p>');
 });
+
+it('defers loading for images and videos', function (): void {
+    $renderer = new CommonMarkRenderer();
+
+    $html = $renderer->render("![A screenshot](media/screenshot.png)\n\n<video controls src=\"media/demo.webm\"></video>");
+
+    expect($html)
+        ->toContain('<img src="media/screenshot.png" alt="A screenshot" loading="lazy" decoding="async">')
+        ->toContain('<video controls src="media/demo.webm" preload="none"></video>');
+});

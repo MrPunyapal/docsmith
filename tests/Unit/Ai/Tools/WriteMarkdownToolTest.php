@@ -155,7 +155,7 @@ it('inserts a video tag for webm files', function (): void {
 
         $content = (string) file_get_contents($docsPath . '/media-page.md');
 
-        expect($content)->toContain('<video controls src="media/select-flow.webm" title="Opening the select"></video>')
+        expect($content)->toContain('<video controls preload="none" src="media/select-flow.webm" title="Opening the select"></video>')
             ->and($content)->not->toContain('![Opening the select]')
             ->and($content)->toMatch('/## Opening the select\s+<video/');
     } finally {

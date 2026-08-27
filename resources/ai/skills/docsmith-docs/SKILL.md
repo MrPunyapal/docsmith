@@ -29,6 +29,8 @@ If they did: boot a demo (`playground/`, `example/`, `demo/`, `workbench/`, or a
 
 Login is not the demo unless the page is about login. Put it in `before` (off-camera). Ask the user for credentials. Do not guess passwords.
 
+After capture retries, delete failed, debug, superseded, and duplicate media files that are not referenced by the Markdown.
+
 If capture tools are missing:
 
 ```bash
@@ -45,6 +47,8 @@ Only when the user asked for screenshots or videos. Skip on a plain "write docs"
 - `before` is login and other setup that should never appear in the file.
 - Video: same `selector`. After `steps`, the widget is framed with space around it. Pace 700-1000. Keep it under about 15 seconds.
 - `full_page` only if the whole page is the point.
+- Use a consistent focused viewport for related screenshots and videos. For scrollable widgets, show the scroll state with real scroll steps before selecting an item.
+- Generated documentation media loads lazily: images use `loading="lazy"` and videos use `preload="none"`.
 
 ```json
 {

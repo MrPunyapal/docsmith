@@ -49,8 +49,34 @@ final readonly class CommonMarkRenderer
         $html = (string) $this->converter->convert($markdown);
         $html = $this->highlightCodeBlocks($html);
         $html = $this->wrapTables($html);
+        $html = $this->deferMediaLoading($html);
 
         return (string) preg_replace('/<h1[^>]*>.*?<\/h1>\s*/si', '', $html, 1);
+    }
+
+    private function deferMediaLoading(string $html): string
+    {
+        $html = preg_replace_callback('/<img\b([^>]*)>/i', static function (array $matches): string {
+            $attributes = trim($matches[1]);
+            $attributes = trim($attributes, '/ ');
+            $attributes = $attributes === '' ? '' : ' ' . $attributes;
+
+            if (preg_match('/\sloading\s*=/i', $attributes) === 1) {
+                return $matches[0];
+            }
+
+            return '<img' . $attributes . ' loading="lazy" decoding="async">';
+        }, $html) ?? $html;
+
+        return preg_replace_callback('/<video\b([^>]*)>/i', static function (array $matches): string {
+            $attributes = $matches[1];
+
+            if (preg_match('/\spreload\s*=/i', $attributes) === 1) {
+                return $matches[0];
+            }
+
+            return '<video' . $attributes . ' preload="none">';
+        }, $html) ?? $html;
     }
 
     private function wrapTables(string $html): string

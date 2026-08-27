@@ -145,7 +145,7 @@ final readonly class WriteMarkdownTool implements ToolInterface
         if (in_array($extension, ['webm', 'mp4', 'mov', 'm4v', 'ogv'], true)) {
             $title = $caption !== '' ? ' title="' . str_replace(['&', '"'], ['&amp;', '&quot;'], $caption) . '"' : '';
 
-            return "\n<video controls src=\"{$mediaPath}\"{$title}></video>\n";
+            return "\n<video controls preload=\"none\" src=\"{$mediaPath}\"{$title}></video>\n";
         }
 
         return "\n![{$caption}]({$mediaPath})\n";
