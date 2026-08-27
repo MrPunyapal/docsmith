@@ -1,10 +1,8 @@
 # MCP Server for AI Assistants
 
-Docsmith provides a Model Context Protocol (MCP) server that exposes
-documentation tools to external AI assistants. This lets tools like Claude Code,
-Codex, and Cursor read your source code, write documentation pages, and build
-the site — using **their own API key**, not Docsmith's. Docsmith itself never
-calls an LLM.
+Docsmith exposes documentation tools over MCP. Grok, Claude Code, Codex, or
+Cursor can read your source, write pages, capture UI, and build the site.
+They use their own API key. Docsmith never calls an LLM.
 
 ## When to use MCP vs the Builder
 
@@ -40,24 +38,34 @@ docsmith mcp:serve \
 
 | Tool | Description | Needs Docsmith API key? |
 |------|-------------|-------------------------|
-| `read_source` | Read and analyze source code files | No — operates on local files only |
-| `write_markdown` | Create or update markdown documentation pages | No — operates on local files only |
-| `capture_media` | Screenshot a running app or record an interaction video (via [capturist](https://github.com/MrPunyapal/capturist) + Playwright) | No — local browser capture |
-| `build_site` | Build the static HTML documentation site | No — built-in Docsmith builder |
+| `read_source` | Read and analyze source code files | No |
+| `write_markdown` | Create or update markdown documentation pages | No |
+| `capture_media` | Inspect a running page, crop a widget screenshot, or record a short video ([capturist](https://github.com/MrPunyapal/capturist) + Playwright) | No |
+| `build_site` | Build the static HTML documentation site | No |
 
-These tools work entirely on local files — no LLM calls, no API keys. The AI
-assistant connecting to the MCP server uses its own credentials to decide *when*
-to call these tools.
+These tools only touch local files. Call `capture_media` only when the user
+asks for screenshots or videos.
 
 `capture_media` requires one-time dev dependencies in the documented project:
 
 ```bash
-npm install -D playwright capturist
+npm install -D playwright capturist@^0.5.0
 npx playwright install chromium
 ```
 
-Captures land in the docs source `media/` directory and are published with the
-site build automatically.
+`capture_media` actions:
+
+- `inspect`: open the URL (optional `before` login) and return visible widgets
+  with CSS selectors. Call this first.
+- `screenshot`: PNG cropped to `selector`, with 32px of space around it
+  (`padding`). `steps` can open a dropdown on the same page, then crop.
+  `before` is login, off-camera.
+- `video`: short WebM. Requires `steps`. Pass `selector` to frame the widget
+  the same way after the steps. Pace 700-1000.
+
+Files land in the docs source `media/` directory. Stills:
+`![caption](media/shot.png)`. Videos:
+`<video controls src="media/flow.webm"></video>`.
 
 ## PHP API
 
@@ -97,8 +105,23 @@ Add to your Claude Code MCP configuration:
 ```
 
 Claude Code can then call `read_source` to explore your codebase,
-`write_markdown` to create documentation pages, and `build_site` to generate the
-static site — all through natural language conversation.
+`write_markdown` to create documentation pages, and `build_site` to generate
+the static site. Call `capture_media` only if the user asked for screenshots
+or a demo video.
+
+### Grok
+
+`docsmith install:ai` writes `.grok/config.toml` and `.grok/skills/` when Grok
+is detected (or pass `--agents=grok`). Native Grok MCP config:
+
+```toml
+[mcp_servers.docsmith]
+command = "docsmith"
+args = ["mcp:serve", "--transport=stdio", "--source=.", "--docs-source=docs-source"]
+```
+
+Restart Grok or press `r` in `/mcps` after installing. Then ask it to write
+docs. It loads the `docsmith-docs` skill and the MCP tools.
 
 ### Codex / other agents
 
@@ -108,15 +131,15 @@ command itself.
 
 ## Using with Laravel Boost
 
-Docsmith has **no dependency on Laravel Boost** — the setup below is just one
-convenient way to register the same server; the standalone Claude Code / Codex /
-Cursor sections above work identically without Boost installed.
+Docsmith has **no dependency on Laravel Boost**. The setup below is one way to
+register the same server. The Claude Code / Codex / Cursor sections above work
+without Boost.
 
 Laravel Boost ships its own MCP server (`php artisan boost:mcp`) and wires it
 into your agents via `.mcp.json`. Docsmith sits next to it: add both servers to
 the same config, and your Boost-configured agent (Claude Code, Codex, Gemini
-CLI, ...) gets docsmith's `read_source` / `write_markdown` / `build_site` tools
-alongside Boost's tinker and schema tools.
+CLI, ...) gets docsmith's `read_source` / `write_markdown` / `capture_media` /
+`build_site` tools alongside Boost's tinker and schema tools.
 
 ```json
 {
@@ -149,5 +172,5 @@ the binary explicitly, the same way you would for `php`:
 
 Then prompt the agent from the project root, for example:
 
-> "Use the docsmith tools to write installation, configuration, and usage
-> documentation for this Laravel application."
+> Write usage docs for this Laravel app. Quick start on the landing page.
+> Capture the UI if you can boot it. If not, ask me for a URL.

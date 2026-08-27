@@ -1,79 +1,75 @@
 ---
 name: docsmith-docs
-description: Write and publish project documentation using the docsmith MCP server (read_source, write_markdown, capture_media, build_site). Use when the user asks to write docs, document the project, create documentation pages, or publish a docs site.
+description: Write project docs with the docsmith MCP tools (read_source, write_markdown, capture_media, build_site). Use when the user asks to write docs, generate documentation, capture screenshots, or record a demo.
 ---
 
-# Writing Docs with Docsmith
+# Docs with Docsmith
 
-Use the docsmith MCP tools in this order:
+Most projects fail docs in one of two ways. Too little, and nobody can start. Too much (every feature, every option), and nobody can find the main use case. Same result: the project does not get used.
 
-1. **Explore** — `read_source list_files` (pattern `**/*`), `read_source analyze_structure`
-   on source directories, and `read_source read_file` on the key files.
-2. **Plan** — a focused page set: `index.md` (landing), `installation.md`,
-   `configuration.md`, `usage.md`, `commands.md`, `api.md`.
-3. **Write** — `write_markdown create_page` for each page (or `update_page` to revise).
-4. **Capture evidence** — `capture_media` for real UI screenshots and videos
-   (see below).
-5. **Build** — `build_site` to render the static site.
-6. **Iterate** — review built pages, fix weak ones, rebuild.
+Write the second kind of README a maintainer would actually keep:
 
-## Page conventions
+1. Quick start or TL;DR at the top of `index.md`. Copy-paste, runnable.
+2. First paragraphs: the most common use case. What a new user does first.
+3. Show, don't tell. When the user asked for screenshots or videos, crop to the widget with a little space around it. Otherwise write the steps in words.
 
-- Lowercase kebab-case paths ending in `.md`; `index.md` is the landing page.
-- H1 title, one-paragraph overview, H2 sections.
-- Real, runnable code examples with language tags; tables for command/option lists.
-- Only document what `read_source` shows — never invent API.
+A few focused pages beat a catalog. Document how a consumer uses this project, not each source file.
 
-## Capturing real UI evidence
+Typical set: `index.md`, `installation.md`, `usage.md`. Add `configuration.md` or `commands.md` only if people need them.
 
-When the project has a UI (admin panel, components, dashboards), boot it and
-capture real screenshots instead of describing features in prose:
+## Workflow
 
-1. Start the app (e.g. `php artisan serve`) and note the URL.
-2. **Never record login or boilerplate navigation.** If the target page needs
-   auth, pass `before` steps — they run off-camera before the capture starts
-   (for videos AND screenshots) and the session carries over:
+1. `read_source` (`list_files`, `analyze_structure`, `read_file`). Do not invent APIs, routes, or options.
+2. `write_markdown`.
+3. `build_site`.
 
-   ```json
-   {"before": [
-     {"action": "goto", "url": "http://127.0.0.1:8000/admin/login"},
-     {"action": "fill", "selector": "input[type=email]", "value": "admin@example.com"},
-     {"action": "fill", "selector": "input[type=password]", "value": "password"},
-     {"action": "click", "selector": "button[type=submit]"},
-     {"action": "wait", "selector": ".fi-sidebar"}
-   ], "steps": [...]}
-   ```
+Do not call `capture_media`, boot a demo, or ask for a URL unless the user asked for screenshots or videos.
 
-   Deep-link `url` straight to the page being documented.
-3. `capture_media` with `action: "screenshot"` for stills — **frame the
-   component, not the page**: pass `selector` (the widget's CSS class) to clip
-   exactly that element, plus `viewport` (e.g. `1280x800`) for context shots.
-   Use `wait_for` when content loads async, `dark: true` for dark mode.
-4. `capture_media` with `action: "video"` plus `steps` for short workflow demos.
-   **Frame the widget, not the whole page**: use a small-ish `viewport`
-   (e.g. `640x480`) and add a `focus` step after opening the dropdown/modal —
-   it measures the element, then frames it centered at ~90% of the recording
-   over a dimmed backdrop, whatever its natural size:
+If they did: boot a demo (`playground/`, `example/`, `demo/`, `workbench/`, or ask for a URL). `capture_media inspect`, then screenshot or video with `selector`. Put the file next to the step it shows. Rebuild. Recapture if it is a full page, a login screen, or the wrong widget.
 
-   ```json
-   {"pace": 500, "steps": [
-     {"action": "click", "selector": ".fi-select-input"},
-     {"action": "wait", "selector": ".fi-select-panel"},
-     {"action": "focus", "selector": ".fi-select-panel"},
-     {"action": "scroll", "y": 600},
-     {"action": "wait", "ms": 400},
-     {"action": "screenshot", "output": "loaded-more.png"}
-   ]}
-   ```
+Login is not the demo unless the page is about login. Put it in `before` (off-camera). Ask the user for credentials. Do not guess passwords.
 
-   Steps are paced automatically (~400ms apart); raise `pace` if viewers need
-   more time. Keep videos under ~15 seconds and under ~2 MB — they ship inside
-   the repo.
-5. Both actions return `path` (e.g. `media/dashboard.png`) — embed it with
-   `write_markdown insert_media`, or reference `![](media/dashboard.png)` directly.
-6. If `capture_media` returns an install error, tell the user to run
-   `npm install -D playwright capturist && npx playwright install chromium`.
+If capture tools are missing:
 
-Use captures when they show something code cannot: rendered UI, visual states,
-multi-step flows. Skip them for pure API/CLI documentation. A focused shot of
-the component beats a full-page capture — readers want the widget.
+```bash
+npm install -D playwright capturist@^0.5.0
+npx playwright install chromium
+```
+
+## Captures
+
+Only when the user asked for screenshots or videos. Skip on a plain "write docs" request, and skip for CLI or API-only docs.
+
+- Always pass `selector` for the widget. The tool crops to it and keeps 32px of space around it (`padding`). Use `padding: 0` only for a tight crop.
+- `steps` run on the same page after load (click to open a dropdown, then crop). Not for login.
+- `before` is login and other setup that should never appear in the file.
+- Video: same `selector`. After `steps`, the widget is framed with space around it. Pace 700-1000. Keep it under about 15 seconds.
+- `full_page` only if the whole page is the point.
+
+```json
+{
+  "selector": ".fi-select-panel",
+  "padding": 32,
+  "before": [
+    {"action": "goto", "url": "http://127.0.0.1:8000/admin/login"},
+    {"action": "fill", "selector": "input[type=email]", "value": "<user-supplied>"},
+    {"action": "fill", "selector": "input[type=password]", "value": "<user-supplied>"},
+    {"action": "click", "selector": "button[type=submit]"},
+    {"action": "wait", "selector": ".fi-sidebar"}
+  ],
+  "pace": 800,
+  "steps": [
+    {"action": "click", "selector": ".fi-select-input"},
+    {"action": "wait", "selector": ".fi-select-panel"}
+  ]
+}
+```
+
+Stills: `![caption](media/select.png)`. Videos: `<video controls src="media/select.webm"></video>`.
+
+## Pages
+
+- kebab-case paths ending in `.md`. `index.md` is the landing page.
+- Frontmatter `title` and `description`. One H1.
+- Second person, present tense. No marketing words, no em dashes.
+- Links to other pages use the `.md` path (`[Usage](usage.md)`).

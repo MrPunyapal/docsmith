@@ -9,6 +9,7 @@ use Docsmith\Support\OgCaptureEnvironmentContract;
 
 /**
  * @phpstan-type CaptureResult array{success: bool, path: string, absolute_path: string, size_bytes: int, width?: int, height?: int}
+ * @phpstan-type InspectResult array{success: bool, url: string, title: string, elements: list<mixed>}
  * @phpstan-type ErrorResult array{error: string}
  */
 final readonly class CaptureMediaTool implements ToolInterface
@@ -27,7 +28,7 @@ final readonly class CaptureMediaTool implements ToolInterface
 
     public function description(): string
     {
-        return 'Capture real UI evidence for the docs: screenshot (action=screenshot) or record an interaction flow as WebM video (action=video) from a running app URL, via capturist/Playwright. Files land in the docs source media directory and the returned path is ready to embed with write_markdown insert_media. Requires capturist + playwright dev dependencies in the project.';
+        return 'Capture UI for the docs from a running app URL. inspect lists visible widgets and CSS selectors. screenshot crops that widget with padding around it. video records a short workflow and frames the widget the same way. Pass selector for the thing being documented. Use before for login (off-camera, skip it unless login is the topic). steps open the widget on the same page (click, wait). Files land in docs-source/media/. Requires capturist + playwright.';
     }
 
     /**
@@ -38,11 +39,12 @@ final readonly class CaptureMediaTool implements ToolInterface
         return [
             'type' => 'object',
             'properties' => [
-                'action' => ['type' => 'string', 'enum' => ['screenshot', 'video'], 'description' => 'Capture a still image or record a video'],
+                'action' => ['type' => 'string', 'enum' => ['inspect', 'screenshot', 'video'], 'description' => 'inspect lists visible widgets/selectors; screenshot captures a still; video records a workflow'],
                 'url' => ['type' => 'string', 'description' => 'Absolute URL of the running app page to capture'],
                 'name' => ['type' => 'string', 'description' => 'Output file name without extension (default: slug of the URL path)'],
-                'selector' => ['type' => 'string', 'description' => 'CSS selector to capture instead of the whole viewport (screenshot)'],
-                'full_page' => ['type' => 'boolean', 'description' => 'Capture the full scrollable page (screenshot)'],
+                'selector' => ['type' => 'string', 'description' => 'CSS selector of the widget to crop (screenshot) or frame (video). Required for a useful capture.'],
+                'padding' => ['type' => 'integer', 'description' => 'Pixels of space around the widget crop/frame (default 32). Pass 0 for a tight crop.'],
+                'full_page' => ['type' => 'boolean', 'description' => 'Capture the full scrollable page (screenshot). Avoid this unless the whole page is the point.'],
                 'wait_for' => ['type' => 'string', 'description' => 'CSS selector to wait for before capturing'],
                 'delay' => ['type' => 'integer', 'description' => 'Extra milliseconds to wait after load'],
                 'viewport' => ['type' => 'string', 'description' => 'Viewport as WIDTHxHEIGHT (e.g. 1280x720)'],
@@ -50,12 +52,12 @@ final readonly class CaptureMediaTool implements ToolInterface
                 'dark' => ['type' => 'boolean', 'description' => 'Emulate dark color scheme'],
                 'steps' => [
                     'type' => 'array',
-                    'description' => 'Interaction steps while recording (video). Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus. focus pins a selector to fill ~90% of the frame centered over a backdrop — use after opening a dropdown/modal for a widget-only recording. Steps are paced automatically (~0.4s apart). Example: {"action": "click", "selector": "#login"}',
+                    'description' => 'Same-page steps after load: open a dropdown, type, wait. Used by video and by screenshot (open then crop). Not for login. Actions: goto, click, dblclick, hover, fill, type, press, scroll, wait, screenshot, focus. Example: {"action": "click", "selector": ".fi-select-input"}',
                     'items' => ['type' => 'object'],
                 ],
                 'before' => [
                     'type' => 'array',
-                    'description' => 'Setup steps that run BEFORE the capture starts and are never recorded — use them to log in or navigate past boilerplate so the capture starts directly on the target page. Same format as steps. Example: [{"action": "goto", "url": "/admin/login"}, {"action": "fill", "selector": "input[type=email]", "value": "..."}, {"action": "click", "selector": "button[type=submit]"}, {"action": "wait", "selector": ".dashboard"}]',
+                    'description' => 'Off-camera setup that is never recorded. Use for login when the demo is not about login. Same format as steps. Example: [{"action": "goto", "url": "/admin/login"}, {"action": "fill", "selector": "input[type=email]", "value": "..."}, {"action": "click", "selector": "button[type=submit]"}, {"action": "wait", "selector": ".fi-sidebar"}]',
                     'items' => ['type' => 'object'],
                 ],
                 'pace' => [
@@ -69,7 +71,7 @@ final readonly class CaptureMediaTool implements ToolInterface
 
     /**
      * @param  array<int|string, mixed>  $input
-     * @return CaptureResult|ErrorResult
+     * @return CaptureResult|InspectResult|ErrorResult
      */
     public function handle(array $input): array
     {
@@ -86,6 +88,10 @@ final readonly class CaptureMediaTool implements ToolInterface
             return ['error' => 'capture_media requires a http(s) url of a running app page.'];
         }
 
+        if ($action === 'inspect') {
+            return $this->inspect($input, $url);
+        }
+
         if ($action === 'screenshot') {
             $extension = 'png';
         } elseif ($action === 'video') {
@@ -95,7 +101,7 @@ final readonly class CaptureMediaTool implements ToolInterface
 
             $extension = 'webm';
         } else {
-            return ['error' => 'Unknown action: ' . $action . ' (expected screenshot or video).'];
+            return ['error' => 'Unknown action: ' . $action . ' (expected inspect, screenshot, or video).'];
         }
 
         foreach (['steps', 'before'] as $list) {
@@ -156,6 +162,75 @@ final readonly class CaptureMediaTool implements ToolInterface
             'size_bytes' => is_int($result['sizeBytes'] ?? null) ? $result['sizeBytes'] : 0,
             'width' => is_int($result['width'] ?? null) ? $result['width'] : 0,
             'height' => is_int($result['height'] ?? null) ? $result['height'] : 0,
+        ];
+    }
+
+    /**
+     * Lists visible widgets and suggested CSS selectors on a running page so
+     * the agent can pass a real selector into screenshot/video instead of guessing.
+     *
+     * @param  array<int|string, mixed>  $input
+     * @return InspectResult|ErrorResult
+     */
+    private function inspect(array $input, string $url): array
+    {
+        $script = dirname(__DIR__, 3) . '/resources/ai/scripts/inspect-page.mjs';
+
+        if (! is_file($script)) {
+            return ['error' => 'inspect-page script is missing from this Docsmith install.'];
+        }
+
+        $escape = fn (string $value): string => $this->environment->escapeShell($value);
+        $parts = [
+            'node',
+            $escape($script),
+            '--url ' . $escape($url),
+            '--cwd ' . $escape($this->projectRoot),
+        ];
+
+        $waitFor = is_string($input['wait_for'] ?? null) ? $input['wait_for'] : '';
+        if ($waitFor !== '') {
+            $parts[] = '--wait-for ' . $escape($waitFor);
+        }
+
+        $delay = is_numeric($input['delay'] ?? null) ? (int) $input['delay'] : 0;
+        if ($delay > 0) {
+            $parts[] = '--delay ' . $delay;
+        }
+
+        $stepsFile = null;
+        if (is_array($input['before'] ?? null) && $input['before'] !== []) {
+            $stepsFile = $this->writeStepsFile('inspect', $input);
+
+            if (is_string($stepsFile) && $stepsFile !== '') {
+                $parts[] = '--steps-file ' . $escape($stepsFile);
+            }
+        }
+
+        try {
+            [$exitCode, $stdout, $stderr] = $this->environment->runShell(implode(' ', $parts), $this->projectRoot);
+        } finally {
+            if (is_string($stepsFile) && $stepsFile !== '' && is_file($stepsFile)) {
+                @unlink($stepsFile);
+            }
+        }
+
+        $payload = json_decode($stdout !== '' ? $stdout : '[]', true);
+        $payload = is_array($payload) ? $payload : [];
+
+        if ($exitCode !== 0 || ($payload['success'] ?? false) !== true) {
+            $detail = is_string($payload['error'] ?? null) ? $payload['error'] : trim($stderr !== '' ? $stderr : $stdout);
+
+            return ['error' => 'Inspect failed: ' . ($detail !== '' ? $detail : 'inspect-page exited with code ' . $exitCode)];
+        }
+
+        $elements = is_array($payload['elements'] ?? null) ? array_values($payload['elements']) : [];
+
+        return [
+            'success' => true,
+            'url' => $url,
+            'title' => is_string($payload['title'] ?? null) ? $payload['title'] : '',
+            'elements' => $elements,
         ];
     }
 
@@ -228,12 +303,18 @@ final readonly class CaptureMediaTool implements ToolInterface
             $flags[] = '--dark';
         }
 
-        if ($action === 'screenshot') {
-            $selector = is_string($input['selector'] ?? null) ? $input['selector'] : '';
-            if ($selector !== '') {
-                $flags[] = '--selector ' . $escape($selector);
-            }
+        $selector = is_string($input['selector'] ?? null) ? $input['selector'] : '';
+        if ($selector !== '' && ($action === 'screenshot' || $action === 'video')) {
+            $flags[] = '--selector ' . $escape($selector);
+        }
 
+        if (is_numeric($input['padding'] ?? null) && (int) $input['padding'] >= 0) {
+            $flags[] = '--padding ' . (int) $input['padding'];
+        } elseif ($selector !== '' && ($input['full_page'] ?? false) !== true) {
+            $flags[] = '--padding 32';
+        }
+
+        if ($action === 'screenshot') {
             if (($input['full_page'] ?? false) === true) {
                 $flags[] = '--full-page';
             }
@@ -243,10 +324,8 @@ final readonly class CaptureMediaTool implements ToolInterface
             }
         }
 
-        // Videos carry recorded steps; screenshots only ever carry off-camera
-        // `before` setup (login etc.) — both travel via --steps-file.
         $hasBefore = is_array($input['before'] ?? null) && $input['before'] !== [];
-        $hasSteps = $action === 'video' && is_array($input['steps'] ?? null) && $input['steps'] !== [];
+        $hasSteps = is_array($input['steps'] ?? null) && $input['steps'] !== [];
 
         if ($hasBefore || $hasSteps) {
             $stepsFile = $this->writeStepsFile($action, $input);
@@ -261,14 +340,14 @@ final readonly class CaptureMediaTool implements ToolInterface
 
     /**
      * Persists agent-supplied capture instructions to a temp JSON file for
-     * --steps-file: recorded `steps` (video) plus optional off-camera `before`
-     * setup and inter-step `pace`.
+     * --steps-file: same-page `steps` plus optional off-camera `before` login
+     * and inter-step `pace`.
      *
      * @param  array<int|string, mixed>  $input
      */
     private function writeStepsFile(string $action, array $input): ?string
     {
-        $steps = $action === 'video' && is_array($input['steps'] ?? null)
+        $steps = is_array($input['steps'] ?? null)
             ? array_values($input['steps'])
             : [];
 

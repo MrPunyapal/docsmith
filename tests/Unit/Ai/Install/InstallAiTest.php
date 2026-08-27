@@ -352,3 +352,87 @@ it('writes antigravity config and skill', function (): void {
         removeDirectory($project);
     }
 });
+
+it('writes grok config and the grok skill', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        $install = new InstallAi($project, '.', 'docs-source', ['grok']);
+
+        $results = $install->install();
+
+        expect($results['.grok/config.toml'] ?? null)->toBe('written')
+            ->and($results['.grok/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['.ai/skills/docsmith-docs/SKILL.md'] ?? null)->toBe('written')
+            ->and($results['.mcp.json'] ?? null)->toBeNull();
+
+        $toml = (string) file_get_contents($project . '/.grok/config.toml');
+
+        expect($toml)->toContain('[mcp_servers.docsmith]')
+            ->toContain('command = "docsmith"')
+            ->toContain('--docs-source=docs-source');
+    } finally {
+        removeDirectory($project);
+    }
+});
+
+it('describes a Filament plugin package with its playground demo', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project . '/playground/app/Providers/Filament', 0777, true);
+
+    try {
+        file_put_contents($project . '/composer.json', json_encode([
+            'name' => 'acme/infinite-select',
+            'type' => 'library',
+            'require' => [
+                'filament/forms' => '^4.0',
+            ],
+        ], JSON_PRETTY_PRINT));
+        file_put_contents($project . '/playground/artisan', '#!/usr/bin/env php');
+        file_put_contents(
+            $project . '/playground/app/Providers/Filament/AdminPanelProvider.php',
+            "<?php\nclass AdminPanelProvider { public function panel() { return \$this->path('admin'); } }\n",
+        );
+
+        $install = new InstallAi($project, '.', 'docs-source', ['claude']);
+        $install->install();
+
+        $skill = (string) file_get_contents($project . '/.ai/skills/docsmith-docs/SKILL.md');
+
+        expect($skill)->toContain('Composer package')
+            ->toContain('acme/infinite-select')
+            ->toContain('playground/')
+            ->toContain('Filament plugin')
+            ->toContain('/admin');
+        expect(str_contains($skill, 'Laravel** application'))->toBeFalse();
+    } finally {
+        removeDirectory($project);
+    }
+});
+
+it('describes a Laravel application when artisan is at the project root', function (): void {
+    $project = sys_get_temp_dir() . '/docsmith-installai-' . uniqid();
+    mkdir($project, 0777, true);
+
+    try {
+        file_put_contents($project . '/artisan', '#!/usr/bin/env php');
+        file_put_contents($project . '/composer.json', json_encode([
+            'name' => 'acme/app',
+            'type' => 'project',
+            'require' => [
+                'laravel/framework' => '^12.0',
+            ],
+        ], JSON_PRETTY_PRINT));
+
+        $install = new InstallAi($project, '.', 'docs-source', ['claude']);
+        $install->install();
+
+        $skill = (string) file_get_contents($project . '/.ai/skills/docsmith-docs/SKILL.md');
+
+        expect($skill)->toContain('Laravel** application');
+        expect(str_contains($skill, 'Composer package'))->toBeFalse();
+    } finally {
+        removeDirectory($project);
+    }
+});

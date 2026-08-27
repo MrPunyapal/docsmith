@@ -59,6 +59,8 @@ This reads Markdown from `md/` and writes the site to `docs/` by default, which 
 - [Open Graph Images](open-graph.md)
 - [Architecture](architecture.md)
 - [Development](development.md)
+- [AI Documentation](ai/getting-started.md)
+- [MCP Server](ai/mcp-server.md)
 
 ## License
 

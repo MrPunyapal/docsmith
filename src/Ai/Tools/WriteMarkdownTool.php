@@ -40,6 +40,7 @@ final readonly class WriteMarkdownTool implements ToolInterface
                 'content' => ['type' => 'string', 'description' => 'Markdown content for the page'],
                 'media_path' => ['type' => 'string', 'description' => 'Relative path to media file (for insert_media)'],
                 'caption' => ['type' => 'string', 'description' => 'Caption for the embedded media'],
+                'after' => ['type' => 'string', 'description' => 'Insert after the first heading that contains this text instead of appending'],
             ],
         ];
     }
@@ -65,6 +66,7 @@ final readonly class WriteMarkdownTool implements ToolInterface
                 is_string($input['path'] ?? null) ? $input['path'] : '',
                 is_string($input['media_path'] ?? null) ? $input['media_path'] : '',
                 is_string($input['caption'] ?? null) ? $input['caption'] : '',
+                is_string($input['after'] ?? null) ? $input['after'] : '',
             ),
             default => ['error' => 'Unknown action: ' . $action],
         };
@@ -106,7 +108,7 @@ final readonly class WriteMarkdownTool implements ToolInterface
     /**
      * @return MediaResult|ErrorResult
      */
-    private function insertMedia(string $path, string $mediaPath, string $caption): array
+    private function insertMedia(string $path, string $mediaPath, string $caption, string $after = ''): array
     {
         $resolved = $this->resolvePath($path);
 
@@ -114,10 +116,39 @@ final readonly class WriteMarkdownTool implements ToolInterface
             return ['error' => 'Page not found: ' . $resolved];
         }
 
-        $mediaTag = "\n![{$caption}]({$mediaPath})\n";
-        file_put_contents($resolved, $mediaTag, FILE_APPEND);
+        $mediaTag = $this->mediaMarkup($mediaPath, $caption);
+        $content = (string) file_get_contents($resolved);
+
+        if ($after !== '') {
+            $count = 0;
+            $pattern = '/^(#{1,6}[^\n]*' . preg_quote($after, '/') . '[^\n]*)(\r?\n)/mi';
+            $replaced = preg_replace($pattern, '$1$2' . ltrim($mediaTag, "\n") . "\n", $content, 1, $count);
+
+            if (! is_string($replaced) || $count === 0) {
+                return ['error' => 'Heading not found: ' . $after];
+            }
+
+            $content = $replaced;
+        } else {
+            $content .= $mediaTag;
+        }
+
+        file_put_contents($resolved, $content);
 
         return ['success' => true, 'page' => $resolved, 'media' => $mediaPath, 'caption' => $caption];
+    }
+
+    private function mediaMarkup(string $mediaPath, string $caption): string
+    {
+        $extension = strtolower(pathinfo($mediaPath, PATHINFO_EXTENSION));
+
+        if (in_array($extension, ['webm', 'mp4', 'mov', 'm4v', 'ogv'], true)) {
+            $title = $caption !== '' ? ' title="' . str_replace(['&', '"'], ['&amp;', '&quot;'], $caption) . '"' : '';
+
+            return "\n<video controls src=\"{$mediaPath}\"{$title}></video>\n";
+        }
+
+        return "\n![{$caption}]({$mediaPath})\n";
     }
 
     private function resolvePath(string $path): string

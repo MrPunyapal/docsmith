@@ -21,7 +21,7 @@ final class InstallAiCommand extends Command
             ->setDescription('Install MCP config and agent skills for AI coding agents')
             ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Source path for the read_source tool', '.')
             ->addOption('docs-source', null, InputOption::VALUE_REQUIRED, 'Docs source path for the write_markdown tool', 'docs-source')
-            ->addOption('agents', null, InputOption::VALUE_REQUIRED, 'Comma-separated agents: claude, cursor, gemini, junie, boost, codex, opencode, antigravity (default: detect installed agents)')
+            ->addOption('agents', null, InputOption::VALUE_REQUIRED, 'Comma-separated agents: claude, cursor, gemini, junie, boost, codex, opencode, antigravity, grok (default: detect installed agents)')
             ->addOption('no-mcp', null, InputOption::VALUE_NONE, 'Skip MCP server configuration (skills only)')
             ->addOption('no-skills', null, InputOption::VALUE_NONE, 'Skip agent skills (MCP configuration only)')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing files');
@@ -75,6 +75,10 @@ final class InstallAiCommand extends Command
             $io->note('Antigravity reads .agents/mcp_config.json and the skill from .agents/skills automatically.');
         }
 
+        if (in_array('grok', $agents, true)) {
+            $io->note('Grok reads .grok/config.toml (mcp_servers.docsmith) and the skill from .grok/skills. Restart Grok or press r in /mcps after install.');
+        }
+
         $io->success('Done. Open your coding agent in this project and ask it to write documentation.');
 
         return Command::SUCCESS;
@@ -126,6 +130,10 @@ final class InstallAiCommand extends Command
 
         if ($home !== '' && is_dir($home . '/.config/opencode')) {
             $agents[] = 'opencode';
+        }
+
+        if ($home !== '' && is_dir($home . '/.grok')) {
+            $agents[] = 'grok';
         }
 
         if ($agents === []) {

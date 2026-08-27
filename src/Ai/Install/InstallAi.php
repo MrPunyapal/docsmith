@@ -12,7 +12,10 @@ final readonly class InstallAi
     private const array MCP_AGENTS = ['claude', 'cursor', 'gemini', 'junie', 'boost'];
 
     /** @var list<string> */
-    private const array KNOWN_AGENTS = ['claude', 'cursor', 'gemini', 'junie', 'boost', 'codex', 'opencode', 'antigravity'];
+    private const array KNOWN_AGENTS = ['claude', 'cursor', 'gemini', 'junie', 'boost', 'codex', 'opencode', 'antigravity', 'grok'];
+
+    /** @var list<string> */
+    private const array DEMO_DIRECTORIES = ['playground', 'example', 'examples', 'demo', 'workbench'];
 
     /**
      * @param  list<string>  $agents
@@ -76,7 +79,11 @@ final readonly class InstallAi
         }
 
         if (in_array('codex', $this->agents, true)) {
-            $results['.codex/config.toml'] = $this->installCodexConfig($force);
+            $results['.codex/config.toml'] = $this->installTomlConfig('.codex/config.toml', $force);
+        }
+
+        if (in_array('grok', $this->agents, true)) {
+            $results['.grok/config.toml'] = $this->installTomlConfig('.grok/config.toml', $force);
         }
 
         return $results;
@@ -113,32 +120,52 @@ final readonly class InstallAi
 
     private function appProfileSection(): string
     {
-        $requires = $this->composerRequirements();
+        $composer = $this->composerFile();
 
-        $section = "\n## App profile\n\nDetected from composer.json — tailor captures to THIS app:\n\n";
-        $lines = [];
+        if ($composer === []) {
+            return '';
+        }
 
+        $requires = $this->composerRequirements($composer);
         $filament = isset($requires['filament/filament']) ? 'filament/filament'
             : (isset($requires['filament/forms']) ? 'filament/forms' : null);
+        $isApplication = $this->isApplication($composer);
+        $demoPath = $this->demoAppPath();
+        $packageName = is_string($composer['name'] ?? null) ? $composer['name'] : 'this package';
+
+        $section = "\n## App profile\n\nDetected from this project. Use it.\n\n";
+        $lines = [];
+
+        if (! $isApplication) {
+            $lines[] = "This is a **Composer package** (`{$packageName}`), not an application. Document how a consumer installs it and the main use case. Do not write one page per source file.";
+
+            if ($demoPath !== null) {
+                $lines[] = "A runnable demo lives in `{$demoPath}/`. Boot it (`cd {$demoPath} && php artisan serve`) only if the user asked for screenshots or videos, and capture from there, not from the package root.";
+            } else {
+                $lines[] = 'No playground/example/demo/workbench app was detected. If the user asked for screenshots or videos and the package has a UI, ask for a running URL. If there is no UI, skip `capture_media`.';
+            }
+        }
 
         if ($filament !== null) {
             $constraint = $requires[$filament] ?? null;
             $version = is_string($constraint) && preg_match('/\d+/', $constraint, $m) === 1 ? $m[0] : '';
-            $panelPath = $this->filamentPanelPath();
+            $panelPath = $this->filamentPanelPath() ?? 'admin';
+            $kind = $isApplication ? 'application' : 'plugin';
 
-            $lines[] = "This project uses **Filament" . ($version !== '' ? " v{$version}" : '') . "**" .
-                ($panelPath !== null ? " — panel served at `/{$panelPath}`" : ' (panel path not detected; check the Panel provider)') . '.';
-            $lines[] = '- Log in off-camera with `before` steps: goto `/admin/login`, fill `input[type=email]` / `input[type=password]`, click `button[type=submit]`, wait for a `.fi-*` element. Never record the login page itself.';
-            $lines[] = '- Deep-link straight to target pages (e.g. a record edit URL) instead of clicking through the sidebar.';
-            $lines[] = "- Frame widgets with Filament's own classes: form fields live under `.fi-field`, select panels `.fi-select-panel`-style overlays — inspect the DOM first, then `focus` the widget for the recording.";
-        } elseif (isset($requires['laravel/framework'])) {
-            $lines[] = 'This project is a **Laravel** application.';
-            $lines[] = '- If the app has auth, log in via `before` steps (`/login`, fill credentials, submit, wait for the post-login page) so no login screen is ever recorded.';
-            $lines[] = '- Deep-link to the exact route you are documenting.';
+            $lines[] = "This project is a **Filament {$kind}" . ($version !== '' ? " (v{$version})" : '') . "**. Panel path `/{$panelPath}`.";
+            $lines[] = '- Capture screenshots or videos only if the user asked.';
+            $lines[] = '- Ask the user for demo credentials. Never invent emails or passwords.';
+            $lines[] = "- Login in `before` (off-camera): goto `/{$panelPath}/login`, fill email/password, submit, wait for a `.fi-*` element. Do not record the login page unless login is the topic.";
+            $lines[] = '- Deep-link to the page that hosts the widget. `inspect`, then screenshot/video with `selector`. Form fields: `.fi-field`. Select overlays: `.fi-select-panel`.';
+        } elseif ($isApplication && isset($requires['laravel/framework'])) {
+            $lines[] = 'This project is a **Laravel** application. Document the main user flows, not every class.';
+            $lines[] = '- Ask the user for demo credentials. Never invent emails or passwords.';
+            $lines[] = '- If the app has auth, log in via `before` (`/login`, fill, submit, wait) so the login screen is not recorded.';
+            $lines[] = '- Deep-link to the route you are documenting.';
         }
 
         if (isset($requires['livewire/livewire']) && $filament === null) {
-            $lines[] = '- Livewire components update over wire requests — after interacting, add a short `{\"action\": \"wait\", \"ms\": 600}` before capturing so the morph settles.';
+            $lines[] = '- Livewire updates over the wire. After a click, add `{"action": "wait", "ms": 600}` before capturing.';
         }
 
         if ($lines === []) {
@@ -149,9 +176,33 @@ final readonly class InstallAi
     }
 
     /**
-     * @return array<string, mixed> merged require + require-dev constraints
+     * @param  array<string, mixed>  $composer
      */
-    private function composerRequirements(): array
+    private function isApplication(array $composer): bool
+    {
+        $type = is_string($composer['type'] ?? null) ? $composer['type'] : '';
+
+        return $type === 'project' || is_file($this->projectRoot . '/artisan');
+    }
+
+    /**
+     * Relative directory of a bundled demo app, if one exists.
+     */
+    private function demoAppPath(): ?string
+    {
+        foreach (self::DEMO_DIRECTORIES as $directory) {
+            if (is_file($this->projectRoot . '/' . $directory . '/artisan')) {
+                return $directory;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function composerFile(): array
     {
         $path = $this->projectRoot . '/composer.json';
 
@@ -165,10 +216,26 @@ final readonly class InstallAi
             return [];
         }
 
+        $composer = [];
+        foreach ($decoded as $key => $value) {
+            if (is_string($key)) {
+                $composer[$key] = $value;
+            }
+        }
+
+        return $composer;
+    }
+
+    /**
+     * @param  array<string, mixed>  $composer
+     * @return array<string, mixed> merged require + require-dev constraints
+     */
+    private function composerRequirements(array $composer): array
+    {
         /** @var array<string, mixed> $merged */
         $merged = [];
 
-        foreach ([is_array($decoded['require'] ?? null) ? $decoded['require'] : [], is_array($decoded['require-dev'] ?? null) ? $decoded['require-dev'] : []] as $group) {
+        foreach ([is_array($composer['require'] ?? null) ? $composer['require'] : [], is_array($composer['require-dev'] ?? null) ? $composer['require-dev'] : []] as $group) {
             foreach ($group as $package => $constraint) {
                 if (is_string($package)) {
                     $merged[$package] = $constraint;
@@ -235,6 +302,10 @@ final readonly class InstallAi
 
         if (in_array('opencode', $this->agents, true)) {
             $targets['.opencode/skills'] = true;
+        }
+
+        if (in_array('grok', $this->agents, true)) {
+            $targets['.grok/skills'] = true;
         }
 
         return array_keys($targets);
@@ -307,9 +378,9 @@ final readonly class InstallAi
         return $this->writeFile($path, $json . PHP_EOL);
     }
 
-    private function installCodexConfig(bool $force): string
+    private function installTomlConfig(string $relative, bool $force): string
     {
-        $path = $this->projectRoot . '/.codex/config.toml';
+        $path = $this->projectRoot . '/' . $relative;
         $section = $this->codexSection();
 
         if (is_file($path)) {

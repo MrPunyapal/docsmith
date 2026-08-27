@@ -136,6 +136,56 @@ it('inserts media into a page', function (): void {
     }
 });
 
+it('inserts a video tag for webm files', function (): void {
+    $docsPath = sys_get_temp_dir() . '/docsmith-wmd-' . uniqid();
+    mkdir($docsPath, 0777, true);
+
+    try {
+        $tool = new WriteMarkdownTool($docsPath);
+
+        file_put_contents($docsPath . '/media-page.md', "# Usage\n\n## Opening the select\n");
+
+        $tool->handle([
+            'action' => 'insert_media',
+            'path' => 'media-page.md',
+            'media_path' => 'media/select-flow.webm',
+            'caption' => 'Opening the select',
+            'after' => 'Opening the select',
+        ]);
+
+        $content = (string) file_get_contents($docsPath . '/media-page.md');
+
+        expect($content)->toContain('<video controls src="media/select-flow.webm" title="Opening the select"></video>')
+            ->and($content)->not->toContain('![Opening the select]')
+            ->and($content)->toMatch('/## Opening the select\s+<video/');
+    } finally {
+        removeDirectory($docsPath);
+    }
+});
+
+it('returns an error when insert_media after heading is missing', function (): void {
+    $docsPath = sys_get_temp_dir() . '/docsmith-wmd-' . uniqid();
+    mkdir($docsPath, 0777, true);
+
+    try {
+        $tool = new WriteMarkdownTool($docsPath);
+
+        file_put_contents($docsPath . '/media-page.md', "# Usage\n");
+
+        $result = $tool->handle([
+            'action' => 'insert_media',
+            'path' => 'media-page.md',
+            'media_path' => 'media/shot.png',
+            'caption' => 'Shot',
+            'after' => 'Not a heading',
+        ]);
+
+        expect($result['error'] ?? '')->toContain('Heading not found');
+    } finally {
+        removeDirectory($docsPath);
+    }
+});
+
 it('returns error when inserting media into non-existent page', function (): void {
     $docsPath = sys_get_temp_dir() . '/docsmith-wmd-' . uniqid();
     mkdir($docsPath, 0777, true);

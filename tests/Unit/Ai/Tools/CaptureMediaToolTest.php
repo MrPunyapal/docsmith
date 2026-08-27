@@ -88,9 +88,17 @@ it('exposes a capture_media tool with a complete schema', function (): void {
     $properties = is_array($schema['properties'] ?? null) ? $schema['properties'] : [];
     $required = is_array($schema['required'] ?? null) ? $schema['required'] : [];
 
+    $action = is_array($properties['action'] ?? null) ? $properties['action'] : [];
+    $enum = is_array($action['enum'] ?? null) ? $action['enum'] : [];
+
     expect($required)->toContain('action')
         ->and($required)->toContain('url')
-        ->and(array_keys($properties))->toContain('steps');
+        ->and($enum)->toContain('inspect')
+        ->and($enum)->toContain('screenshot')
+        ->and($enum)->toContain('video')
+        ->and(array_keys($properties))->toContain('steps')
+        ->and(array_keys($properties))->toContain('padding')
+        ->and(array_keys($properties))->toContain('selector');
 });
 
 it('returns install guidance when capturist is missing', function (): void {
@@ -193,4 +201,149 @@ it('surfaces capturist failures as errors', function (): void {
     $result = $tool->handle(['action' => 'screenshot', 'url' => 'http://127.0.0.1:8000/']);
 
     expect($result['error'] ?? null)->toContain('Capture failed');
+});
+
+it('writes before steps and pace into the steps file for video', function (): void {
+    $environment = new FakeCaptureEnvironment();
+    $tool = new CaptureMediaTool('/docs-source', '/project', $environment);
+
+    $tool->handle([
+        'action' => 'video',
+        'url' => 'http://127.0.0.1:8000/admin/users',
+        'name' => 'select-flow',
+        'pace' => 800,
+        'before' => [
+            ['action' => 'goto', 'url' => 'http://127.0.0.1:8000/admin/login'],
+            ['action' => 'fill', 'selector' => 'input[type=email]', 'value' => 'admin@example.com'],
+        ],
+        'steps' => [
+            ['action' => 'click', 'selector' => '.fi-select-input'],
+            ['action' => 'focus', 'selector' => '.fi-select-panel'],
+        ],
+    ]);
+
+    $decoded = json_decode($environment->stepsFileContents, true);
+    $decoded = is_array($decoded) ? $decoded : [];
+    $before = is_array($decoded['before'] ?? null) ? $decoded['before'] : [];
+    $steps = is_array($decoded['steps'] ?? null) ? $decoded['steps'] : [];
+
+    $firstBefore = is_array($before[0] ?? null) ? $before[0] : [];
+    $secondStep = is_array($steps[1] ?? null) ? $steps[1] : [];
+
+    expect($decoded['pace'] ?? null)->toBe(800)
+        ->and($firstBefore['action'] ?? null)->toBe('goto')
+        ->and($secondStep['action'] ?? null)->toBe('focus');
+});
+
+it('writes before steps for a screenshot without recorded steps', function (): void {
+    $environment = new FakeCaptureEnvironment();
+    $tool = new CaptureMediaTool('/docs-source', '/project', $environment);
+
+    $tool->handle([
+        'action' => 'screenshot',
+        'url' => 'http://127.0.0.1:8000/admin/users',
+        'name' => 'users-table',
+        'selector' => '.fi-ta',
+        'before' => [
+            ['action' => 'fill', 'selector' => 'input[type=email]', 'value' => 'admin@example.com'],
+            ['action' => 'click', 'selector' => 'button[type=submit]'],
+        ],
+    ]);
+
+    $command = $environment->commands[0] ?? '';
+    $decoded = json_decode($environment->stepsFileContents, true);
+    $decoded = is_array($decoded) ? $decoded : [];
+    $before = is_array($decoded['before'] ?? null) ? $decoded['before'] : [];
+    $steps = is_array($decoded['steps'] ?? null) ? $decoded['steps'] : [];
+
+    expect($command)->toContain('shot --url')
+        ->and($command)->toContain('--selector ".fi-ta"')
+        ->and($command)->toContain('--padding 32')
+        ->and($command)->toContain('--steps-file ')
+        ->and($steps)->toBe([])
+        ->and($before)->toHaveCount(2);
+});
+
+it('crops a screenshot with padding and same-page steps', function (): void {
+    $environment = new FakeCaptureEnvironment();
+    $tool = new CaptureMediaTool('/docs-source', '/project', $environment);
+
+    $tool->handle([
+        'action' => 'screenshot',
+        'url' => 'http://127.0.0.1:8000/admin/users',
+        'name' => 'select-open',
+        'selector' => '.fi-select-panel',
+        'padding' => 24,
+        'steps' => [
+            ['action' => 'click', 'selector' => '.fi-select-input'],
+            ['action' => 'wait', 'selector' => '.fi-select-panel'],
+        ],
+    ]);
+
+    $command = $environment->commands[0] ?? '';
+    $decoded = json_decode($environment->stepsFileContents, true);
+    $decoded = is_array($decoded) ? $decoded : [];
+    $steps = is_array($decoded['steps'] ?? null) ? $decoded['steps'] : [];
+    $first = is_array($steps[0] ?? null) ? $steps[0] : [];
+
+    expect($command)->toContain('shot --url')
+        ->and($command)->toContain('--selector ".fi-select-panel"')
+        ->and($command)->toContain('--padding 24')
+        ->and($first['action'] ?? null)->toBe('click');
+});
+
+it('passes selector and padding on video so the widget is framed', function (): void {
+    $environment = new FakeCaptureEnvironment();
+    $tool = new CaptureMediaTool('/docs-source', '/project', $environment);
+
+    $tool->handle([
+        'action' => 'video',
+        'url' => 'http://127.0.0.1:8000/admin/users',
+        'name' => 'select-flow',
+        'selector' => '.fi-select-panel',
+        'steps' => [
+            ['action' => 'click', 'selector' => '.fi-select-input'],
+            ['action' => 'wait', 'selector' => '.fi-select-panel'],
+        ],
+    ]);
+
+    $command = $environment->commands[0] ?? '';
+
+    expect($command)->toContain('record --url')
+        ->and($command)->toContain('--selector ".fi-select-panel"')
+        ->and($command)->toContain('--padding 32');
+});
+
+it('inspects a page and returns widget selectors', function (): void {
+    $payload = json_encode([
+        'success' => true,
+        'title' => 'Users',
+        'elements' => [
+            ['selector' => '.fi-select-panel', 'tag' => 'div', 'text' => 'Search', 'role' => 'listbox'],
+        ],
+    ]);
+
+    $environment = new FakeCaptureEnvironment(stdout: is_string($payload) ? $payload : '{}');
+    $tool = new CaptureMediaTool('/docs-source', '/project', $environment);
+
+    /** @var array<string, mixed> $result */
+    $result = $tool->handle([
+        'action' => 'inspect',
+        'url' => 'http://127.0.0.1:8000/admin/users',
+        'before' => [
+            ['action' => 'goto', 'url' => 'http://127.0.0.1:8000/admin/login'],
+        ],
+    ]);
+
+    $command = $environment->commands[0] ?? '';
+    $elements = is_array($result['elements'] ?? null) ? $result['elements'] : [];
+    $first = is_array($elements[0] ?? null) ? $elements[0] : [];
+
+    expect($result['success'] ?? false)->toBeTrue()
+        ->and($result['title'] ?? null)->toBe('Users')
+        ->and($first['selector'] ?? null)->toBe('.fi-select-panel')
+        ->and($command)->toContain('inspect-page.mjs')
+        ->and($command)->toContain('--url "http://127.0.0.1:8000/admin/users"')
+        ->and($command)->toContain('--steps-file ')
+        ->and($command)->not->toContain('capturist');
 });
