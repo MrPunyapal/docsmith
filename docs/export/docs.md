@@ -137,6 +137,78 @@ To split the steps, call `captureOg(false)` in the HTML job, then capture later 
 
 ---
 
+# AI documentation
+
+# AI documentation
+
+Ask your coding agent (Grok, Claude Code, Codex, Cursor, OpenCode) to write
+docs. Docsmith gives it tools. Docsmith does not call an LLM and does not need
+its own API key.
+
+## Quick start
+
+```bash
+docsmith install:ai
+```
+
+Then in the agent:
+
+> Write usage docs for this project. Put a quick start on the landing page.
+
+Ask for screenshots or a demo video only if you want them:
+
+> Add cropped screenshots and a short demo video of the UI. If you cannot
+> boot a demo, ask me for a URL.
+
+`install:ai` detects agents you have installed and writes:
+
+- `.ai/skills/docsmith-docs/SKILL.md` (also copied into each agent's skills dir)
+- `.mcp.json` for Claude Code, Cursor, Gemini CLI, Junie, Boost
+- `.grok/config.toml` and `.grok/skills/` when Grok is installed
+- `.codex/config.toml` when Codex is installed
+- `opencode.json` when OpenCode is installed
+- `.agents/mcp_config.json` when Antigravity is installed
+
+```bash
+docsmith install:ai --agents=grok,claude --source=./app --docs-source=./docs-source --force
+docsmith install:ai --no-mcp        # skills only
+docsmith install:ai --no-skills     # MCP config only
+```
+
+## What the agent should produce
+
+A small set of usage pages, not one page per source file.
+
+The landing page opens with a quick start and the most common use case. The
+agent does not take screenshots or record videos unless you asked. When you
+do, the widget is cropped with a little space around it, and login is not in
+the recording unless the page is about login.
+
+The agent uses `read_source`, `write_markdown`, and `build_site`. It uses
+`capture_media` only when you asked for images or videos. See
+[MCP Server](mcp-server.md).
+
+## Build the site
+
+```bash
+docsmith build --source=./docs-source --output=./docs --title="My App"
+```
+
+You can also start the MCP server yourself:
+
+```bash
+docsmith mcp:serve --transport=stdio --source=./my-app --docs-source=./docs-source
+```
+
+## Old AI pipeline
+
+Earlier versions called an LLM from Docsmith (`agent:run`, providers, a
+reviewer). That is gone. Coding agents do the writing with their own keys.
+The old code is in git history on `feat/AI`. See [Future Scope](future-scope.md).
+
+
+---
+
 # Architecture
 
 # Architecture
@@ -401,11 +473,105 @@ This reads Markdown from `md/` and writes the site to `docs/` by default, which 
 - [Open Graph Images](open-graph.md)
 - [Architecture](architecture.md)
 - [Development](development.md)
+- [AI Documentation](ai/getting-started.md)
+- [MCP Server](ai/mcp-server.md)
 
 ## License
 
 MIT. See [LICENSE](https://github.com/MrPunyapal/docsmith/blob/main/LICENSE) for details.
 
+
+---
+
+# Future Scope
+
+# Future Scope
+
+## The Internal AI Pipeline (Removed)
+
+Earlier iterations of Docsmith shipped an internal AI pipeline: a `laravel/ai`
+SDK-based provider, then a dependency-free `OpenAiHttpProvider` (OpenAI-compatible
+chat completions over cURL), a project-level planner that let the model design
+whole doc sets, a `ReviewerAgent` quality pass, an `agent:run` command, and
+`--ai-provider` / `--ai-model` / `--ai-api-key` / `--ai-base-url` CLI options.
+Later it also shipped a structural `generate` pipeline that produced shallow
+LLM-free pages and a Playwright media-capture stage.
+
+All of it was removed in favor of the coding-agent architecture: agents bring
+their own model and keys, and drive Docsmith through MCP (`read_source`,
+`write_markdown`, `capture_media`, `build_site`). The media-capture stage was
+rebuilt properly as the `capture_media` tool backed by
+[capturist](https://github.com/MrPunyapal/capturist) — screenshots and stepped
+videos of the running app, written straight into the docs source.
+
+The removed code lives in git history (pre-refactor commits on `feat/AI`,
+before `f808bf1`) if anyone ever wants to revisit an unattended/CI pipeline.
+
+## Multi-Agent Parallel Generation
+
+For large codebases, doc generation could be parallelized — each module or
+namespace processed simultaneously. This would dramatically reduce generation
+time for projects with hundreds of files.
+
+## Custom Prompt Templates
+
+Allow users to define documentation style and structure conventions the coding
+agent should follow (for MCP-driven generation):
+
+```php
+Docsmith::serveMcp(
+    sourcePath: './app',
+    docsSourcePath: './docs-source',
+);
+```
+
+## RAG from Existing Docs
+
+Feed existing documentation as context for consistency. Newly generated pages
+would match the tone, terminology, and structure of hand-written docs already in
+the project.
+
+## CI Integration
+
+Run `docsmith build` as a GitHub Action step to publish the markdown docs as a
+static site on every push:
+
+```yaml
+- run: docsmith build --source=./docs-source --output=./docs
+```
+
+## Web Dashboard
+
+A browser-based UI to monitor, trigger, and review doc generation — showing
+pipeline progress, media previews, and (when the AI pipeline returns) review
+scores before publishing.
+
+## Plugin System
+
+Third-party agents and tools via Composer:
+
+```bash
+composer require docsmith/agent-swagger
+composer require docsmith/tool-graphviz
+```
+
+Plugins could add new source scanners (for Python, Go, Rust), custom media
+capturers, or alternative output formats (PDF, API Blueprint).
+
+## Multi-Format Export
+
+Beyond HTML sites, generate PDF manuals, OpenAPI specs, or Markdown API
+references from the same pipeline.
+
+## Incremental Generation
+
+Only regenerate docs for changed files since the last build, using git diffs to
+detect modifications. This would make iteration on large projects near-instant.
+
+## Docstring Extraction
+
+Parse PHPDoc, JSDoc, or Python docstrings to enrich generated documentation
+with inline comments, `@param` / `@return` annotations, and type information.
 
 ---
 
@@ -552,6 +718,191 @@ Every page's raw Markdown merged into a single file with frontmatter metadata.
 `siteUrl` must be set for correct URL generation in `llms.txt`.
 
 If no `index.md` exists in the source directory, the generated landing page is included in the export.
+
+
+---
+
+# MCP Server for AI Assistants
+
+# MCP Server for AI Assistants
+
+Docsmith exposes documentation tools over MCP. Grok, Claude Code, Codex, or
+Cursor can read your source, write pages, capture UI, and build the site.
+They use their own API key. Docsmith never calls an LLM.
+
+## When to use MCP vs the Builder
+
+| MCP Server | Builder CLI (`docsmith build`) |
+|------------|--------------------------------|
+| AI assistant drives the process interactively | Renders markdown to a static site |
+| Assistant uses its own API key | No API key at all |
+| Good for iterative, guided doc creation | Good for CI/CD publishing |
+| Tools exposed: read, write, capture, build | One command: markdown → HTML |
+
+## Starting the Server
+
+### stdio Mode (for local AI assistants)
+
+```bash
+docsmith mcp:serve \
+    --transport=stdio \
+    --source=./my-app \
+    --docs-source=./docs-source
+```
+
+### HTTP Mode (for remote agents)
+
+```bash
+docsmith mcp:serve \
+    --transport=http \
+    --port=8090 \
+    --source=./my-app \
+    --docs-source=./docs-source
+```
+
+## Exposed Tools
+
+| Tool | Description | Needs Docsmith API key? |
+|------|-------------|-------------------------|
+| `read_source` | Read and analyze source code files | No |
+| `write_markdown` | Create or update markdown documentation pages | No |
+| `capture_media` | Inspect a running page, crop a widget screenshot, or record a short video ([capturist](https://github.com/MrPunyapal/capturist) + Playwright) | No |
+| `build_site` | Build the static HTML documentation site | No |
+
+These tools only touch local files. Call `capture_media` only when the user
+asks for screenshots or videos.
+
+`capture_media` requires one-time dev dependencies in the documented project:
+
+```bash
+npm install -D playwright capturist@^0.5.0
+npx playwright install chromium
+```
+
+`capture_media` actions:
+
+- `inspect`: open the URL (optional `before` login) and return visible widgets
+  with CSS selectors. Call this first.
+- `screenshot`: PNG cropped to `selector`, with 32px of space around it
+  (`padding`). `steps` can open a dropdown on the same page, then crop.
+  `before` is login, off-camera.
+- `video`: short WebM. Requires `steps`. Pass `selector` to frame the widget
+  the same way after the steps. Pace 700-1000.
+
+Files land in the docs source `media/` directory. Stills:
+`![caption](media/shot.png)`. Videos:
+`<video controls preload="none" src="media/flow.webm"></video>`. Use
+`write_markdown` with `after` to place a capture below the heading for the step
+it documents.
+
+## PHP API
+
+```php
+use Docsmith\Docsmith;
+
+// Start stdio server
+Docsmith::serveMcp(
+    transport: 'stdio',
+    sourcePath: __DIR__ . '/app',
+    docsSourcePath: __DIR__ . '/docs-source',
+);
+
+// Start HTTP server on port 8090
+Docsmith::serveMcp(
+    transport: 'http',
+    port: 8090,
+    sourcePath: __DIR__ . '/app',
+    docsSourcePath: __DIR__ . '/docs-source',
+);
+```
+
+## Using with AI Assistants
+
+### Claude Code
+
+Add to your Claude Code MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "docsmith": {
+      "command": "docsmith",
+      "args": ["mcp:serve", "--transport=stdio", "--source=.", "--docs-source=docs-source"]
+    }
+  }
+}
+```
+
+Claude Code can then call `read_source` to explore your codebase,
+`write_markdown` to create documentation pages, and `build_site` to generate
+the static site. Call `capture_media` only if the user asked for screenshots
+or a demo video.
+
+### Grok
+
+`docsmith install:ai` writes `.grok/config.toml` and `.grok/skills/` when Grok
+is detected (or pass `--agents=grok`). Native Grok MCP config:
+
+```toml
+[mcp_servers.docsmith]
+command = "docsmith"
+args = ["mcp:serve", "--transport=stdio", "--source=.", "--docs-source=docs-source"]
+```
+
+Restart Grok or press `r` in `/mcps` after installing. Then ask it to write
+docs. It loads the `docsmith-docs` skill and the MCP tools.
+
+### Codex / other agents
+
+Point any MCP-capable agent at the same server. Use `--transport=http
+--port=8090` when the agent connects over HTTP, or stdio when it launches the
+command itself.
+
+## Using with Laravel Boost
+
+Docsmith has **no dependency on Laravel Boost**. The setup below is one way to
+register the same server. The Claude Code / Codex / Cursor sections above work
+without Boost.
+
+Laravel Boost ships its own MCP server (`php artisan boost:mcp`) and wires it
+into your agents via `.mcp.json`. Docsmith sits next to it: add both servers to
+the same config, and your Boost-configured agent (Claude Code, Codex, Gemini
+CLI, ...) gets docsmith's `read_source` / `write_markdown` / `capture_media` /
+`build_site` tools alongside Boost's tinker and schema tools.
+
+```json
+{
+  "mcpServers": {
+    "laravel-boost": {
+      "command": "php",
+      "args": ["artisan", "boost:mcp"]
+    },
+    "docsmith": {
+      "command": "docsmith",
+      "args": ["mcp:serve", "--transport=stdio", "--source=.", "--docs-source=docs-source"]
+    }
+  }
+}
+```
+
+If `docsmith` is not on your PATH (Herd/Valet or per-project installs), point at
+the binary explicitly, the same way you would for `php`:
+
+```json
+{
+  "mcpServers": {
+    "docsmith": {
+      "command": "/Users/you/.config/herd/bin/php",
+      "args": ["vendor/mrpunyapal/docsmith/bin/docsmith", "mcp:serve", "--transport=stdio", "--source=.", "--docs-source=docs-source"]
+    }
+  }
+}
+```
+
+Then prompt the agent from the project root, for example:
+
+> Write usage docs for this Laravel app. Quick start on the landing page.
+> Capture the UI if you can boot it. If not, ask me for a URL.
 
 
 ---

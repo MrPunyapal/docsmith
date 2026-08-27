@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server for AI Assistants | Docsmith</title>
+    <meta name="description" content="Craft static documentation sites from Markdown with minimal setup.">
+    <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MCP Server for AI Assistants | Docsmith">
+    <meta property="og:description" content="">
+    <meta property="og:url" content="https://mrpunyapal.github.io/docsmith/ai/mcp-server">
+    <meta property="og:image" content="https://mrpunyapal.github.io/docsmith/og/cover.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MCP Server for AI Assistants | Docsmith">
+    <meta name="twitter:description" content="">
+    <meta name="twitter:image" content="https://mrpunyapal.github.io/docsmith/og/cover.png">
+    <link rel="stylesheet" href="../../assets/app.css">
+    <script src="../../assets/app.js" defer></script>
+</head>
+<body data-docsmith-root="../../">
+    <div class="shell has-right-rail">
+        <aside class="sidebar" data-docsmith-sidebar>
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <h1 class="brand">Docsmith</h1>
+                    <p class="tagline">Craft static documentation sites from Markdown with minimal setup.</p>
+                </div>
+                <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
+            </div>
+            <div class="sidebar-panel" id="docsmith-sidebar-panel" data-docsmith-sidebar-panel>
+                
+                <div class="sidebar-actions"><a class="sidebar-action-link" href="https://github.com/MrPunyapal/docsmith">Repository</a><button type="button" class="theme-toggle" data-docsmith-theme-toggle>Theme</button></div>
+                <div class="search">
+                    <input type="search" placeholder="Search pages  (⌘K)" aria-label="Search pages" data-docsmith-search>
+                    <div class="search-results" data-docsmith-search-results hidden></div>
+                    <div class="search-empty" data-docsmith-empty>No pages match your search.</div>
+                </div>
+                <nav class="nav" data-docsmith-nav><section class="nav-group" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="false"><span class="nav-group-label"><span>General</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../../" data-nav-item data-title="Docsmith" data-search="Docsmith Docsmith">Docsmith</a><a class="" href="../../installation/" data-nav-item data-title="Installation" data-search="Installation Installation">Installation</a><a class="" href="../../usage/" data-nav-item data-title="Usage" data-search="Usage Usage">Usage</a><a class="" href="../../architecture/" data-nav-item data-title="Architecture" data-search="Architecture Architecture">Architecture</a><a class="" href="../../development/" data-nav-item data-title="Development" data-search="Development Development">Development</a><a class="" href="../../open-graph/" data-nav-item data-title="Open Graph" data-search="Open Graph Images Open Graph">Open Graph</a><a class="" href="../../llm-export/" data-nav-item data-title="LLM Export" data-search="LLM Export LLM Export">LLM Export</a><a class="" href="../../versioned-docs/" data-nav-item data-title="Versioned Docs" data-search="Versioned Docs Versioned Docs">Versioned Docs</a><a class="" href="../../docs-hub/" data-nav-item data-title="Docs Hub" data-search="Docs Hub Docs Hub">Docs Hub</a><a class="" href="../../media/" data-nav-item data-title="Media" data-search="Media Media">Media</a><a class="" href="../../remote-sources/" data-nav-item data-title="Remote Sources" data-search="Remote Sources Remote Sources">Remote Sources</a><a class="" href="../../workflows/" data-nav-item data-title="Workflows" data-search="Workflows Workflows">Workflows</a></div></section><section class="nav-group is-open has-active" data-nav-group><button type="button" class="nav-group-toggle" data-nav-toggle aria-expanded="true"><span class="nav-group-label"><span>Ai</span></span><span class="nav-group-caret" aria-hidden="true">▾</span></button><div class="nav-group-items" data-nav-items><a class="" href="../getting-started/" data-nav-item data-title="AI documentation" data-search="AI documentation AI documentation">AI documentation</a><a class="" href="../future-scope/" data-nav-item data-title="Future Scope" data-search="Future Scope Future Scope">Future Scope</a><a class="active" href="./" data-nav-item data-title="MCP Server for AI Assistants" data-search="MCP Server for AI Assistants MCP Server for AI Assistants">MCP Server for AI Assistants</a></div></section></nav>
+                <a class="docsmith-badge" href="https://github.com/MrPunyapal/docsmith" target="_blank" rel="noopener noreferrer" data-docsmith-badge aria-label="Built with DocSmith"><svg class="docsmith-badge-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-6.716-4.35-9.428-7.052C.4 11.692-.21 8.9 1.38 6.87 2.736 5.14 5.09 4.583 6.86 5.686 8 6.41 8.86 7.55 9.6 8.7c.74-1.15 1.6-2.29 2.74-3.014 1.77-1.103 4.124-.546 5.48 1.184 1.59 2.03.98 4.822-1.192 7.078C18.716 16.65 12 21 12 21z"/></svg><span class="docsmith-badge-text">Built with</span><span class="docsmith-badge-brand">DocSmith</span></a>
+            </div>
+        </aside>
+        <button type="button" class="sidebar-backdrop" data-docsmith-sidebar-backdrop aria-label="Close menu"></button>
+        <main class="content">
+            <article>
+                <header class="doc-head">
+                    <nav class="breadcrumbs" aria-label="Breadcrumbs"><a href="../../">Docs</a><span class="breadcrumb-sep">/</span><a href="../getting-started/">Ai</a></nav>
+                    <h1>MCP Server for AI Assistants</h1>
+                    
+                </header>
+                <div class="doc-body">
+                    <p>Docsmith exposes documentation tools over MCP. Grok, Claude Code, Codex, or
+Cursor can read your source, write pages, capture UI, and build the site.
+They use their own API key. Docsmith never calls an LLM.</p>
+<h2 id="when-to-use-mcp-vs-the-builder">When to use MCP vs the Builder</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>MCP Server</th>
+<th>Builder CLI (<code>docsmith build</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI assistant drives the process interactively</td>
+<td>Renders markdown to a static site</td>
+</tr>
+<tr>
+<td>Assistant uses its own API key</td>
+<td>No API key at all</td>
+</tr>
+<tr>
+<td>Good for iterative, guided doc creation</td>
+<td>Good for CI/CD publishing</td>
+</tr>
+<tr>
+<td>Tools exposed: read, write, capture, build</td>
+<td>One command: markdown → HTML</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="starting-the-server">Starting the Server</h2>
+<h3 id="stdio-mode-for-local-ai-assistants">stdio Mode (for local AI assistants)</h3>
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsmith</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">mcp:serve</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-transport=stdio</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-source=./my-app</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-docs-source=./docs-source</span><span class="token">
+</span></span></code></pre>
+<h3 id="http-mode-for-remote-agents">HTTP Mode (for remote agents)</h3>
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsmith</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">mcp:serve</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-transport=http</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-port=8090</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-source=./my-app</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-docs-source=./docs-source</span><span class="token">
+</span></span></code></pre>
+<h2 id="exposed-tools">Exposed Tools</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Description</th>
+<th>Needs Docsmith API key?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read_source</code></td>
+<td>Read and analyze source code files</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>write_markdown</code></td>
+<td>Create or update markdown documentation pages</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>capture_media</code></td>
+<td>Inspect a running page, crop a widget screenshot, or record a short video (<a href="https://github.com/MrPunyapal/capturist">capturist</a> + Playwright)</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>build_site</code></td>
+<td>Build the static HTML documentation site</td>
+<td>No</td>
+</tr>
+</tbody>
+</table></div>
+<p>These tools only touch local files. Call <code>capture_media</code> only when the user
+asks for screenshots or videos.</p>
+<p><code>capture_media</code> requires one-time dev dependencies in the documented project:</p>
+<pre class="phiki language-shellscript github-light phiki-themes github-dark" data-language="shellscript" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">npm</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">install</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">-</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">D</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">playwright</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">capturist@^0.5.0</span><span class="token">
+</span></span><span class="line"><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">npx</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">playwright</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">install</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">chromium</span><span class="token">
+</span></span></code></pre>
+<p><code>capture_media</code> actions:</p>
+<ul>
+<li><code>inspect</code>: open the URL (optional <code>before</code> login) and return visible widgets
+with CSS selectors. Call this first.</li>
+<li><code>screenshot</code>: PNG cropped to <code>selector</code>, with 32px of space around it
+(<code>padding</code>). <code>steps</code> can open a dropdown on the same page, then crop.
+<code>before</code> is login, off-camera.</li>
+<li><code>video</code>: short WebM. Requires <code>steps</code>. Pass <code>selector</code> to frame the widget
+the same way after the steps. Pace 700-1000.</li>
+</ul>
+<p>Files land in the docs source <code>media/</code> directory. Stills:
+<code>![caption](media/shot.png)</code>. Videos:
+<code>&lt;video controls preload="none" src="media/flow.webm"&gt;&lt;/video&gt;</code>. Use
+<code>write_markdown</code> with <code>after</code> to place a capture below the heading for the step
+it documents.</p>
+<h2 id="php-api">PHP API</h2>
+<pre class="phiki language-php github-light phiki-themes github-dark" data-language="php" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">use</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">\</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> Start stdio server</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
+</span></span><span class="line"><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">serveMcp</span><span class="token">(</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">transport</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">stdio</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">sourcePath</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/app</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsSourcePath</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/docs-source</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span><span class="line"><span class="token">
+</span></span><span class="line"><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">//</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;"> Start HTTP server on port 8090</span><span class="token" style="color: #6a737d;--phiki-dark-color: #6a737d;">
+</span></span><span class="line"><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">Docsmith</span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">::</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">serveMcp</span><span class="token">(</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">transport</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">http</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">port</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">8090</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">sourcePath</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/app</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsSourcePath</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">__DIR__</span><span class="token"> </span><span class="token" style="color: #d73a49;--phiki-dark-color: #f97583;">.</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/docs-source</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">'</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">)</span><span class="token">;</span><span class="token">
+</span></span></code></pre>
+<h2 id="using-with-ai-assistants">Using with AI Assistants</h2>
+<h3 id="claude-code">Claude Code</h3>
+<p>Add to your Claude Code MCP configuration:</p>
+<pre class="phiki language-json github-light phiki-themes github-dark" data-language="json" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">  </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">mcpServers</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">docsmith</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">command</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">docsmith</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">args</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">[</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">mcp:serve</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--transport=stdio</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--source=.</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--docs-source=docs-source</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">]</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token">}</span><span class="token">
+</span></span><span class="line"><span class="token">  </span><span class="token">}</span><span class="token">
+</span></span><span class="line"><span class="token">}</span><span class="token">
+</span></span></code></pre>
+<p>Claude Code can then call <code>read_source</code> to explore your codebase,
+<code>write_markdown</code> to create documentation pages, and <code>build_site</code> to generate
+the static site. Call <code>capture_media</code> only if the user asked for screenshots
+or a demo video.</p>
+<h3 id="grok">Grok</h3>
+<p><code>docsmith install:ai</code> writes <code>.grok/config.toml</code> and <code>.grok/skills/</code> when Grok
+is detected (or pass <code>--agents=grok</code>). Native Grok MCP config:</p>
+<pre class="phiki language-toml github-light phiki-themes github-dark" data-language="toml" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">[</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">mcp_servers</span><span class="token">.</span><span class="token" style="color: #6f42c1;--phiki-dark-color: #b392f0;">docsmith</span><span class="token">]</span><span class="token">
+</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">command</span><span class="token"> </span><span class="token">=</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">docsmith</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">
+</span></span><span class="line"><span class="token" style="color: #24292e;--phiki-dark-color: #e1e4e8;">args</span><span class="token"> </span><span class="token">=</span><span class="token"> </span><span class="token">[</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">mcp:serve</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--transport=stdio</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--source=.</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--docs-source=docs-source</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">]</span><span class="token">
+</span></span></code></pre>
+<p>Restart Grok or press <code>r</code> in <code>/mcps</code> after installing. Then ask it to write
+docs. It loads the <code>docsmith-docs</code> skill and the MCP tools.</p>
+<h3 id="codex-other-agents">Codex / other agents</h3>
+<p>Point any MCP-capable agent at the same server. Use <code>--transport=http --port=8090</code> when the agent connects over HTTP, or stdio when it launches the
+command itself.</p>
+<h2 id="using-with-laravel-boost">Using with Laravel Boost</h2>
+<p>Docsmith has <strong>no dependency on Laravel Boost</strong>. The setup below is one way to
+register the same server. The Claude Code / Codex / Cursor sections above work
+without Boost.</p>
+<p>Laravel Boost ships its own MCP server (<code>php artisan boost:mcp</code>) and wires it
+into your agents via <code>.mcp.json</code>. Docsmith sits next to it: add both servers to
+the same config, and your Boost-configured agent (Claude Code, Codex, Gemini
+CLI, ...) gets docsmith's <code>read_source</code> / <code>write_markdown</code> / <code>capture_media</code> /
+<code>build_site</code> tools alongside Boost's tinker and schema tools.</p>
+<pre class="phiki language-json github-light phiki-themes github-dark" data-language="json" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">  </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">mcpServers</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">laravel-boost</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">command</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">php</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">args</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">[</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">artisan</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">boost:mcp</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">]</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token">}</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">docsmith</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">command</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">docsmith</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">args</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">[</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">mcp:serve</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--transport=stdio</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--source=.</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--docs-source=docs-source</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">]</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token">}</span><span class="token">
+</span></span><span class="line"><span class="token">  </span><span class="token">}</span><span class="token">
+</span></span><span class="line"><span class="token">}</span><span class="token">
+</span></span></code></pre>
+<p>If <code>docsmith</code> is not on your PATH (Herd/Valet or per-project installs), point at
+the binary explicitly, the same way you would for <code>php</code>:</p>
+<pre class="phiki language-json github-light phiki-themes github-dark" data-language="json" style="background-color: #fff;color: #24292e;--phiki-dark-background-color: #24292e;--phiki-dark-color: #e1e4e8;"><code><span class="line"><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">  </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">mcpServers</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">docsmith</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">{</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">command</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">/Users/you/.config/herd/bin/php</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token">
+</span></span><span class="line"><span class="token">      </span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">args</span><span class="token" style="color: #005cc5;--phiki-dark-color: #79b8ff;">"</span><span class="token">:</span><span class="token"> </span><span class="token">[</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">vendor/mrpunyapal/docsmith/bin/docsmith</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">mcp:serve</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--transport=stdio</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--source=.</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">,</span><span class="token"> </span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">--docs-source=docs-source</span><span class="token" style="color: #032f62;--phiki-dark-color: #9ecbff;">"</span><span class="token">]</span><span class="token">
+</span></span><span class="line"><span class="token">    </span><span class="token">}</span><span class="token">
+</span></span><span class="line"><span class="token">  </span><span class="token">}</span><span class="token">
+</span></span><span class="line"><span class="token">}</span><span class="token">
+</span></span></code></pre>
+<p>Then prompt the agent from the project root, for example:</p>
+<blockquote>
+<p>Write usage docs for this Laravel app. Quick start on the landing page.
+Capture the UI if you can boot it. If not, ask me for a URL.</p>
+</blockquote>
+
+                </div>
+                <footer class="doc-meta">
+                    <a class="edit-link" href="https://github.com/MrPunyapal/docsmith/edit/main/md/ai/mcp-server.md">Edit this page</a>
+                </footer>
+            </article>
+            <nav class="pager" aria-label="Page navigation"><a class="pager-link" href="../future-scope/"><span>Previous</span><strong>Future Scope</strong></a><a class="pager-link pager-link-next" href="../../media/"><span>Next</span><strong>Media</strong></a></nav>
+        </main>
+        <aside class="toc-sidebar" data-docsmith-toc><p class="toc-title">On this page</p><nav class="toc-links"><a class="toc-link toc-link-level-2" href="#when-to-use-mcp-vs-the-builder" data-docsmith-toc-link="when-to-use-mcp-vs-the-builder">When to use MCP vs the Builder</a><a class="toc-link toc-link-level-2" href="#starting-the-server" data-docsmith-toc-link="starting-the-server">Starting the Server</a><a class="toc-link toc-link-level-3" href="#stdio-mode-for-local-ai-assistants" data-docsmith-toc-link="stdio-mode-for-local-ai-assistants">stdio Mode (for local AI assistants)</a><a class="toc-link toc-link-level-3" href="#http-mode-for-remote-agents" data-docsmith-toc-link="http-mode-for-remote-agents">HTTP Mode (for remote agents)</a><a class="toc-link toc-link-level-2" href="#exposed-tools" data-docsmith-toc-link="exposed-tools">Exposed Tools</a><a class="toc-link toc-link-level-2" href="#php-api" data-docsmith-toc-link="php-api">PHP API</a><a class="toc-link toc-link-level-2" href="#using-with-ai-assistants" data-docsmith-toc-link="using-with-ai-assistants">Using with AI Assistants</a><a class="toc-link toc-link-level-3" href="#claude-code" data-docsmith-toc-link="claude-code">Claude Code</a><a class="toc-link toc-link-level-3" href="#grok" data-docsmith-toc-link="grok">Grok</a><a class="toc-link toc-link-level-3" href="#codex-other-agents" data-docsmith-toc-link="codex-other-agents">Codex / other agents</a><a class="toc-link toc-link-level-2" href="#using-with-laravel-boost" data-docsmith-toc-link="using-with-laravel-boost">Using with Laravel Boost</a></nav></aside>
+    </div>
+    <div class="search-overlay" data-docsmith-search-overlay hidden role="dialog" aria-label="Search documentation">
+    <div class="search-overlay-backdrop" data-docsmith-search-overlay-close></div>
+    <div class="search-overlay-panel">
+        <div class="search-overlay-input-wrap">
+            <svg class="search-overlay-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="search" class="search-overlay-input" placeholder="Search documentation..." aria-label="Search documentation" data-docsmith-search-overlay-input autocomplete="off">
+            <kbd class="search-overlay-hint">ESC</kbd>
+        </div>
+        <div class="search-overlay-results" data-docsmith-search-overlay-results></div>
+        <div class="search-overlay-empty" data-docsmith-search-overlay-empty hidden>No results found.</div>
+    </div>
+</div>
+</body>
+</html>
