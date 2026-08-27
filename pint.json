@@ -2,7 +2,8 @@
     "preset": "psr12",
     "exclude": [
         "vendor",
-        "test-hub"
+        "test-hub",
+        "test-auto"
     ],
     "notPath": [
         "tests/Fixtures/Expected/**"

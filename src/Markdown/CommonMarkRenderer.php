@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith\Markdown;
 
+use Closure;
 use Docsmith\Markdown\GitHubAlerts\GitHubAlertsExtension;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
@@ -49,8 +50,81 @@ final readonly class CommonMarkRenderer
         $html = (string) $this->converter->convert($markdown);
         $html = $this->highlightCodeBlocks($html);
         $html = $this->wrapTables($html);
+        $html = $this->deferMediaLoading($html);
 
         return (string) preg_replace('/<h1[^>]*>.*?<\/h1>\s*/si', '', $html, 1);
+    }
+
+    private function deferMediaLoading(string $html): string
+    {
+        $html = $this->replaceTag($html, 'img', static function (string $attributes): ?string {
+            if (preg_match('/\sloading\s*=/i', $attributes) === 1) {
+                return null;
+            }
+
+            return ' loading="lazy" decoding="async"';
+        });
+
+        return $this->replaceTag($html, 'video', static function (string $attributes): ?string {
+            if (preg_match('/\spreload\s*=/i', $attributes) === 1) {
+                return null;
+            }
+
+            return ' preload="none"';
+        });
+    }
+
+    /**
+     * Find the complete opening tag (respecting quoted attributes) and apply a
+     * callback to its attribute string. Returns null when the tag name is not
+     * present.
+     *
+     * @param Closure(string):?string $mutator
+     */
+    private function replaceTag(string $html, string $tagName, Closure $mutator): string
+    {
+        $pattern = '/<(' . $tagName . ')\b/i';
+        $offset = 0;
+
+        while (preg_match($pattern, $html, $m, PREG_OFFSET_CAPTURE, $offset) === 1) {
+            $tagStart = $m[0][1];
+            $pos = $tagStart + strlen($m[0][0]);
+            $inSingle = false;
+            $inDouble = false;
+            $len = strlen($html);
+
+            while ($pos < $len) {
+                $ch = $html[$pos];
+
+                if ($ch === "'" && ! $inDouble) {
+                    $inSingle = ! $inSingle;
+                } elseif ($ch === '"' && ! $inSingle) {
+                    $inDouble = ! $inDouble;
+                } elseif ($ch === '>' && ! $inSingle && ! $inDouble) {
+                    break;
+                }
+
+                $pos++;
+            }
+
+            if ($pos >= $len) {
+                break;
+            }
+
+            $attrs = substr($html, $tagStart + strlen($m[0][0]), $pos - $tagStart - strlen($m[0][0]));
+            $extra = $mutator($attrs);
+
+            if ($extra === null) {
+                $offset = $pos + 1;
+                continue;
+            }
+
+            $insert = rtrim($attrs, '/ ') . $extra;
+            $html = substr($html, 0, $tagStart + strlen($m[0][0])) . $insert . substr($html, $pos);
+            $offset = $tagStart + strlen($m[0][0]) + strlen($insert) + 1;
+        }
+
+        return $html;
     }
 
     private function wrapTables(string $html): string

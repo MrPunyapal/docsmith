@@ -8,7 +8,13 @@ metadata:
 
 # Writing Documentation
 
-How to write documentation pages that build well with Docsmith and read well for humans and LLMs.
+How to write documentation pages that build well with Docsmith and that a new user can actually start from.
+
+Too little docs: hard to start. Too much (every feature, every option): hard to find the main use case. Same outcome. The project does not get used.
+
+- Quick start or TL;DR at the top of the landing page. Copy-paste, runnable.
+- First paragraphs: the most common use case, not a feature list.
+- Show, don't tell. If the user asked for screenshots or videos, put them next to the step they show, cropped to the thing that matters. Do not capture images or videos unless they asked.
 
 ## Page rules
 
@@ -16,6 +22,7 @@ How to write documentation pages that build well with Docsmith and read well for
 - Exactly one H1 per page, matching the page title. Use H2/H3 for sections.
 - Open with a one or two sentence summary of what the reader gets. Details after.
 - Prefer pages under roughly 400 lines. Longer pages usually hide two topics.
+- Second person, present tense. No marketing words, no em dashes.
 
 ## Frontmatter
 
@@ -87,3 +94,4 @@ Remote URLs and root-relative paths are not rewritten. Reference only files that
 4. Is the sidebar order deliberate (`order:` or `navigationOrder()`), not accidental?
 5. Would a newcomer understand the first screen without reading another page?
 6. Are code blocks copy-pasteable with no hidden context?
+7. Does the landing page have a quick start and the main use case, not a catalog?

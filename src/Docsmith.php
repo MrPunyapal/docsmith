@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith;
 
+use Docsmith\Ai\Mcp\DocsmithMcpServer;
 use Docsmith\Builder\Builder;
 use League\CommonMark\Extension\ExtensionInterface;
 
@@ -54,5 +55,21 @@ final class Docsmith
     public static function make(): Builder
     {
         return new Builder();
+    }
+
+    public static function serveMcp(
+        string $transport = 'stdio',
+        int $port = 8090,
+        string $sourcePath = '',
+        string $docsSourcePath = '',
+    ): void {
+        $server = new DocsmithMcpServer(
+            transport: $transport,
+            port: $port,
+            sourcePath: $sourcePath,
+            docsSourcePath: $docsSourcePath,
+        );
+
+        $server->run();
     }
 }

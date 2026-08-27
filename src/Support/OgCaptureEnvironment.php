@@ -140,7 +140,7 @@ Open Graph image generation is enabled, but required tools are not installed in 
 
 Install once:
 
-  npm install -D playwright capturist
+  npm install -D playwright capturist@^0.5.0
   npx playwright install chromium
 
 You do not need to configure capturist — Docsmith writes its config during the docs build.

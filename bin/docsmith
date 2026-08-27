@@ -3,6 +3,10 @@
 
 declare(strict_types=1);
 
+use Docsmith\Command\InstallAiCommand;
+use Docsmith\Command\McpServeCommand;
+use Symfony\Component\Console\Application;
+
 $autoloader = null;
 
 foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $file) {
@@ -26,10 +30,19 @@ use Docsmith\RemoteSources\RemoteSources;
 use Docsmith\RemoteSources\InvalidSourcesConfiguration;
 use League\CommonMark\Extension\ExtensionInterface;
 
+if (class_exists(McpServeCommand::class) && in_array($argv[1] ?? null, ['mcp:serve', 'install:ai'], true)) {
+    $application = new Application('Docsmith');
+    $application->addCommands([new McpServeCommand(), new InstallAiCommand()]);
+
+    exit($application->run());
+}
+
 const USAGE = <<<TXT
 Usage:
   php bin/docsmith build [options]
   php bin/docsmith sync [options]
+  php bin/docsmith mcp:serve [options]  (MCP server for coding agents)
+  php bin/docsmith install:ai [options] (MCP config, guidelines, and skills for AI agents)
   php bin/docsmith --help
 
 Build options:
