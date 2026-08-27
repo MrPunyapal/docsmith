@@ -140,7 +140,7 @@ if (! is_dir($source)) {
     exit(1);
 }
 
-$builder = Docsmith\Docsmith::make()
+$builder = Docsmith::make()
     ->source($source)
     ->output(stringOption($options, 'output', 'docs'))
     ->title(stringOption($options, 'title', 'Documentation'))
