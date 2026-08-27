@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Docsmith\Markdown;
 
+use Closure;
 use Docsmith\Markdown\GitHubAlerts\GitHubAlertsExtension;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
@@ -78,9 +79,9 @@ final readonly class CommonMarkRenderer
      * callback to its attribute string. Returns null when the tag name is not
      * present.
      *
-     * @param  \Closure(string): ?string  $mutator
+     * @param Closure(string):?string $mutator
      */
-    private function replaceTag(string $html, string $tagName, \Closure $mutator): string
+    private function replaceTag(string $html, string $tagName, Closure $mutator): string
     {
         $pattern = '/<(' . $tagName . ')\b/i';
         $offset = 0;
