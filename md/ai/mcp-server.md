@@ -65,7 +65,9 @@ npx playwright install chromium
 
 Files land in the docs source `media/` directory. Stills:
 `![caption](media/shot.png)`. Videos:
-`<video controls src="media/flow.webm"></video>`.
+`<video controls preload="none" src="media/flow.webm"></video>`. Use
+`write_markdown` with `after` to place a capture below the heading for the step
+it documents.
 
 ## PHP API
 
