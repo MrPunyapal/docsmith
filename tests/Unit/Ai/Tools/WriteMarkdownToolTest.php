@@ -70,6 +70,27 @@ it('creates nested directories when creating a page', function (): void {
     }
 });
 
+it('rejects traversal before creating directories outside the docs root', function (): void {
+    $rootPath = sys_get_temp_dir() . '/docsmith-wmd-' . uniqid();
+    $docsPath = $rootPath . '/docs';
+    $outsidePath = $rootPath . '/outside';
+    mkdir($docsPath, 0777, true);
+
+    try {
+        $tool = new WriteMarkdownTool($docsPath);
+
+        expect(fn (): array => $tool->handle([
+            'action' => 'create_page',
+            'path' => '../outside/page.md',
+            'content' => '# Outside',
+        ]))->toThrow(RuntimeException::class, 'path outside docs root');
+
+        expect($outsidePath)->not->toBeDirectory();
+    } finally {
+        removeDirectory($rootPath);
+    }
+});
+
 it('updates an existing page', function (): void {
     $docsPath = sys_get_temp_dir() . '/docsmith-wmd-' . uniqid();
     mkdir($docsPath, 0777, true);

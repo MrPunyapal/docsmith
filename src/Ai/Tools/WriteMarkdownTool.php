@@ -160,6 +160,10 @@ final readonly class WriteMarkdownTool implements ToolInterface
     {
         $path = ltrim(str_replace('\\', '/', $path), '/');
 
+        if (in_array('..', explode('/', $path), true)) {
+            throw new RuntimeException('Access denied: path outside docs root');
+        }
+
         if (! str_ends_with($path, '.md')) {
             $path .= '.md';
         }
