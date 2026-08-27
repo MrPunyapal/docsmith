@@ -3,7 +3,7 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
-## Unreleased
+## 0.5.0 - 2026-08-28
 
 ### Features
 - **AI docs**: `docsmith install:ai` sets up MCP tools and a `docsmith-docs` skill for Grok, Claude Code, Codex, Cursor, OpenCode, and Google Antigravity. Agents write docs in words unless the user asked for screenshots or videos. `capture_media` then inspects a running page, crops a widget screenshot with padding, or records a short video framed the same way. Login goes in off-camera `before` steps. Grok gets `.grok/config.toml` and `.grok/skills/`.
