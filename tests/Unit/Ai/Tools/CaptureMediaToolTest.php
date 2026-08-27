@@ -224,6 +224,7 @@ it('writes before steps and pace into the steps file for video', function (): vo
 
     $decoded = json_decode($environment->stepsFileContents, true);
     $decoded = is_array($decoded) ? $decoded : [];
+
     $before = is_array($decoded['before'] ?? null) ? $decoded['before'] : [];
     $steps = is_array($decoded['steps'] ?? null) ? $decoded['steps'] : [];
 
@@ -253,6 +254,7 @@ it('writes before steps for a screenshot without recorded steps', function (): v
     $command = $environment->commands[0] ?? '';
     $decoded = json_decode($environment->stepsFileContents, true);
     $decoded = is_array($decoded) ? $decoded : [];
+
     $before = is_array($decoded['before'] ?? null) ? $decoded['before'] : [];
     $steps = is_array($decoded['steps'] ?? null) ? $decoded['steps'] : [];
 
@@ -283,6 +285,7 @@ it('crops a screenshot with padding and same-page steps', function (): void {
     $command = $environment->commands[0] ?? '';
     $decoded = json_decode($environment->stepsFileContents, true);
     $decoded = is_array($decoded) ? $decoded : [];
+
     $steps = is_array($decoded['steps'] ?? null) ? $decoded['steps'] : [];
     $first = is_array($steps[0] ?? null) ? $steps[0] : [];
 

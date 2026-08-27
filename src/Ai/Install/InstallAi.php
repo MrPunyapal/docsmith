@@ -264,13 +264,13 @@ final readonly class InstallAi
             $providers = glob($pattern);
 
             foreach ((is_array($providers) ? $providers : []) as $provider) {
-                $basename = basename((string) $provider);
+                $basename = basename($provider);
 
-                if (! (str_contains($basename, 'Panel') && str_ends_with($basename, 'Provider.php'))) {
+                if (! str_contains($basename, 'Panel') || ! str_ends_with($basename, 'Provider.php')) {
                     continue;
                 }
 
-                $code = (string) file_get_contents((string) $provider);
+                $code = (string) file_get_contents($provider);
 
                 if (preg_match('/->path\(\s*[\'"]([^\'"]+)[\'"]/', $code, $match) === 1) {
                     return trim($match[1], '/');
