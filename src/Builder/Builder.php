@@ -854,6 +854,8 @@ final class Builder
                     'isPrimary' => true,
                     'isRoot' => $slug === $defaultSlug,
                     'label' => (string) $version['label'],
+                    'contextName' => $this->title,
+                    'contextVersion' => (string) $version['label'],
                     'source' => (string) $version['source'],
                     'navigation' => $version['navigation'],
                 ];
@@ -887,6 +889,8 @@ final class Builder
                         'isPrimary' => true,
                         'isRoot' => $isRootEntry,
                         'label' => $entry['label'],
+                        'contextName' => (string) $entry['label'],
+                        'contextVersion' => '',
                         'source' => (string) $entry['source'],
                         'navigation' => $entry['navigation'],
                     ];
@@ -924,6 +928,8 @@ final class Builder
                         'isPrimary' => $isPrimary,
                         'isRoot' => $isRootEntry && $isPrimary,
                         'label' => (string) $version['label'],
+                        'contextName' => (string) $entry['label'],
+                        'contextVersion' => (string) $version['label'],
                         'source' => (string) $version['source'],
                         'navigation' => $entry['navigation'],
                     ];
@@ -1003,6 +1009,8 @@ final class Builder
                 dropdownGroups: $dropdownGroups,
                 pillMembers: $pillMembersByUnit[$unit['unitId']] ?? [],
                 pageSets: $pageSets,
+                contextName: $unit['contextName'],
+                contextVersion: $unit['contextVersion'],
             );
 
             $this->generateOgImages($config, null, $writeTarget);

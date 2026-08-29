@@ -220,6 +220,10 @@ a {
     margin: 0.65rem 0 1.1rem;
 }
 
+.mobile-context {
+    display: none;
+}
+
 .search {
     margin-bottom: 0.85rem;
 }
@@ -1222,6 +1226,31 @@ pre.phiki .line::before {
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
         overflow: hidden;
+    }
+
+    .mobile-context {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-top: 0.5rem;
+        color: var(--muted);
+        font-size: 0.7rem;
+        line-height: 1.2;
+        min-width: 0;
+    }
+
+    .mobile-context-name,
+    .mobile-context-version {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text);
+        font-size: 0.76rem;
+        font-weight: 650;
+    }
+
+    .mobile-context-divider {
+        color: var(--border);
     }
 
     .mobile-menu-toggle {

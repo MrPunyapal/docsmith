@@ -583,7 +583,10 @@ it('builds a docs entry with internal versions using the classic versioned layou
     $usage = (string) file_get_contents($outputPath . '/kd/usage/index.html');
     expect($usage)->toContain('version-pills')
         ->toContain('<a class="version-link version-link-current" href="/kd/">2.x</a>')
-        ->toContain('href="/kd/1.x/usage/">1.x</a>');
+        ->toContain('href="/kd/1.x/usage/">1.x</a>')
+        ->toContain('aria-label="Current documentation: Versioned Docs, version 2.x"')
+        ->toContain('<strong class="mobile-context-name">Versioned Docs</strong>')
+        ->toContain('<strong class="mobile-context-version">2.x</strong>');
 });
 
 it('builds a standalone versions() set with pill buttons and no docs dropdown', function (): void {
@@ -617,7 +620,10 @@ it('builds a standalone versions() set with pill buttons and no docs dropdown', 
     $usage = (string) file_get_contents($outputPath . '/usage/index.html');
     expect($usage)->toContain('version-pills')
         ->toContain('<a class="version-link version-link-current" href="/">v2.0</a>')
-        ->toContain('href="/v1/usage/">v1.0</a>');
+        ->toContain('href="/v1/usage/">v1.0</a>')
+        ->toContain('aria-label="Current documentation: Documentation, version v2.0"')
+        ->toContain('<strong class="mobile-context-name">Documentation</strong>')
+        ->toContain('<strong class="mobile-context-version">v2.0</strong>');
     expect(str_contains($usage, 'data-docsmith-hub-switcher'))->toBeFalse();
 
     // The first version is the default when none is flagged.
@@ -671,7 +677,9 @@ it('builds every version under its slug and redirects the root to the first one 
     $page = (string) file_get_contents($outputPath . '/pkg-one/index.html');
     expect($page)
         ->toContain('<option value="/pkg-one/" selected>Package One</option>')
-        ->toContain('<option value="/pkg-two/">Package Two</option>');
+        ->toContain('<option value="/pkg-two/">Package Two</option>')
+        ->toContain('aria-label="Current documentation: Package One"')
+        ->toContain('<strong class="mobile-context-name">Package One</strong>');
 });
 
 it('applies navigation order per version instead of globally', function (): void {

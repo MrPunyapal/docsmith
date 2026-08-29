@@ -122,6 +122,8 @@ final readonly class SiteBuilder
         array $dropdownGroups,
         array $pillMembers,
         array $pageSets,
+        string $contextName = '',
+        string $contextVersion = '',
     ): void {
         $documents = array_map(
             fn (Document $document): Document => $document->html === ''
@@ -169,7 +171,16 @@ final readonly class SiteBuilder
 
             file_put_contents(
                 $absoluteOutputPath,
-                $this->page($config, $document, $visibleDocuments, $hubSwitcher, $documents, $mediaFiles),
+                $this->page(
+                    $config,
+                    $document,
+                    $visibleDocuments,
+                    $hubSwitcher,
+                    $documents,
+                    $mediaFiles,
+                    $contextName,
+                    $contextVersion,
+                ),
             );
         }
 
@@ -235,8 +246,16 @@ HTML;
      * @param list<Document>|null $linkTargets
      * @param array<string, true> $mediaFiles
      */
-    private function page(BuildConfig $config, Document $document, array $documents, string $hubSwitcher = '', ?array $linkTargets = null, array $mediaFiles = []): string
-    {
+    private function page(
+        BuildConfig $config,
+        Document $document,
+        array $documents,
+        string $hubSwitcher = '',
+        ?array $linkTargets = null,
+        array $mediaFiles = [],
+        string $contextName = '',
+        string $contextVersion = '',
+    ): string {
         $tocData = $this->tocFromHtml($document->html);
         $toc = $tocData['items'];
         $contentHtml = $this->rewriteMarkdownLinks($tocData['html'], $document, $linkTargets ?? $documents);
@@ -257,6 +276,7 @@ HTML;
         $title = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
         $siteTitle = htmlspecialchars($config->metadata->title, ENT_QUOTES, 'UTF-8');
         $description = htmlspecialchars($config->metadata->description, ENT_QUOTES, 'UTF-8');
+        $mobileContext = $this->mobileContext($contextName, $contextVersion);
 
         return <<<HTML
 <!DOCTYPE html>
@@ -276,7 +296,7 @@ HTML;
             <div class="sidebar-header">
                 <div class="sidebar-title">
                     <h1 class="brand">{$siteTitle}</h1>
-                    <p class="tagline">{$description}</p>
+                    <p class="tagline">{$description}</p>{$mobileContext}
                 </div>
                 <button type="button" class="mobile-menu-toggle" data-docsmith-menu-toggle aria-expanded="false" aria-controls="docsmith-sidebar-panel" aria-label="Open menu"><svg class="mobile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mobile-menu-bars" d="M3.75 8.25h16.5M3.75 15.75h11"></path><path class="mobile-menu-close" d="M6 6l12 12M18 6L6 18"></path></svg><span class="sr-only">Toggle menu</span></button>
             </div>
@@ -315,6 +335,23 @@ HTML;
 </body>
 </html>
 HTML;
+    }
+
+    private function mobileContext(string $name, string $version): string
+    {
+        if ($name === '' && $version === '') {
+            return '';
+        }
+
+        $items = $name !== '' ? '<strong class="mobile-context-name">' . $this->escape($name) . '</strong>' : '';
+
+        if ($version !== '') {
+            $items .= '<span class="mobile-context-divider" aria-hidden="true">/</span><strong class="mobile-context-version">' . $this->escape($version) . '</strong>';
+        }
+
+        $ariaLabel = 'Current documentation' . ($name !== '' ? ': ' . $name : '') . ($version !== '' ? ', version ' . $version : '');
+
+        return '<div class="mobile-context" aria-label="' . $this->escape($ariaLabel) . '">' . $items . '</div>';
     }
 
     /** @param list<Document> $documents */
