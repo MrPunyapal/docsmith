@@ -3,6 +3,11 @@
 > Changes in **0.1.4 and after** — every release from `0.1.4` through `0.2.1`.
 > (`chore: regenerate docs` and merge commits are omitted.)
 
+## 0.5.1 - 2026-08-29
+
+### Fixed
+- **Mobile docs context**: mobile documentation headers now show the active documentation name and version, so users can identify their location in a Docs Hub without opening the sidebar.
+
 ## 0.5.0 - 2026-08-28
 
 ### Features
