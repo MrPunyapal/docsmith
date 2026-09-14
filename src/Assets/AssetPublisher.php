@@ -844,6 +844,23 @@ li + li {
     margin-top: 0.35rem;
 }
 
+blockquote {
+    margin: 1.15rem 0 1.35rem;
+    padding: 0.6rem 1rem;
+    border-left: 0.22rem solid var(--muted);
+    border-radius: 0.5rem;
+    background: var(--bg-shade);
+    color: var(--text);
+}
+
+blockquote > :first-child {
+    margin-top: 0;
+}
+
+blockquote > :last-child {
+    margin-bottom: 0;
+}
+
 .table-scroll {
     width: 100%;
     overflow-x: auto;
